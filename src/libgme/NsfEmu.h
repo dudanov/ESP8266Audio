@@ -1,0 +1,119 @@
+// Nintendo NES/Famicom NSF music file emulator
+
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
+#pragma once
+
+#include "ClassicEmu.h"
+#include "NesApu.h"
+#include "NesCpu.h"
+#include <array>
+
+namespace gme {
+namespace emu {
+namespace nes {
+
+class NsfEmu : private NesCpu, public ClassicEmu {
+  typedef NesCpu cpu;
+
+ public:
+  // Equalizer profiles for US NES and Japanese Famicom
+  static equalizer_t const nes_eq;
+  static equalizer_t const famicom_eq;
+  static MusicEmu *createNsfEmu() { return BLARGG_NEW NsfEmu; }
+
+  // NSF file header
+  struct Header {
+    char tag[5];
+    uint8_t vers;
+    uint8_t track_count;
+    uint8_t first_track;
+    uint8_t load_addr[2];
+    uint8_t init_addr[2];
+    uint8_t play_addr[2];
+    char game[32];
+    char author[32];
+    char copyright[32];
+    uint8_t ntsc_speed[2];
+    uint8_t banks[8];
+    uint8_t pal_speed[2];
+    uint8_t speed_flags;
+    uint8_t chip_flags;
+    uint8_t unused[4];
+  };
+  static const size_t HEADER_SIZE = 128;
+
+  // Header for currently loaded file
+  const Header &header() const { return this->m_header; }
+
+  static gme_type_t static_type() { return gme_nsf_type; }
+
+ public:
+  NsfEmu();
+  ~NsfEmu();
+  // NesApu *apu_() { return &this->m_apu; }
+
+ protected:
+  /* GmeFile methods */
+
+  blargg_err_t m_getTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t m_load(DataReader &) override;
+  void m_unload() override;
+
+  /* MusicEmu methods */
+
+  blargg_err_t m_startTrack(int) override;
+  void m_setTempo(double) override;
+
+  /* ClassicEmu methods */
+
+  blargg_err_t m_runClocks(blip_time_t &, int) override;
+  void m_setChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
+  void m_updateEq(const BlipEq &) override;
+
+ protected:
+  static const size_t BANKS_NUM = 8;
+  std::array<uint8_t, BANKS_NUM> m_initBanks;
+  nes_addr_t m_initAddress;
+  nes_addr_t m_playAddress;
+  float m_clockRate;
+  bool m_palMode;
+
+  // timing
+  NesCpu::registers_t m_savedState;
+  nes_time_t m_nextPlay;
+  nes_time_t m_playPeriod;
+  int m_playExtra;
+  int m_playReady;
+
+  static const nes_addr_t ROM_BEGIN = 0x8000;
+  static const nes_addr_t BANK_SELECT_ADDR = 0x5FF8;
+  static const nes_addr_t BANK_SIZE = 0x1000;
+  RomData<BANK_SIZE> m_rom;
+
+ private:
+  friend class NesCpu;
+  uint8_t m_cpuRead(nes_addr_t);
+  void m_cpuWrite(nes_addr_t, uint8_t);
+  void m_cpuWriteMisc(nes_addr_t, uint8_t);
+  static const nes_addr_t BADOP_ADDR = BANK_SELECT_ADDR;
+
+  static int pcmRead(void *, nes_addr_t);
+
+  class NesNamcoApu *namco;
+  class NesVrc6Apu *vrc6;
+  class NesFme7Apu *fme7;
+  // NES APU instance
+  NesApu m_apu;
+  // Header of current opened file
+  Header m_header;
+
+  blargg_err_t m_initSound();
+
+  static const nes_addr_t SRAM_ADDR = 0x6000;
+  std::array<uint8_t, 8192> m_sram;
+  std::array<uint8_t, NesCpu::PAGE_SIZE + 8> m_unMappedCode;
+};
+
+}  // namespace nes
+}  // namespace emu
+}  // namespace gme

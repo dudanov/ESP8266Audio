@@ -1,0 +1,90 @@
+// Nintendo Game Boy GBS music file emulator
+
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
+#pragma once
+#include "ClassicEmu.h"
+#include "GbApu.h"
+#include "GbCpu.h"
+
+namespace gme {
+namespace emu {
+namespace gb {
+
+class GbsEmu : private GbCpu, public ClassicEmu {
+  typedef GbCpu cpu;
+
+ public:
+  // Equalizer profiles for Game Boy Color speaker and headphones
+  static equalizer_t const handheld_eq;
+  static equalizer_t const headphones_eq;
+  static MusicEmu *createGbsEmu() { return BLARGG_NEW GbsEmu; }
+
+  // GBS file header
+  struct Header {
+    char tag[3];
+    uint8_t vers;
+    uint8_t track_count;
+    uint8_t first_track;
+    uint8_t load_addr[2];
+    uint8_t init_addr[2];
+    uint8_t play_addr[2];
+    uint8_t stack_ptr[2];
+    uint8_t timer_modulo;
+    uint8_t timer_mode;
+    char game[32];
+    char author[32];
+    char copyright[32];
+  };
+  enum { HEADER_SIZE = 112 };
+
+  // Header for currently loaded file
+  // Header const &header() const { return m_header; }
+
+  // static gme_type_t static_type() { return gme_gbs_type; }
+
+ public:
+  GbsEmu();
+  ~GbsEmu();
+
+ protected:
+  blargg_err_t m_getTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t m_load(DataReader &) override;
+  blargg_err_t m_startTrack(int) override;
+  blargg_err_t m_runClocks(blip_time_t &, int) override;
+  void m_setTempo(double) override;
+  void m_setChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
+  void m_updateEq(BlipEq const &) override;
+  void m_unload() override;
+
+ private:
+  // rom
+  enum { BANK_SIZE = 0x4000 };
+  RomData<BANK_SIZE> m_rom;
+  void m_setBank(int);
+
+  // timer
+  blip_time_t m_cpuTime;
+  blip_time_t m_playPeriod;
+  blip_time_t m_nextPlay;
+  void m_updateTimer();
+
+  Header m_header;
+  void m_cpuJsr(gb_addr_t);
+
+ private:
+  friend class GbCpu;
+  blip_time_t clock() const { return this->m_cpuTime - cpu::remain(); }
+
+  enum { JOYPAD_ADDR = 0xFF00 };
+  enum { RAM_ADDR = 0xA000 };
+  enum { HI_PAGE = 0xFF00 - RAM_ADDR };
+  std::array<uint8_t, 0x4000 + 0x2000 + GbCpu::CPU_PADDING> m_ram;
+  GbApu m_apu;
+
+  int cpu_read(gb_addr_t);
+  void cpu_write(gb_addr_t, int);
+};
+
+}  // namespace gb
+}  // namespace emu
+}  // namespace gme
