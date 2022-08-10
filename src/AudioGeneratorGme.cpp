@@ -1,8 +1,8 @@
 /*
   AudioGeneratorGme
-  Audio output generator that reads 8 and 16-bit WAV files
+  Audio output generator that plays various retro game music using GME
 
-  Copyright (C) 2017  Earle F. Philhower, III
+  Copyright (C) 2022  Sergey V. DUDANOV <sergey.dudanov@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

@@ -1,8 +1,8 @@
 /*
-  AudioGenerator
-  Base class of an audio output generator
+  AudioGeneratorGme
+  Audio output generator that plays various retro game music using GME
 
-  Copyright (C) 2017  Earle F. Philhower, III
+  Copyright (C) 2022  Sergey V. DUDANOV <sergey.dudanov@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
