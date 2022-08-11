@@ -22,33 +22,33 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 // MonoBuffer
 
 blargg_err_t MonoBuffer::setSampleRate(long rate, int msec) {
-  RETURN_ERR(m_buf.setSampleRate(rate, msec));
-  return MultiBuffer::setSampleRate(m_buf.getSampleRate(), m_buf.getLength());
+  RETURN_ERR(m_buf.SetSampleRate(rate, msec));
+  return MultiBuffer::setSampleRate(m_buf.GetSampleRate(), m_buf.GetLength());
 }
 
 // StereoBuffer
 
 blargg_err_t StereoBuffer::setSampleRate(long rate, int msec) {
   for (auto &buf : this->m_bufs)
-    RETURN_ERR(buf.setSampleRate(rate, msec));
-  return MultiBuffer::setSampleRate(m_bufs[0].getSampleRate(), m_bufs[0].getLength());
+    RETURN_ERR(buf.SetSampleRate(rate, msec));
+  return MultiBuffer::setSampleRate(m_bufs[0].GetSampleRate(), m_bufs[0].GetLength());
 }
 
 void StereoBuffer::setClockRate(long rate) {
   for (auto &buf : this->m_bufs)
-    buf.setClockRate(rate);
+    buf.SetClockRate(rate);
 }
 
 void StereoBuffer::setBassFreq(int bass) {
   for (auto &buf : this->m_bufs)
-    buf.setBassFrequency(bass);
+    buf.SetBassFrequency(bass);
 }
 
 void StereoBuffer::clear() {
   this->m_stereoAdded = 0;
   this->m_wasStereo = false;
   for (auto &buf : this->m_bufs)
-    buf.clear();
+    buf.Clear();
 }
 
 void StereoBuffer::endFrame(blip_time_t clock_count) {
@@ -57,7 +57,7 @@ void StereoBuffer::endFrame(blip_time_t clock_count) {
   for (auto &buf : this->m_bufs) {
     if (buf.clearModified())
       this->m_stereoAdded |= mask;
-    buf.end_frame(clock_count);
+    buf.EndFrame(clock_count);
     mask <<= 1;
   }
 }
@@ -66,7 +66,7 @@ long StereoBuffer::readSamples(blip_sample_t *out, long count) {
   require(!(count & 1));  // count must be even
   count = (unsigned) count / 2;
 
-  long avail = this->m_bufs[0].samplesAvailable();
+  long avail = this->m_bufs[0].SamplesAvailable();
   if (count > avail)
     count = avail;
   if (count) {
@@ -74,23 +74,23 @@ long StereoBuffer::readSamples(blip_sample_t *out, long count) {
     // debug_printf( "%X\n", bufs_used );
     if (bufs_used <= 1) {
       this->m_mixMono(out, count);
-      this->m_bufs[0].removeSamples(count);
+      this->m_bufs[0].RemoveSamples(count);
       this->m_bufs[1].removeSilence(count);
       this->m_bufs[2].removeSilence(count);
     } else if (bufs_used & 1) {
       this->m_mixStereo(out, count);
-      this->m_bufs[0].removeSamples(count);
-      this->m_bufs[1].removeSamples(count);
-      this->m_bufs[2].removeSamples(count);
+      this->m_bufs[0].RemoveSamples(count);
+      this->m_bufs[1].RemoveSamples(count);
+      this->m_bufs[2].RemoveSamples(count);
     } else {
       this->m_mixStereoNoCenter(out, count);
       this->m_bufs[0].removeSilence(count);
-      this->m_bufs[1].removeSamples(count);
-      this->m_bufs[2].removeSamples(count);
+      this->m_bufs[1].RemoveSamples(count);
+      this->m_bufs[2].RemoveSamples(count);
     }
 
     // to do: this might miss opportunities for optimization
-    if (!this->m_bufs[0].samplesAvailable()) {
+    if (!this->m_bufs[0].SamplesAvailable()) {
       this->m_wasStereo = this->m_stereoAdded;
       this->m_stereoAdded = 0;
     }

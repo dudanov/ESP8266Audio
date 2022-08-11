@@ -41,14 +41,14 @@ void DualResampler::resize(int pairs) {
 
 void DualResampler::m_playFrame(BlipBuffer &blip_buf, dsample_t *out) {
   long pair_count = m_sampleBufSize >> 1;
-  blip_time_t blip_time = blip_buf.countClocks(pair_count);
+  blip_time_t blip_time = blip_buf.CountClocks(pair_count);
   int sample_count = m_oversamplesPerFrame - m_resampler.written();
 
   int new_count = m_playFrame(blip_time, sample_count, m_resampler.buffer());
   assert(new_count < m_resamplerSize);
 
-  blip_buf.end_frame(blip_time);
-  assert(blip_buf.samplesAvailable() == pair_count);
+  blip_buf.EndFrame(blip_time);
+  assert(blip_buf.SamplesAvailable() == pair_count);
 
   m_resampler.write(new_count);
 
@@ -60,7 +60,7 @@ void DualResampler::m_playFrame(BlipBuffer &blip_buf, dsample_t *out) {
 #endif
 
   m_mixSamples(blip_buf, out);
-  blip_buf.removeSamples(pair_count);
+  blip_buf.RemoveSamples(pair_count);
 }
 
 void DualResampler::dualPlay(long count, dsample_t *out, BlipBuffer &blip_buf) {

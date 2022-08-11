@@ -67,12 +67,12 @@ AyApu::Envelope::Envelope() {
 }
 
 AyApu::AyApu() {
-  this->setOutput(nullptr);
-  this->setVolume(1.0);
-  this->reset();
+  this->SetOutput(nullptr);
+  this->SetVolume(1.0);
+  this->Reset();
 }
 
-void AyApu::reset() {
+void AyApu::Reset() {
   this->m_lastTime = 0;
   this->m_noise.delay = 0;
   this->m_noise.lfsr = 1;
@@ -85,10 +85,10 @@ void AyApu::reset() {
   for (int i = sizeof(this->m_regs); --i >= 0;)
     this->m_regs[i] = 0;
   this->m_regs[7] = 0xFF;
-  this->m_writeData(13, 0);
+  this->mWriteData(13, 0);
 }
 
-void AyApu::m_writeData(int addr, int data) {
+void AyApu::mWriteData(int addr, int data) {
   assert((unsigned) addr < REG_COUNT);
 
   if ((unsigned) addr >= 14) {
@@ -103,7 +103,7 @@ void AyApu::m_writeData(int addr, int data) {
       data = (data & 4) ? 15 : 9;
     this->m_envelope.wave = this->m_envelope.modes[data - 7];
     this->m_envelope.pos = -48;
-    this->m_envelope.delay = 0;  // will get set to envelope period in m_runUntil()
+    this->m_envelope.delay = 0;  // will get set to envelope period in mRunUntil()
   }
   this->m_regs[addr] = data;
 
@@ -129,7 +129,7 @@ void AyApu::m_writeData(int addr, int data) {
 int const NOISE_OFF = 0x08;
 int const TONE_OFF = 0x01;
 
-void AyApu::m_runUntil(blip_time_t final_end_time) {
+void AyApu::mRunUntil(blip_time_t final_end_time) {
   require(final_end_time >= this->m_lastTime);
 
   // noise period and initial values
@@ -161,7 +161,7 @@ void AyApu::m_runUntil(blip_time_t final_end_time) {
 
     // period
     int half_vol = 0;
-    blip_time_t inaudible_period = (blargg_ulong)(osc_output->getClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
+    blip_time_t inaudible_period = (blargg_ulong)(osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
     if (osc->period <= inaudible_period && !(osc_mode & TONE_OFF)) {
       half_vol = 1;  // Actually around 60%, but 50% is close enough
       osc_mode |= TONE_OFF;

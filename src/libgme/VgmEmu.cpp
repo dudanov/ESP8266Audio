@@ -208,7 +208,7 @@ void VgmEmu::m_setTempo(double t) {
 }
 
 blargg_err_t VgmEmu::m_setSampleRate(long sample_rate) {
-  RETURN_ERR(blip_buf.setSampleRate(sample_rate, 1000 / 30));
+  RETURN_ERR(blip_buf.SetSampleRate(sample_rate, 1000 / 30));
   return ClassicEmu::m_setSampleRate(sample_rate);
 }
 
@@ -304,7 +304,7 @@ blargg_err_t VgmEmu::m_loadMem(uint8_t const *new_data, long new_size) {
   psg_dual = (m_psgRate & 0x40000000) != 0;
   psg_t6w28 = (m_psgRate & 0x80000000) != 0;
   m_psgRate &= 0x0FFFFFFF;
-  blip_buf.setClockRate(m_psgRate);
+  blip_buf.SetClockRate(m_psgRate);
 
   data = new_data;
   data_end = new_data + new_size;
@@ -336,14 +336,14 @@ blargg_err_t VgmEmu::setup_fm() {
 
   uses_fm = false;
 
-  m_fmRate = blip_buf.getSampleRate() * OVERSAMPLE_FACTOR;
+  m_fmRate = blip_buf.GetSampleRate() * OVERSAMPLE_FACTOR;
 
   if (ym2612_rate) {
     ym2612_rate &= ~0xC0000000;
     uses_fm = true;
     if (disable_oversampling_)
       m_fmRate = ym2612_rate / 144.0;
-    DualResampler::setup(m_fmRate / blip_buf.getSampleRate(), rolloff, FM_GAIN * m_getGain());
+    DualResampler::setup(m_fmRate / blip_buf.GetSampleRate(), rolloff, FM_GAIN * m_getGain());
     RETURN_ERR(ym2612[0].set_rate(m_fmRate, ym2612_rate));
     ym2612[0].enable(true);
     if (ym2612_dual) {
@@ -358,7 +358,7 @@ blargg_err_t VgmEmu::setup_fm() {
     uses_fm = true;
     if (disable_oversampling_)
       m_fmRate = ym2413_rate / 72.0;
-    DualResampler::setup(m_fmRate / blip_buf.getSampleRate(), rolloff, FM_GAIN * m_getGain());
+    DualResampler::setup(m_fmRate / blip_buf.GetSampleRate(), rolloff, FM_GAIN * m_getGain());
     int result = ym2413[0].set_rate(m_fmRate, ym2413_rate);
     if (result == 2)
       return "YM2413 FM sound isn't supported";
@@ -375,7 +375,7 @@ blargg_err_t VgmEmu::setup_fm() {
   }
 
   if (uses_fm) {
-    RETURN_ERR(DualResampler::reset(blip_buf.getLength() * blip_buf.getSampleRate() / 1000));
+    RETURN_ERR(DualResampler::reset(blip_buf.GetLength() * blip_buf.GetSampleRate() / 1000));
     psg[0].setVolume(0.135 * FM_GAIN * m_getGain());
     if (psg_dual)
       psg[1].setVolume(0.135 * FM_GAIN * m_getGain());
@@ -426,7 +426,7 @@ blargg_err_t VgmEmu::m_startTrack(int track) {
       ym2612[1].reset();
 
     fm_time_offset = 0;
-    blip_buf.clear();
+    blip_buf.Clear();
     DualResampler::clear();
   }
   return 0;

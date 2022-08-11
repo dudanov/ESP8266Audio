@@ -122,7 +122,7 @@ blargg_err_t AyEmu::m_loadMem(uint8_t const *in, long size) {
     m_setWarning("Unknown file version");
 
   m_setChannelsNumber(OSCS_NUM);
-  apu.setVolume(m_getGain());
+  apu.SetVolume(m_getGain());
 
   return m_setupBuffer(CLK_SPECTRUM);
 }
@@ -133,7 +133,7 @@ void AyEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
   if (i >= AyApu::OSCS_NUM)
     beeper_output = center;
   else
-    apu.setOscOutput(i, center);
+    apu.SetOscOutput(i, center);
 }
 
 // Emulation
@@ -163,7 +163,7 @@ blargg_err_t AyEmu::m_startTrack(int track) {
     return "File data missing";
 
   // initial addresses
-  cpu::reset(mem.ram);
+  cpu::Reset(mem.ram);
   r.sp = get_be16(more_data);
   r.b.a = r.b.b = r.b.d = r.b.h = data[8];
   r.b.flags = r.b.c = r.b.e = r.b.l = data[9];
@@ -240,7 +240,7 @@ blargg_err_t AyEmu::m_startTrack(int track) {
 
   beeper_delta = int(apu.AMP_RANGE * 0.65);
   last_beeper = 0;
-  apu.reset();
+  apu.Reset();
   next_play = play_period;
 
   // start at spectrum speed
@@ -266,7 +266,7 @@ void AyEmu::cpu_out_misc(cpu_time_t time, unsigned addr, int data) {
 
       case 0xBEFD:
         spectrum_mode = true;
-        apu.write(time, apu_addr, data);
+        apu.Write(time, apu_addr, data);
         return;
     }
   }
@@ -280,7 +280,7 @@ void AyEmu::cpu_out_misc(cpu_time_t time, unsigned addr, int data) {
             goto enable_cpc;
 
           case 0x80:
-            apu.write(time, apu_addr, cpc_latch);
+            apu.Write(time, apu_addr, cpc_latch);
             goto enable_cpc;
         }
         break;
@@ -330,14 +330,14 @@ int ay_cpu_in(AyCpu *, unsigned addr) {
 }
 
 blargg_err_t AyEmu::m_runClocks(blip_time_t &duration, int) {
-  set_time(0);
+  SetTime(0);
   if (!(spectrum_mode | cpc_mode))
     duration /= 2;  // until mode is set, leave room for halved clock rate
 
-  while (time() < duration) {
-    cpu::run(min(duration, (blip_time_t) next_play));
+  while (Time() < duration) {
+    cpu::Run(min(duration, (blip_time_t) next_play));
 
-    if (time() >= next_play) {
+    if (Time() >= next_play) {
       next_play += play_period;
 
       if (r.iff1) {
@@ -349,19 +349,19 @@ blargg_err_t AyEmu::m_runClocks(blip_time_t &duration, int) {
         mem.ram[--r.sp] = uint8_t(r.pc >> 8);
         mem.ram[--r.sp] = uint8_t(r.pc);
         r.pc = 0x38;
-        cpu::adjust_time(12);
+        cpu::AdjustTime(12);
         if (r.im == 2) {
-          cpu::adjust_time(6);
+          cpu::AdjustTime(6);
           unsigned addr = r.i * 0x100u + 0xFF;
           r.pc = mem.ram[(addr + 1) & 0xFFFF] * 0x100u + mem.ram[addr];
         }
       }
     }
   }
-  duration = time();
+  duration = Time();
   next_play -= duration;
   check(next_play >= 0);
-  adjust_time(-duration);
+  AdjustTime(-duration);
 
   apu.endFrame(duration);
 

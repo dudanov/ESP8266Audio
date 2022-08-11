@@ -62,17 +62,17 @@ SilentBlipBuffer::SilentBlipBuffer() {
          sizeof(this->m_buf));  // in case machine takes exception for signed overflow
 }
 
-void BlipBuffer::clear(bool entire) {
+void BlipBuffer::Clear(bool entire) {
   this->m_offset = 0;
   this->m_readerAccum = 0;
   // this->m_modified = 0;
   if (this->m_buffer) {
-    long count = entire ? this->m_bufferSize : this->samplesAvailable();
+    long count = entire ? this->m_bufferSize : this->SamplesAvailable();
     memset(this->m_buffer, 0, (count + BLIP_BUFFER_EXTRA) * sizeof(buf_t_));
   }
 }
 
-BlipBuffer::blargg_err_t BlipBuffer::setSampleRate(long rate, int ms) {
+BlipBuffer::blargg_err_t BlipBuffer::SetSampleRate(long rate, int ms) {
   if (this->m_bufferSize == SILENT_BUF_SIZE) {
     assert(0);
     return "Internal (tried to resize SilentBlipBuffer)";
@@ -104,9 +104,9 @@ BlipBuffer::blargg_err_t BlipBuffer::setSampleRate(long rate, int ms) {
   if (ms)
     assert(this->m_length == ms);  // ensure length is same as that passed in
   if (this->m_clockRate)
-    this->setClockRate(this->m_clockRate);
-  this->setBassFrequency(this->m_bassFreq);
-  this->clear();
+    this->SetClockRate(this->m_clockRate);
+  this->SetBassFrequency(this->m_bassFreq);
+  this->Clear();
 
   return nullptr;  // success
 }
@@ -118,7 +118,7 @@ blip_resampled_time_t BlipBuffer::clockRateFactor(long rate) const {
   return (blip_resampled_time_t) factor;
 }
 
-void BlipBuffer::setBassFrequency(int freq) {
+void BlipBuffer::SetBassFrequency(int freq) {
   this->m_bassFreq = freq;
   int shift = 31;
   if (freq > 0) {
@@ -130,13 +130,13 @@ void BlipBuffer::setBassFrequency(int freq) {
   this->m_bassShift = shift;
 }
 
-void BlipBuffer::end_frame(blip_time_t t) {
+void BlipBuffer::EndFrame(blip_time_t t) {
   this->m_offset += t * this->m_factor;
-  assert(this->samplesAvailable() <= (long) this->m_bufferSize);  // time outside buffer length
+  assert(this->SamplesAvailable() <= (long) this->m_bufferSize);  // time outside buffer length
 }
 
 void BlipBuffer::removeSilence(long count) {
-  assert(count <= this->samplesAvailable());  // tried to remove more samples than available
+  assert(count <= this->SamplesAvailable());  // tried to remove more samples than available
   this->m_offset -= (blip_resampled_time_t) count << BLIP_BUFFER_ACCURACY;
 }
 
@@ -146,7 +146,7 @@ long BlipBuffer::countSamples(blip_time_t t) const {
   return (long) (last_sample - first_sample);
 }
 
-blip_time_t BlipBuffer::countClocks(long count) const {
+blip_time_t BlipBuffer::CountClocks(long count) const {
   if (!this->m_factor) {
     assert(0);  // sample rate and clock rates must be set first
     return 0;
@@ -158,12 +158,12 @@ blip_time_t BlipBuffer::countClocks(long count) const {
   return (blip_time_t)((time - this->m_offset + this->m_factor - 1) / this->m_factor);
 }
 
-void BlipBuffer::removeSamples(long count) {
+void BlipBuffer::RemoveSamples(long count) {
   if (!count)
     return;
   this->removeSilence(count);
   // copy remaining samples to beginning and clear old samples
-  long remain = this->samplesAvailable() + BLIP_BUFFER_EXTRA;
+  long remain = this->SamplesAvailable() + BLIP_BUFFER_EXTRA;
   memmove(this->m_buffer, this->m_buffer + count, remain * sizeof(*this->m_buffer));
   memset(this->m_buffer + remain, 0, count * sizeof(*this->m_buffer));
 }
@@ -342,8 +342,8 @@ void BlipSynthImpl::setVolumeUnit(double new_unit) {
 }
 #endif
 
-long BlipBuffer::readSamples(blip_sample_t *out, long max_samples, int stereo) {
-  long count = this->samplesAvailable();
+long BlipBuffer::ReadSamples(blip_sample_t *out, long max_samples, int stereo) {
+  long count = this->SamplesAvailable();
   if (count > max_samples)
     count = max_samples;
   if (!count)
@@ -370,7 +370,7 @@ long BlipBuffer::readSamples(blip_sample_t *out, long max_samples, int stereo) {
     }
   }
   BLIP_READER_END(reader, *this);
-  this->removeSamples(count);
+  this->RemoveSamples(count);
   return count;
 }
 

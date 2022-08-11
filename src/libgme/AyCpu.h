@@ -17,19 +17,19 @@ int ay_cpu_in(class AyCpu *, unsigned addr);
 class AyCpu {
  public:
   // Clear all registers and keep pointer to 64K memory passed in
-  void reset(void *mem_64k);
+  void Reset(void *mem_64k);
 
   // Run until specified time is reached. Returns true if
   // suspicious/unsupported instruction was encountered at any point during
   // run.
-  bool run(cpu_time_t end_time);
+  bool Run(cpu_time_t end_time);
 
   // Time of beginning of next instruction
-  cpu_time_t time() const { return state->time + state->base; }
+  cpu_time_t Time() const { return state->time + state->base; }
 
   // Alter current time. Not supported during run() call.
-  void set_time(cpu_time_t t) { state->time = t - state->base; }
-  void adjust_time(int delta) { state->time += delta; }
+  void SetTime(cpu_time_t t) { state->time = t - state->base; }
+  void AdjustTime(int delta) { state->time += delta; }
 
 #if BLARGG_BIG_ENDIAN
   struct regs_t {
@@ -84,17 +84,15 @@ class AyCpu {
   };
   state_t *state;  // points to state_ or a local copy within run()
   state_t state_;
-  void set_end_time(cpu_time_t t);
+  void set_end_time(cpu_time_t t) {
+    cpu_time_t delta = state->base - t;
+    state->base = t;
+    state->time += delta;
+  }
 
  public:
   registers_t r;
 };
-
-inline void AyCpu::set_end_time(cpu_time_t t) {
-  cpu_time_t delta = state->base - t;
-  state->base = t;
-  state->time += delta;
-}
 
 }  // namespace ay
 }  // namespace emu
