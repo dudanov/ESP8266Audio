@@ -279,15 +279,9 @@ class SilentBlipBuffer : public BlipBuffer {
  public:
   SilentBlipBuffer();
   // The following cannot be used (an assertion will fail if attempted):
-<<<<<<< HEAD
   blargg_err_t SetSampleRate(long samples_per_sec, int msec_length);
   blip_time_t CountClocks(long count) const;
   void MixSamples(const blip_sample_t *buf, long count);
-=======
-  blargg_err_t setSampleRate(long samples_per_sec, int msec_length);
-  blip_time_t CountClocks(long count) const;
-  void mix_samples(const blip_sample_t *buf, long count);
->>>>>>> 51d4be117afc63fb8aa306e2651975a202a3a37c
 
  private:
   buf_t_ m_buf[BLIP_BUFFER_EXTRA + 1];
