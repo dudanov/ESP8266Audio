@@ -261,7 +261,7 @@ void NesDmc::recalc_irq() {
           ((this->lengthCounter - 1) * 8 + this->bits_remain - 1) * nes_time_t(this->period) + 1;
   if (irq != this->m_nextIrq) {
     this->m_nextIrq = irq;
-    this->m_apu->m_irqChanged();
+    this->m_apu->mIrqChanged();
   }
 }
 
@@ -309,7 +309,7 @@ void NesDmc::writeRegister(int addr, int data) {
       72, 73, 73, 74, 74, 75, 75, 75, 76, 76, 77, 77, 78, 78, 79, 79, 80, 80, 81, 81, 82, 82, 82, 83,
   };
   if (addr == 0) {
-    this->period = DMC_PERIOD_TABLE[this->m_apu->isPAL()][data & 15];
+    this->period = DMC_PERIOD_TABLE[this->m_apu->IsPAL()][data & 15];
     this->irq_enabled = (data & 0xC0) == 0x80;  // enabled only if loop disabled
     this->m_irqFlag &= this->irq_enabled;
     this->recalc_irq();
@@ -343,7 +343,7 @@ void NesDmc::fill_buffer() {
         this->m_apu->m_oscEnables &= ~0x10;
         this->m_irqFlag = this->irq_enabled;
         this->m_nextIrq = NesApu::NO_IRQ;
-        this->m_apu->m_irqChanged();
+        this->m_apu->mIrqChanged();
       }
     }
   }
@@ -404,7 +404,7 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
       {4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068},  // NTSC
       {4, 8, 14, 30, 60, 88, 118, 148, 188, 236, 354, 472, 708, 944, 1890, 3778}    // PAL
   };
-  uint16_t period = NOISE_PERIOD_TABLE[this->m_apu->isPAL()][this->regs[2] & 15];
+  uint16_t period = NOISE_PERIOD_TABLE[this->m_apu->IsPAL()][this->regs[2] & 15];
 
   if (this->m_output == nullptr) {
     // TODO: clean up

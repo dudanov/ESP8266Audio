@@ -26,7 +26,7 @@ uint8_t NsfEmu::m_cpuRead(nes_addr_t addr) {
     goto exit;
 
   if (addr == NesApu::STATUS_REG)
-    return m_apu.readStatus(cpu::time());
+    return m_apu.ReadStatus(cpu::time());
 
 #if !NSF_EMU_APU_ONLY
   if (addr == NesNamcoApu::data_reg_addr && namco)
@@ -60,7 +60,7 @@ void NsfEmu::m_cpuWrite(nes_addr_t addr, uint8_t data) {
 
   if (unsigned(addr - NesApu::START_ADDR) <= NesApu::END_ADDR - NesApu::START_ADDR) {
     GME_APU_HOOK(this, addr - NesApu::START_ADDR, data);
-    m_apu.writeRegister(cpu::time(), addr, data);
+    m_apu.WriteRegister(cpu::time(), addr, data);
     return;
   }
 

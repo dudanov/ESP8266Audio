@@ -21,14 +21,14 @@ struct apu_state_t;
 class NesApu {
  public:
   // Set buffer to generate all sound into, or disable sound if NULL
-  void setOutput(BlipBuffer *);
+  void SetOutput(BlipBuffer *);
 
   // Set memory reader callback used by DMC oscillator to fetch samples.
   // When callback is invoked, 'user_data' is passed unchanged as the
   // first parameter.
-  void setDmcReader(DmcReaderFn fn, void *data) {
-    m_dmc.prg_reader_data = data;
-    m_dmc.prg_reader = fn;
+  void SetDmcReader(DmcReaderFn fn, void *data) {
+    mDmc.prg_reader_data = data;
+    mDmc.prg_reader = fn;
   }
 
   // All time values are the number of CPU clock cycles relative to the
@@ -38,16 +38,16 @@ class NesApu {
   // Write to register (0x4000-0x4017, except 0x4014 and 0x4016)
   enum { START_ADDR = 0x4000 };
   enum { END_ADDR = 0x4017 };
-  void writeRegister(nes_time_t, nes_addr_t, uint8_t data);
+  void WriteRegister(nes_time_t, nes_addr_t, uint8_t data);
 
   // Read from status register at 0x4015
   enum { STATUS_REG = 0x4015 };
-  uint8_t readStatus(nes_time_t);
+  uint8_t ReadStatus(nes_time_t);
 
   // Run all oscillators up to specified time, end current time frame, then
   // start a new time frame at time 0. Time frames have no effect on emulation
   // and each can be whatever length is convenient.
-  void endFrame(nes_time_t);
+  void EndFrame(nes_time_t);
 
   // Additional optional features (can be ignored without any problem)
 
@@ -55,38 +55,38 @@ class NesApu {
   // Use PAL timing if pal_timing is true, otherwise use NTSC timing.
   // Set the DMC oscillator's initial DAC value to initial_dmc_dac without
   // any audible click.
-  void reset(bool pal = false, int initial_dmc_dac = 0);
+  void Reset(bool pal = false, int initial_dmc_dac = 0);
 
   // Adjust frame period
-  void setTempo(double);
+  void SetTempo(double);
 
   // Save/load exact emulation state
   // void saveState(apu_state_t *out) const;
   // void loadState(apu_state_t const &);
 
   // Set overall volume (default is 1.0)
-  void volume(double);
+  void SetVolume(double);
 
   // Set treble equalization (see notes.txt)
-  void setTrebleEq(const BlipEq &);
+  void SetTrebleEq(const BlipEq &);
 
   // In PAL mode
-  bool isPAL() const { return this->m_palMode; }
+  bool IsPAL() const { return this->m_palMode; }
 
   // Set sound output of specific oscillator to buffer. If buffer is NULL,
   // the specified oscillator is muted and emulation accuracy is reduced.
   // The oscillators are indexed as follows: 0) Square 1, 1) Square 2,
   // 2) Triangle, 3) Noise, 4) DMC.
   enum { OSCS_NUM = 5 };
-  void setOscOutput(int osc, BlipBuffer *buf) {
+  void SetOscOutput(int osc, BlipBuffer *buf) {
     assert((unsigned) osc < OSCS_NUM);
-    m_oscs[osc]->setOutput(buf);
+    mOscs[osc]->setOutput(buf);
   }
 
   // Set IRQ time callback that is invoked when the time of earliest IRQ
   // may have changed, or NULL to disable. When callback is invoked,
   // 'user_data' is passed unchanged as the first parameter.
-  void setIrqNotifier(IrqNotifyFn fn, void *data) {
+  void SetIrqNotifier(IrqNotifyFn fn, void *data) {
     m_irqNotifier = fn;
     m_irqData = data;
   }
@@ -95,48 +95,48 @@ class NesApu {
   // IRQ will occur, returns NO_IRQ.
   enum { NO_IRQ = INT_MAX / 2 + 1 };
   enum { IRQ_WAITING = 0 };
-  nes_time_t earliestIrq(nes_time_t) const { return m_earliestIrq; }
+  nes_time_t EarliestIrq(nes_time_t) const { return m_earliestIrq; }
 
-  // Count number of DMC reads that would occur if 'runUntil( t )' were
+  // Count number of DMC reads that would occur if 'RunUntil( t )' were
   // executed. If last_read is not NULL, set *last_read to the earliest time
-  // that 'countDmcReads( time )' would result in the same result.
-  int countDmcReads(nes_time_t time, nes_time_t *last_read = nullptr) const {
-    return m_dmc.count_reads(time, last_read);
+  // that 'CountDmcReads( time )' would result in the same result.
+  int CountDmcReads(nes_time_t time, nes_time_t *last_read = nullptr) const {
+    return mDmc.count_reads(time, last_read);
   }
 
   // Time when next DMC memory read will occur
-  nes_time_t next_dmc_read_time() const { return m_dmc.next_read_time(); }
+  nes_time_t NextDmcReadTime() const { return mDmc.next_read_time(); }
 
   // Run DMC until specified time, so that any DMC memory reads can be
   // accounted for (i.e. inserting CPU wait states).
-  void runUntil(nes_time_t);
+  void RunUntil(nes_time_t);
 
  public:
   NesApu();
  private:
-  void m_enableNonlinear(double volume);
-  static double m_nonlinearTndGain() { return 0.75; }
+  void mEnableNonlinear(double volume);
+  static double mNonlinearTndGain() { return 0.75; }
 
  private:
   friend struct NesDmc;
-  void m_irqChanged();
-  void m_stateRestored();
-  void m_runUntil(nes_time_t);
+  void mIrqChanged();
+  void mStateRestored();
+  void mRunUntil(nes_time_t);
 
   // noncopyable
   NesApu(const NesApu &);
   NesApu &operator=(const NesApu &);
 
-  NesSquare::Synth m_squareSynth;  // shared by squares
-  NesSquare m_square1{&m_squareSynth};
-  NesSquare m_square2{&m_squareSynth};
-  NesTriangle m_triangle;
-  NesNoise m_noise;
-  NesDmc m_dmc;
-  std::array<NesOsc *, OSCS_NUM> m_oscs{{&m_square1, &m_square2, &m_triangle, &m_noise, &m_dmc}};
+  NesSquare::Synth mSquareSynth;  // shared by squares
+  NesSquare mSquare1{&mSquareSynth};
+  NesSquare mSquare2{&mSquareSynth};
+  NesTriangle mTriangle;
+  NesNoise mNoise;
+  NesDmc mDmc;
+  std::array<NesOsc *, OSCS_NUM> mOscs{{&mSquare1, &mSquare2, &mTriangle, &mNoise, &mDmc}};
 
-  double m_tempo;
-  nes_time_t m_lastTime;  // has been run until this time in current frame
+  double mTempo;
+  nes_time_t mLastTime;  // has been run until this time in current frame
   nes_time_t m_lastDmcTime;
   nes_time_t m_earliestIrq;
   nes_time_t m_nextIrq;
