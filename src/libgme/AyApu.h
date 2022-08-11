@@ -71,14 +71,15 @@ class AyApu {
   };
 
   struct Envelope {
+    Envelope();
     blip_time_t delay;
-    uint8_t const *wave;
+    const uint8_t *wave;
     int pos;
     uint8_t modes[8][48];  // values already passed through volume table
   };
 
-  static const uint8_t AMP_TABLE[16];
-  static const uint8_t MODES[8];
+  //static const uint8_t AMP_TABLE[16];
+  //static const uint8_t MODES[8];
   static const uint8_t REG_COUNT = 16;
 
   uint8_t m_regs[REG_COUNT];
