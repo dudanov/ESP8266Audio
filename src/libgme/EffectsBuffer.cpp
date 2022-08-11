@@ -73,18 +73,14 @@ EffectsBuffer::EffectsBuffer(int numChannels, bool centerOnly)
 EffectsBuffer::~EffectsBuffer() {}
 
 blargg_err_t EffectsBuffer::setSampleRate(long rate, int msec) {
-  try {
-    for (int i = 0; i < m_maxChannels; i++) {
-      if (!m_echoBuf[i].size()) {
-        m_echoBuf[i].resize(ECHO_SIZE);
-      }
-
-      if (!m_reverbBuf[i].size()) {
-        m_reverbBuf[i].resize(REVERB_SIZE);
-      }
+  for (int i = 0; i < m_maxChannels; i++) {
+    if (!m_echoBuf[i].size()) {
+      m_echoBuf[i].resize(ECHO_SIZE);
     }
-  } catch (std::bad_alloc &ba) {
-    return "Out of memory";
+
+    if (!m_reverbBuf[i].size()) {
+      m_reverbBuf[i].resize(REVERB_SIZE);
+    }
   }
 
   for (auto &buf : this->m_bufs)
