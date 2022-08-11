@@ -38,7 +38,7 @@ void SccApu::run_until(blip_time_t end_time) {
     int volume = 0;
     if (m_regs[0x8F] & (1 << index)) {
       blip_time_t inaudible_period =
-          (blargg_ulong)(output->getClockRate() + INAUDIBLE_FREQ * 32) / (INAUDIBLE_FREQ * 16);
+          (blargg_ulong)(output->GetClockRate() + INAUDIBLE_FREQ * 32) / (INAUDIBLE_FREQ * 16);
       if (period > inaudible_period)
         volume = (m_regs[0x8A + index] & 0x0F) * (AMP_RANGE / 256 / 15);
     }
