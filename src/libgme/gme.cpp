@@ -275,8 +275,6 @@ int gme_track_count(MusicEmu const *me) { return me->getTrackCount(); }
 
 struct gme_info_t_ : gme_info_t {
   track_info_t info;
-
-  BLARGG_DISABLE_NOTHROW
 };
 
 gme_err_t gme_track_info(MusicEmu const *me, gme_info_t **out, int track) {

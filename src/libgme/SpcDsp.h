@@ -119,8 +119,6 @@ struct SpcDsp {
   sample_t const *out_pos() const { return m.out; }
 
  public:
-  BLARGG_DISABLE_NOTHROW
-
   enum { ECHO_HIST_SIZE = 8 };
 
   enum env_mode_t { ENV_RELEASE, ENV_ATTACK, ENV_DECAY, ENV_SUSTAIN };

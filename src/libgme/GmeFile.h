@@ -106,7 +106,6 @@ struct GmeFile {
  public:
   GmeFile();
   virtual ~GmeFile();
-  BLARGG_DISABLE_NOTHROW
 
  protected:
   // Services

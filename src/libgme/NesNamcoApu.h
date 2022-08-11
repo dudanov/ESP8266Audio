@@ -44,7 +44,6 @@ class NesNamcoApu {
 
  public:
   NesNamcoApu();
-  BLARGG_DISABLE_NOTHROW
  private:
   NesNamcoApu(const NesNamcoApu &) = delete;
   NesNamcoApu &operator=(const NesNamcoApu &) = delete;

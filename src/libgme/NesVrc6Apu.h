@@ -35,7 +35,6 @@ class NesVrc6Apu {
 
  public:
   NesVrc6Apu();
-  BLARGG_DISABLE_NOTHROW
  private:
   // noncopyable
   NesVrc6Apu(const NesVrc6Apu &);

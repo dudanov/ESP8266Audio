@@ -36,7 +36,6 @@ struct SpcFilter {
 
  public:
   SpcFilter();
-  BLARGG_DISABLE_NOTHROW
  private:
   enum { GAIN_BITS = 8 };
   int m_gain;

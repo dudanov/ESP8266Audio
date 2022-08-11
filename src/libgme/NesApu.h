@@ -113,7 +113,6 @@ class NesApu {
 
  public:
   NesApu();
-  BLARGG_DISABLE_NOTHROW
  private:
   void m_enableNonlinear(double volume);
   static double m_nonlinearTndGain() { return 0.75; }

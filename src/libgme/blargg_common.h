@@ -63,18 +63,9 @@ template<class T> class blargg_vector {
   }
 };
 
-// Use to force disable exceptions for allocations of a class
-#include <new>
-#ifndef BLARGG_DISABLE_NOTHROW
-#define BLARGG_DISABLE_NOTHROW \
-  void *operator new(size_t s) noexcept { return malloc(s); } \
-  void *operator new(size_t s, const std::nothrow_t &) noexcept { return malloc(s); } \
-  void operator delete(void *p) noexcept { free(p); }
-#endif
-
 // Use to force disable exceptions for a specific allocation no matter what
 // class
-#define BLARGG_NEW new (std::nothrow)
+#define BLARGG_NEW new
 
 // BLARGG_4CHAR('a','b','c','d') = 'abcd' (four character integer constant)
 #define BLARGG_4CHAR(a, b, c, d) ((a & 0xFF) * 0x1000000L + (b & 0xFF) * 0x10000L + (c & 0xFF) * 0x100L + (d & 0xFF))

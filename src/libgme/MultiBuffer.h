@@ -53,8 +53,6 @@ class MultiBuffer {
   virtual long readSamples(blip_sample_t *, long) = 0;
   virtual long samplesAvailable() const = 0;
 
- public:
-  BLARGG_DISABLE_NOTHROW
  protected:
   void m_channelChanged() { this->m_changedChannelsNumber++; }
 

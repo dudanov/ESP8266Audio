@@ -44,7 +44,6 @@ class NesFme7Apu : private fme7_apu_state_t {
 
  public:
   NesFme7Apu();
-  BLARGG_DISABLE_NOTHROW
  private:
   // noncopyable
   NesFme7Apu(const NesFme7Apu &);

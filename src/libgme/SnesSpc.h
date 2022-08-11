@@ -132,8 +132,6 @@ struct SnesSpc {
   void run_until(time_t t) { run_until_(t); }
 
  public:
-  BLARGG_DISABLE_NOTHROW
-
   // Time relative to m_spc_time. Speeds up code a bit by eliminating need to
   // constantly add m_spc_time to time from CPU. CPU uses time that ends at
   // 0 to eliminate reloading end time every instruction. It pays off.
