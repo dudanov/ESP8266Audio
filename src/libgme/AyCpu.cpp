@@ -73,7 +73,7 @@ AyCpu::AyCpu() {
   szpc[0x100] |= Z40;
 }
 
-void AyCpu::reset(void *m) {
+void AyCpu::Reset(void *m) {
   mem = (uint8_t *) m;
 
   check(state == &state_);
@@ -139,7 +139,7 @@ static uint8_t const ed_dd_timing[0x100] = {
     0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-bool AyCpu::run(cpu_time_t end_time) {
+bool AyCpu::Run(cpu_time_t end_time) {
   set_end_time(end_time);
   state_t s = this->state_;
   this->state = &s;

@@ -16,25 +16,25 @@ class AyApu {
   static const uint8_t OSCS_NUM = 3;
   static const uint8_t AMP_RANGE = 255;
   // Set buffer to generate all sound into, or disable sound if NULL
-  void setOutput(BlipBuffer *buf) {
-    this->setOscOutput(0, buf);
-    this->setOscOutput(1, buf);
-    this->setOscOutput(2, buf);
+  void SetOutput(BlipBuffer *buf) {
+    this->SetOscOutput(0, buf);
+    this->SetOscOutput(1, buf);
+    this->SetOscOutput(2, buf);
   }
   // Reset sound chip
-  void reset();
+  void Reset();
 
   // Write to register at specified time
-  void write(blip_time_t time, int addr, int data) {
-    this->m_runUntil(time);
-    this->m_writeData(addr, data);
+  void Write(blip_time_t time, int addr, int data) {
+    this->mRunUntil(time);
+    this->mWriteData(addr, data);
   }
   // Run sound to specified time, end current time frame, then start a new
   // time frame at time 0. Time frames have no effect on emulation and each
   // can be whatever length is convenient.
   void endFrame(blip_time_t time) {
     if (time > this->m_lastTime)
-      this->m_runUntil(time);
+      this->mRunUntil(time);
 
     assert(m_lastTime >= time);
     this->m_lastTime -= time;
@@ -43,19 +43,19 @@ class AyApu {
 
   // Set sound output of specific oscillator to buffer, where index is
   // 0, 1, or 2. If buffer is NULL, the specified oscillator is muted.
-  void setOscOutput(uint8_t idx, BlipBuffer *buf) {
+  void SetOscOutput(uint8_t idx, BlipBuffer *buf) {
     assert(idx < OSCS_NUM);
     this->m_square[idx].output = buf;
   }
   // Set overall volume (default is 1.0)
-  void setVolume(double v) { this->m_synth.setVolume(0.7 / OSCS_NUM / AMP_RANGE * v); }
+  void SetVolume(double v) { this->m_synth.setVolume(0.7 / OSCS_NUM / AMP_RANGE * v); }
 
   // Set treble equalization (see documentation)
   void setTrebleEq(BlipEq const &eq) { this->m_synth.setTrebleEq(eq); }
 
  private:
-  void m_runUntil(blip_time_t);
-  void m_writeData(int addr, int data);
+  void mRunUntil(blip_time_t);
+  void mWriteData(int addr, int data);
 
   struct Square {
     BlipBuffer *output;

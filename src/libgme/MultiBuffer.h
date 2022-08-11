@@ -84,13 +84,13 @@ class MonoBuffer : public MultiBuffer {
   }
   ~MonoBuffer() {}
   blargg_err_t setSampleRate(long rate, int msec = BLIP_DEFAULT_LENGTH) override;
-  void setClockRate(long rate) override { this->m_buf.setClockRate(rate); }
-  void setBassFreq(int freq) override { this->m_buf.setBassFrequency(freq); }
-  void clear() override { this->m_buf.clear(); }
-  long samplesAvailable() const override { return this->m_buf.samplesAvailable(); }
-  long readSamples(blip_sample_t *p, long s) override { return this->m_buf.readSamples(p, s); }
+  void setClockRate(long rate) override { this->m_buf.SetClockRate(rate); }
+  void setBassFreq(int freq) override { this->m_buf.SetBassFrequency(freq); }
+  void clear() override { this->m_buf.Clear(); }
+  long samplesAvailable() const override { return this->m_buf.SamplesAvailable(); }
+  long readSamples(blip_sample_t *p, long s) override { return this->m_buf.ReadSamples(p, s); }
   const Channel &getChannelBuffers(int, int) const override { return this->m_chan; }
-  void endFrame(blip_time_t t) override { this->m_buf.end_frame(t); }
+  void endFrame(blip_time_t t) override { this->m_buf.EndFrame(t); }
 };
 
 // Uses three buffers (one for center) and outputs stereo sample pairs.
@@ -114,7 +114,7 @@ class StereoBuffer : public MultiBuffer {
   void clear() override;
   const Channel &getChannelBuffers(int, int) const override { return this->m_chan; }
   void endFrame(blip_time_t) override;
-  long samplesAvailable() const override { return this->m_bufs[0].samplesAvailable() * 2; }
+  long samplesAvailable() const override { return this->m_bufs[0].SamplesAvailable() * 2; }
   long readSamples(blip_sample_t *, long) override;
 
  private:

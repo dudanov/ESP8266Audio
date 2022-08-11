@@ -100,7 +100,7 @@ void KssEmu::update_gain() {
   double g = m_getGain() * 1.4;
   if (scc_accessed)
     g *= 1.5;
-  ay.setVolume(g);
+  ay.SetVolume(g);
   scc.setVolume(g);
   if (sn)
     sn->setVolume(g);
@@ -157,7 +157,7 @@ void KssEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffe
   if (i2 >= 0)
     scc.osc_output(i2, center);
   else
-    ay.setOscOutput(i, center);
+    ay.SetOscOutput(i, center);
   if (sn && i < sn->OSCS_NUM)
     sn->setOscOutput(i, center, left, right);
 }
@@ -215,7 +215,7 @@ blargg_err_t KssEmu::m_startTrack(int track) {
   cpu::reset(unmapped_write, unmapped_read);
   cpu::map_mem(0, mem_size, ram, ram);
 
-  ay.reset();
+  ay.Reset();
   scc.reset();
   if (sn)
     sn->reset();
@@ -289,7 +289,7 @@ void kss_cpu_out(KssCpu *cpu, cpu_time_t time, unsigned addr, int data) {
 
     case 0xA1:
       GME_APU_HOOK(&emu, emu.ay_latch, data);
-      emu.ay.write(time, emu.ay_latch, data);
+      emu.ay.Write(time, emu.ay_latch, data);
       return;
 
     case 0x06:

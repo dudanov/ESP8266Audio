@@ -84,22 +84,22 @@ blargg_err_t EffectsBuffer::setSampleRate(long rate, int msec) {
   }
 
   for (auto &buf : this->m_bufs)
-    RETURN_ERR(buf.setSampleRate(rate, msec));
+    RETURN_ERR(buf.SetSampleRate(rate, msec));
 
   config(m_config);
   clear();
 
-  return MultiBuffer::setSampleRate(m_bufs[0].getSampleRate(), m_bufs[0].getLength());
+  return MultiBuffer::setSampleRate(m_bufs[0].GetSampleRate(), m_bufs[0].GetLength());
 }
 
 void EffectsBuffer::setClockRate(long rate) {
   for (auto &buf : this->m_bufs)
-    buf.setClockRate(rate);
+    buf.SetClockRate(rate);
 }
 
 void EffectsBuffer::setBassFreq(int freq) {
   for (auto &buf : this->m_bufs)
-    buf.setBassFrequency(freq);
+    buf.SetBassFrequency(freq);
 }
 
 void EffectsBuffer::clear() {
@@ -115,7 +115,7 @@ void EffectsBuffer::clear() {
   }
 
   for (auto &buf : this->m_bufs)
-    buf.clear();
+    buf.Clear();
 }
 
 inline int pin_range(int n, int max, int min = 0) {
@@ -223,14 +223,14 @@ void EffectsBuffer::endFrame(blip_time_t clock_count) {
     for (int i = 0; i < buf_count_per_voice; i++)  // foreach buffer of that voice
     {
       bufs_used |= m_bufs[v * buf_count_per_voice + i].clearModified() << i;
-      m_bufs[v * buf_count_per_voice + i].end_frame(clock_count);
+      m_bufs[v * buf_count_per_voice + i].EndFrame(clock_count);
 
       if ((bufs_used & stereo_mask) && m_bufNum == m_maxChannels * MAX_BUFS_NUM)
-        m_stereoRemain = max(m_stereoRemain, m_bufs[v * buf_count_per_voice + i].samplesAvailable() +
-                                                 m_bufs[v * buf_count_per_voice + i].getOutputLatency());
+        m_stereoRemain = max(m_stereoRemain, m_bufs[v * buf_count_per_voice + i].SamplesAvailable() +
+                                                 m_bufs[v * buf_count_per_voice + i].GetOutputLatency());
       if (m_effectsEnabled || m_config.effects_enabled)
-        m_effectRemain = max(m_effectRemain, m_bufs[v * buf_count_per_voice + i].samplesAvailable() +
-                                                 m_bufs[v * buf_count_per_voice + i].getOutputLatency());
+        m_effectRemain = max(m_effectRemain, m_bufs[v * buf_count_per_voice + i].SamplesAvailable() +
+                                                 m_bufs[v * buf_count_per_voice + i].GetOutputLatency());
     }
     bufs_used = 0;
   }
@@ -238,7 +238,7 @@ void EffectsBuffer::endFrame(blip_time_t clock_count) {
   m_effectsEnabled = m_config.effects_enabled;
 }
 
-long EffectsBuffer::samplesAvailable() const { return m_bufs[0].samplesAvailable() * 2; }
+long EffectsBuffer::samplesAvailable() const { return m_bufs[0].SamplesAvailable() * 2; }
 
 long EffectsBuffer::readSamples(blip_sample_t *out, long total_samples) {
   const int n_channels = m_maxChannels * 2;
@@ -246,7 +246,7 @@ long EffectsBuffer::readSamples(blip_sample_t *out, long total_samples) {
 
   require(total_samples % n_channels == 0);  // as many items needed to fill at least one frame
 
-  long remain = m_bufs[0].samplesAvailable();
+  long remain = m_bufs[0].SamplesAvailable();
   total_samples = remain = min(remain, total_samples / n_channels);
 
   while (remain) {
@@ -291,7 +291,7 @@ long EffectsBuffer::readSamples(blip_sample_t *out, long total_samples) {
       for (int i = 0; i < buf_count_per_voice; i++)  // foreach buffer of that voice
       {
         if (i < active_bufs)
-          m_bufs[v * buf_count_per_voice + i].removeSamples(count);
+          m_bufs[v * buf_count_per_voice + i].RemoveSamples(count);
         else  // keep time synchronized
           m_bufs[v * buf_count_per_voice + i].removeSilence(count);
       }

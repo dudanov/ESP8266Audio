@@ -155,8 +155,8 @@ blargg_err_t GymEmu::m_setSampleRate(long sample_rate) {
   double factor = DualResampler::setup(OVERSAMPLE_FACTOR, 0.990, FM_GAIN * m_getGain());
   fm_sample_rate = sample_rate * factor;
 
-  RETURN_ERR(blip_buf.setSampleRate(sample_rate, int(1000 / 60.0 / MIN_TEMPO)));
-  blip_buf.setClockRate(CLOCK_RATE);
+  RETURN_ERR(blip_buf.SetSampleRate(sample_rate, int(1000 / 60.0 / MIN_TEMPO)));
+  blip_buf.SetClockRate(CLOCK_RATE);
 
   RETURN_ERR(fm.set_rate(fm_sample_rate, BASE_CLOCK / 7.0));
   RETURN_ERR(DualResampler::reset(long(1.0 / 60 / MIN_TEMPO * sample_rate)));
@@ -170,7 +170,7 @@ void GymEmu::m_setTempo(double t) {
     return;
   }
 
-  if (blip_buf.getSampleRate()) {
+  if (blip_buf.GetSampleRate()) {
     clocks_per_frame = long(CLOCK_RATE / 60 / m_getTempo());
     DualResampler::resize(long(getSampleRate() / (60.0 * m_getTempo())));
   }
@@ -215,7 +215,7 @@ blargg_err_t GymEmu::m_startTrack(int track) {
 
   fm.reset();
   apu.reset();
-  blip_buf.clear();
+  blip_buf.Clear();
   DualResampler::clear();
   return 0;
 }

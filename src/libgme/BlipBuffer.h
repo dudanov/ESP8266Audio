@@ -65,58 +65,58 @@ class BlipBuffer {
   // defaults to 1/4 second), then clear buffer. Returns NULL on success,
   // otherwise if there isn't enough memory, returns error without affecting
   // current buffer setup.
-  blargg_err_t setSampleRate(long samples_per_sec, int msec_length = 1000 / 4);
+  blargg_err_t SetSampleRate(long samples_per_sec, int msec_length = 1000 / 4);
 
   // Set number of source time units per second
-  void setClockRate(long cps) { this->m_factor = this->clockRateFactor(this->m_clockRate = cps); }
+  void SetClockRate(long cps) { this->m_factor = this->clockRateFactor(this->m_clockRate = cps); }
 
   // End current time frame of specified duration and make its samples
   // available (along with any still-unread samples) for reading with
-  // readSamples(). Begins a new time frame at the end of the current frame.
-  void end_frame(blip_time_t time);
+  // ReadSamples(). Begins a new time frame at the end of the current frame.
+  void EndFrame(blip_time_t time);
 
   // Read at most 'max_samples' out of buffer into 'dest', removing them from
   // from the buffer. Returns number of samples actually read and removed. If
   // stereo is true, increments 'dest' one extra time after writing each
   // sample, to allow easy interleving of two channels into a stereo output
   // buffer.
-  long readSamples(blip_sample_t *dest, long max_samples, int stereo = 0);
+  long ReadSamples(blip_sample_t *dest, long max_samples, int stereo = 0);
 
   // Additional optional features
 
   // Current output sample rate
-  long getSampleRate() const { return this->m_sampleRate; }
+  long GetSampleRate() const { return this->m_sampleRate; }
 
   // Length of buffer, in milliseconds
-  int getLength() const { return this->m_length; }
+  int GetLength() const { return this->m_length; }
 
   // Number of source time units per second
-  long getClockRate() const { return this->m_clockRate; }
+  long GetClockRate() const { return this->m_clockRate; }
 
   // Set frequency high-pass filter frequency, where higher values reduce bass
   // more
-  void setBassFrequency(int frequency);
+  void SetBassFrequency(int frequency);
 
   // Number of samples delay from synthesis to samples read out
-  int getOutputLatency() const { return BLIP_WIDEST_IMPULSE / 2; }
+  int GetOutputLatency() const { return BLIP_WIDEST_IMPULSE / 2; }
 
   // Remove all available samples and clear buffer to silence. If
   // 'entire_buffer' is false, just clears out any samples waiting rather than
   // the entire buffer.
-  void clear(bool entire_buffer = true);
+  void Clear(bool entire_buffer = true);
 
-  // Number of samples available for reading with readSamples()
-  long samplesAvailable() const { return (long) (this->m_offset >> BLIP_BUFFER_ACCURACY); }
+  // Number of samples available for reading with ReadSamples()
+  long SamplesAvailable() const { return (long) (this->m_offset >> BLIP_BUFFER_ACCURACY); }
 
   // Remove 'count' samples from those waiting to be read
-  void removeSamples(long count);
+  void RemoveSamples(long count);
 
   // Experimental features
 
   // Count number of clocks needed until 'count' samples will be available.
   // If buffer can't even hold 'count' samples, returns number of clocks until
   // buffer becomes full.
-  blip_time_t countClocks(long count) const;
+  blip_time_t CountClocks(long count) const;
 
   // Number of raw samples that can be mixed within frame of specified
   // duration.
@@ -279,9 +279,9 @@ class SilentBlipBuffer : public BlipBuffer {
  public:
   SilentBlipBuffer();
   // The following cannot be used (an assertion will fail if attempted):
-  blargg_err_t setSampleRate(long samples_per_sec, int msec_length);
-  blip_time_t countClocks(long count) const;
-  void mix_samples(const blip_sample_t *buf, long count);
+  blargg_err_t SetSampleRate(long samples_per_sec, int msec_length);
+  blip_time_t CountClocks(long count) const;
+  void MixSamples(const blip_sample_t *buf, long count);
 
  private:
   buf_t_ m_buf[BLIP_BUFFER_EXTRA + 1];
@@ -311,7 +311,7 @@ const int BLIP_READER_DEFAULT_BASS = 9;
 #define BLIP_READER_NEXT(name, bass) (void) (name##ReaderAccum += *name##ReaderBuf++ - (name##ReaderAccum >> (bass)))
 
 // End reading samples from buffer. The number of samples read must now be
-// removed using BlipBuffer::removeSamples().
+// removed using BlipBuffer::RemoveSamples().
 #define BLIP_READER_END(name, blip_buffer) (void) ((blip_buffer).m_readerAccum = name##ReaderAccum)
 
 // Compatibility with older version
