@@ -14,6 +14,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #include "NesOscs.h"
 #include "NesApu.h"
 #include "blargg_source.h"
+#include <pgmspace.h>
 
 namespace gme {
 namespace emu {
