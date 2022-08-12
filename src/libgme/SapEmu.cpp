@@ -179,7 +179,7 @@ static void copy_sap_fields(SapEmu::info_t const &in, track_info_t *out) {
   GmeFile::copyField(out->copyright, in.copyright);
 }
 
-blargg_err_t SapEmu::m_getTrackInfo(track_info_t *out, int) const {
+blargg_err_t SapEmu::mGetTrackInfo(track_info_t *out, int) const {
   copy_sap_fields(info, out);
   return 0;
 }
@@ -190,13 +190,13 @@ struct SapFile : GmeInfo {
   SapFile() { m_setType(gme_sap_type); }
   static MusicEmu *createSapFile() { return BLARGG_NEW SapFile; }
 
-  blargg_err_t m_loadMem(uint8_t const *begin, long size) {
+  blargg_err_t mLoadMem(uint8_t const *begin, long size) {
     RETURN_ERR(parse_info(begin, size, &info));
     m_setTrackNum(info.track_count);
     return 0;
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
     copy_sap_fields(info, out);
     return 0;
   }
@@ -204,7 +204,7 @@ struct SapFile : GmeInfo {
 
 // Setup
 
-blargg_err_t SapEmu::m_loadMem(uint8_t const *in, long size) {
+blargg_err_t SapEmu::mLoadMem(uint8_t const *in, long size) {
   file_end = in + size;
 
   info.warning = 0;

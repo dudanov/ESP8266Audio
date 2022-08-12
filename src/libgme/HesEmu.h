@@ -41,16 +41,15 @@ class HesEmu : private HesCpu, public ClassicEmu {
   ~HesEmu();
 
  protected:
-  blargg_err_t m_getTrackInfo(track_info_t *, int track) const;
-  blargg_err_t m_load(DataReader &);
-  blargg_err_t m_startTrack(int);
-  blargg_err_t m_runClocks(blip_time_t &, int);
-  void m_setTempo(double);
-  void m_setChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *);
-  void m_updateEq(BlipEq const &);
-  void m_unload();
+  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t mLoad(DataReader &) override;
+  blargg_err_t m_startTrack(int) override;
+  blargg_err_t m_runClocks(blip_time_t &, int) override;
+  void m_setTempo(double) override;
+  void m_setChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
+  void m_updateEq(BlipEq const &) override;
+  void mUnload() override;
 
- public:
  private:
   friend class HesCpu;
   uint8_t *write_pages[page_count + 1];  // 0 if unmapped or I/O space

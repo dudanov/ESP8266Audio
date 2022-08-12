@@ -261,13 +261,13 @@ NsfeEmu::NsfeEmu() {
 
 NsfeEmu::~NsfeEmu() {}
 
-void NsfeEmu::m_unload() {
+void NsfeEmu::mUnload() {
   if (!loading)
     info.unload();  // TODO: extremely hacky!
-  NsfEmu::m_unload();
+  NsfEmu::mUnload();
 }
 
-blargg_err_t NsfeEmu::m_getTrackInfo(track_info_t *out, int track) const { return info.track_info_(out, track); }
+blargg_err_t NsfeEmu::mGetTrackInfo(track_info_t *out, int track) const { return info.track_info_(out, track); }
 
 struct NsfeFile : GmeInfo {
   NsfeInfo info;
@@ -275,19 +275,19 @@ struct NsfeFile : GmeInfo {
   NsfeFile() { m_setType(gme_nsfe_type); }
   static MusicEmu *createNsfeFile() { return BLARGG_NEW NsfeFile; }
 
-  blargg_err_t m_load(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) {
     RETURN_ERR(info.load(in, 0));
     info.disable_playlist(false);
     m_setTrackNum(info.info.track_count);
     return 0;
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int track) const { return info.track_info_(out, track); }
+  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const { return info.track_info_(out, track); }
 };
 
-blargg_err_t NsfeEmu::m_load(DataReader &in) {
+blargg_err_t NsfeEmu::mLoad(DataReader &in) {
   if (loading)
-    return NsfEmu::m_load(in);
+    return NsfEmu::mLoad(in);
 
   // TODO: this hacky recursion-avoidance could have subtle problems
   loading = true;

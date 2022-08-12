@@ -115,11 +115,11 @@ struct GmeFile {
   blargg_err_t m_loadRemaining(void const *header, long header_size, DataReader &remaining);
 
   // Overridable
-  virtual void m_unload();                    // called before loading file and if loading fails
-  virtual blargg_err_t m_load(DataReader &);  // default loads then calls m_loadMem()
-  virtual blargg_err_t m_loadMem(uint8_t const *data,
+  virtual void mUnload();                   // called before loading file and if loading fails
+  virtual blargg_err_t mLoad(DataReader &);  // default loads then calls mLoadMem()
+  virtual blargg_err_t mLoadMem(uint8_t const *data,
                                  long size);  // use data in memory
-  virtual blargg_err_t m_getTrackInfo(track_info_t *out, int track) const = 0;
+  virtual blargg_err_t mGetTrackInfo(track_info_t *out, int track) const = 0;
   virtual void m_preLoad();
   virtual void m_postLoad();
   virtual void m_clearPlaylist() {}

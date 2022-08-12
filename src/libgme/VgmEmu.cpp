@@ -134,7 +134,7 @@ static void get_vgm_length(VgmEmu::header_t const &h, track_info_t *out) {
   }
 }
 
-blargg_err_t VgmEmu::m_getTrackInfo(track_info_t *out, int) const {
+blargg_err_t VgmEmu::mGetTrackInfo(track_info_t *out, int) const {
   get_vgm_length(header(), out);
 
   int size;
@@ -158,7 +158,7 @@ struct VgmFile : GmeInfo {
   VgmFile() { m_setType(gme_vgm_type); }
   static MusicEmu *createVgmFile() { return BLARGG_NEW VgmFile; }
 
-  blargg_err_t m_load(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) override {
     long file_size = in.remain();
     if (file_size <= VgmEmu::HEADER_SIZE)
       return gme_wrong_file_type;
@@ -181,7 +181,7 @@ struct VgmFile : GmeInfo {
     return 0;
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
     get_vgm_length(h, out);
     if (gd3.size())
       parse_gd3(gd3.begin(), gd3.end(), out);
@@ -285,7 +285,7 @@ void VgmEmu::m_muteChannels(int mask) {
   }
 }
 
-blargg_err_t VgmEmu::m_loadMem(uint8_t const *new_data, long new_size) {
+blargg_err_t VgmEmu::mLoadMem(uint8_t const *new_data, long new_size) {
   assert(offsetof(header_t, unused2[8]) == HEADER_SIZE);
 
   if (new_size <= HEADER_SIZE)

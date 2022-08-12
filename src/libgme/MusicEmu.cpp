@@ -39,10 +39,10 @@ void MusicEmu::m_clearTrackVars() {
   this->warning();  // clear warning
 }
 
-void MusicEmu::m_unload() {
+void MusicEmu::mUnload() {
   this->m_channelsNum = 0;
   this->m_clearTrackVars();
-  GmeFile::m_unload();
+  GmeFile::mUnload();
 }
 
 MusicEmu::MusicEmu() {
@@ -65,7 +65,7 @@ MusicEmu::MusicEmu() {
   static const char *const CHANNELS_NAMES[] = {"Channel 1", "Channel 2", "Channel 3", "Channel 4",
                                                "Channel 5", "Channel 6", "Channel 7", "Channel 8"};
   this->m_setChannelsNames(CHANNELS_NAMES);
-  MusicEmu::m_unload();  // non-virtual
+  MusicEmu::mUnload();  // non-virtual
 }
 
 MusicEmu::~MusicEmu() { delete m_effectsBuffer; }

@@ -73,8 +73,8 @@ class VgmEmu : public VgmEmuImpl {
   ~VgmEmu();
 
  protected:
-  blargg_err_t m_getTrackInfo(track_info_t *, int track) const override;
-  blargg_err_t m_loadMem(uint8_t const *, long) override;
+  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t mLoadMem(uint8_t const *, long) override;
   blargg_err_t m_setSampleRate(long sample_rate) override;
   blargg_err_t m_startTrack(int) override;
   blargg_err_t m_play(long count, sample_t *) override;

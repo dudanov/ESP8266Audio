@@ -47,13 +47,13 @@ class GymEmu : public MusicEmu, private DualResampler {
   ~GymEmu();
 
  protected:
-  blargg_err_t m_loadMem(uint8_t const *, long);
-  blargg_err_t m_getTrackInfo(track_info_t *, int track) const;
-  blargg_err_t m_setSampleRate(long sample_rate);
-  blargg_err_t m_startTrack(int);
-  blargg_err_t m_play(long count, sample_t *);
-  void m_muteChannels(int);
-  void m_setTempo(double);
+  blargg_err_t mLoadMem(uint8_t const *, long) override;
+  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t m_setSampleRate(long sample_rate) override;
+  blargg_err_t m_startTrack(int) override;
+  blargg_err_t m_play(long count, sample_t *) override;
+  void m_muteChannels(int) override;
+  void m_setTempo(double) override;
   int m_playFrame(blip_time_t blip_time, int sample_count, sample_t *buf) override;
 
  private:

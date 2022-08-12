@@ -47,14 +47,14 @@ class GbsEmu : private GbCpu, public ClassicEmu {
   ~GbsEmu();
 
  protected:
-  blargg_err_t m_getTrackInfo(track_info_t *, int track) const override;
-  blargg_err_t m_load(DataReader &) override;
+  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t mLoad(DataReader &) override;
   blargg_err_t m_startTrack(int) override;
   blargg_err_t m_runClocks(blip_time_t &, int) override;
   void m_setTempo(double) override;
   void m_setChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void m_updateEq(BlipEq const &) override;
-  void m_unload() override;
+  void mUnload() override;
 
  private:
   // rom

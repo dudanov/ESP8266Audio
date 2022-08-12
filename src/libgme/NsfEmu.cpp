@@ -53,9 +53,9 @@ NsfEmu::NsfEmu() {
   std::fill(this->m_unMappedCode.begin(), this->m_unMappedCode.end(), NesCpu::BAD_OPCODE);
 }
 
-NsfEmu::~NsfEmu() { this->m_unload(); }
+NsfEmu::~NsfEmu() { this->mUnload(); }
 
-void NsfEmu::m_unload() {
+void NsfEmu::mUnload() {
 #if !NSF_EMU_APU_ONLY
   {
     delete vrc6;
@@ -70,7 +70,7 @@ void NsfEmu::m_unload() {
 #endif
 
   this->m_rom.clear();
-  MusicEmu::m_unload();
+  MusicEmu::mUnload();
 }
 
 // Track info
@@ -83,7 +83,7 @@ static void copy_nsf_fields(NsfEmu::Header const &h, track_info_t *out) {
     GmeFile::copyField(out->system, "Famicom");
 }
 
-blargg_err_t NsfEmu::m_getTrackInfo(track_info_t *out, int) const {
+blargg_err_t NsfEmu::mGetTrackInfo(track_info_t *out, int) const {
   copy_nsf_fields(this->m_header, out);
   return 0;
 }
@@ -98,7 +98,7 @@ struct NsfFile : GmeInfo {
   NsfEmu::Header hdr;
   NsfFile() { this->m_setType(gme_nsf_type); }
   static MusicEmu *createNsfFile() { return BLARGG_NEW NsfFile; }
-  blargg_err_t m_load(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) {
     blargg_err_t err = in.read(&hdr, NsfEmu::HEADER_SIZE);
     if (err)
       return (err == in.eof_error ? gme_wrong_file_type : err);
@@ -110,7 +110,7 @@ struct NsfFile : GmeInfo {
     return check_nsf_header(&hdr);
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
     copy_nsf_fields(hdr, out);
     return 0;
   }
@@ -223,7 +223,7 @@ blargg_err_t NsfEmu::m_initSound() {
   return 0;
 }
 
-blargg_err_t NsfEmu::m_load(DataReader &in) {
+blargg_err_t NsfEmu::mLoad(DataReader &in) {
   assert(offsetof(Header, unused[4]) == HEADER_SIZE);
   RETURN_ERR(this->m_rom.load(in, HEADER_SIZE, &this->m_header, 0));
 

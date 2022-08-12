@@ -211,12 +211,12 @@ static void get_spc_info(const SpcEmu::header_t &hdr, const uint8_t *xid6, long 
     get_spc_xid6(xid6, xid6_size, out);
 }
 
-blargg_err_t SpcEmu::m_getTrackInfo(track_info_t *out, int) const {
+blargg_err_t SpcEmu::mGetTrackInfo(track_info_t *out, int) const {
   get_spc_info(m_header(), this->m_trailer(), this->m_trailerSize(), out);
   return 0;
 }
 
-blargg_err_t RsnEmu::m_getTrackInfo(track_info_t *out, int track) const {
+blargg_err_t RsnEmu::mGetTrackInfo(track_info_t *out, int track) const {
   get_spc_info(header(track), m_trailer(track), m_trailerSize(track), out);
   return 0;
 }
@@ -235,7 +235,7 @@ struct SpcFile : GmeInfo {
   SpcFile() : SpcFile(gme_spc_type) {}
   static MusicEmu *createSpcFile() { return BLARGG_NEW SpcFile; }
 
-  blargg_err_t m_load(DataReader &src) {
+  blargg_err_t mLoad(DataReader &src) override {
     if (this->m_isArchive)
       return 0;
     long fileSize = src.remain();
@@ -252,7 +252,7 @@ struct SpcFile : GmeInfo {
     return 0;
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int) const override {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const override {
     get_spc_info(header, xid6.begin(), xid6.size(), out);
     return 0;
   }
@@ -334,7 +334,7 @@ struct RsnFile : SpcFile {
 #endif
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int track) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const {
     if (static_cast<size_t>(track) >= m_spc.size())
       return "Invalid track";
     long xid6_size = m_spc[track + 1] - (m_spc[track] + HEAD_SIZE);
@@ -365,7 +365,7 @@ void SpcEmu::m_muteChannels(int m) {
   m_apu.mute_voices(m);
 }
 
-blargg_err_t SpcEmu::m_loadMem(uint8_t const *in, long size) {
+blargg_err_t SpcEmu::mLoadMem(uint8_t const *in, long size) {
   assert(offsetof(header_t, unused2[46]) == HEADER_SIZE);
   m_fileData = in;
   m_fileSize = size;
@@ -389,7 +389,7 @@ blargg_err_t SpcEmu::m_startTrack(int track) {
   m_filter.SetGain((int) (m_getGain() * SpcFilter::GAIN_UNIT));
   m_apu.clear_echo();
   track_info_t spc_info;
-  RETURN_ERR(m_getTrackInfo(&spc_info, track));
+  RETURN_ERR(mGetTrackInfo(&spc_info, track));
 
   // Set a default track length, need a non-zero fadeout
   if (autoloadPlaybackLimit() && (spc_info.length > 0))

@@ -55,9 +55,9 @@ class NsfEmu : private NesCpu, public ClassicEmu {
  protected:
   /* GmeFile methods */
 
-  blargg_err_t m_getTrackInfo(track_info_t *, int track) const override;
-  blargg_err_t m_load(DataReader &) override;
-  void m_unload() override;
+  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t mLoad(DataReader &) override;
+  void mUnload() override;
 
   /* MusicEmu methods */
 

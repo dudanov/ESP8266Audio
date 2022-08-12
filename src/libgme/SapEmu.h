@@ -37,13 +37,13 @@ class SapEmu : private SapCpu, public ClassicEmu {
   };
 
  protected:
-  blargg_err_t m_getTrackInfo(track_info_t *, int track) const;
-  blargg_err_t m_loadMem(uint8_t const *, long);
-  blargg_err_t m_startTrack(int);
-  blargg_err_t m_runClocks(blip_time_t &, int);
-  void m_setTempo(double);
-  void m_setChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *);
-  void m_updateEq(BlipEq const &);
+  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t mLoadMem(uint8_t const *, long) override;
+  blargg_err_t m_startTrack(int) override;
+  blargg_err_t m_runClocks(blip_time_t &, int) override;
+  void m_setTempo(double) override;
+  void m_setChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
+  void m_updateEq(BlipEq const &) override;
 
  public:
  private:

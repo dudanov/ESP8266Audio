@@ -44,12 +44,12 @@ KssEmu::KssEmu() {
   memset(unmapped_read, 0xFF, sizeof unmapped_read);
 }
 
-KssEmu::~KssEmu() { m_unload(); }
+KssEmu::~KssEmu() { mUnload(); }
 
-void KssEmu::m_unload() {
+void KssEmu::mUnload() {
   delete sn;
   sn = 0;
-  ClassicEmu::m_unload();
+  ClassicEmu::mUnload();
 }
 
 // Track info
@@ -64,7 +64,7 @@ static void copy_kss_fields(KssEmu::header_t const &h, track_info_t *out) {
   GmeFile::copyField(out->system, system);
 }
 
-blargg_err_t KssEmu::m_getTrackInfo(track_info_t *out, int) const {
+blargg_err_t KssEmu::mGetTrackInfo(track_info_t *out, int) const {
   copy_kss_fields(header_, out);
   return 0;
 }
@@ -81,14 +81,14 @@ struct KssFile : GmeInfo {
   KssFile() { m_setType(gme_kss_type); }
   static MusicEmu *createKssFile() { return BLARGG_NEW KssFile; }
 
-  blargg_err_t m_load(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) {
     blargg_err_t err = in.read(&header_, KssEmu::HEADER_SIZE);
     if (err)
       return (err == in.eof_error ? gme_wrong_file_type : err);
     return check_kss_header(&header_);
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
     copy_kss_fields(header_, out);
     return 0;
   }
@@ -106,7 +106,7 @@ void KssEmu::update_gain() {
     sn->setVolume(g);
 }
 
-blargg_err_t KssEmu::m_load(DataReader &in) {
+blargg_err_t KssEmu::mLoad(DataReader &in) {
   memset(&header_, 0, sizeof header_);
   assert(offsetof(header_t, device_flags) == HEADER_SIZE - 1);
   assert(offsetof(ext_header_t, msx_audio_vol) == EXT_HEADER_SIZE - 1);

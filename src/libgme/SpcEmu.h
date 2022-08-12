@@ -50,8 +50,8 @@ class SpcEmu : public MusicEmu {
   void disableSurround(bool b = true) { m_apu.disableSurround(b); }
 
  protected:
-  blargg_err_t m_loadMem(uint8_t const *, long) override;
-  blargg_err_t m_getTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t mLoadMem(uint8_t const *, long) override;
+  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
   blargg_err_t m_setSampleRate(long) override;
   blargg_err_t m_startTrack(int) override;
   blargg_err_t m_play(long, sample_t *) override;
@@ -86,7 +86,7 @@ class RsnEmu : public SpcEmu {
   header_t const &header(int track) const { return *(header_t const *) m_spc[track]; }
 
  protected:
-  blargg_err_t m_getTrackInfo(track_info_t *, int) const override;
+  blargg_err_t mGetTrackInfo(track_info_t *, int) const override;
   blargg_err_t m_startTrack(int) override;
 
  private:

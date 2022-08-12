@@ -26,7 +26,7 @@ void GmeFile::clearPlaylist() {
   this->m_trackNum = this->m_rawTrackCount;
 }
 
-void GmeFile::m_unload() {
+void GmeFile::mUnload() {
   this->clearPlaylist();  // *before* clearing track count
   this->m_trackNum = 0;
   this->m_rawTrackCount = 0;
@@ -34,7 +34,7 @@ void GmeFile::m_unload() {
 }
 
 GmeFile::GmeFile() {
-  this->m_unload();            // clears fields
+  this->mUnload();            // clears fields
   blargg_verify_byte_order();  // used by most emulator types, so save them the
                                // trouble
 }
@@ -44,20 +44,20 @@ GmeFile::~GmeFile() {
     this->m_userCleanupFn(this->m_userData);
 }
 
-blargg_err_t GmeFile::m_loadMem(const uint8_t *data, long size) {
-  require(data != this->m_fileData.begin());  // m_loadMem() or m_load() must be overridden
+blargg_err_t GmeFile::mLoadMem(const uint8_t *data, long size) {
+  require(data != this->m_fileData.begin());  // mLoadMem() or mLoad() must be overridden
   MemFileReader in(data, size);
-  return this->m_load(in);
+  return this->mLoad(in);
 }
 
-blargg_err_t GmeFile::m_load(DataReader &in) {
+blargg_err_t GmeFile::mLoad(DataReader &in) {
   RETURN_ERR(this->m_fileData.resize(in.remain()));
   RETURN_ERR(in.read(this->m_fileData.begin(), this->m_fileData.size()));
-  return this->m_loadMem(this->m_fileData.begin(), this->m_fileData.size());
+  return this->mLoadMem(this->m_fileData.begin(), this->m_fileData.size());
 }
 
 // public load functions call this at beginning
-void GmeFile::m_preLoad() { this->m_unload(); }
+void GmeFile::m_preLoad() { this->mUnload(); }
 
 void GmeFile::m_postLoad() {}
 
@@ -68,7 +68,7 @@ blargg_err_t GmeFile::m_postLoad(blargg_err_t err) {
   if (!err)
     this->m_postLoad();
   else
-    this->m_unload();
+    this->mUnload();
 
   return err;
 }
@@ -77,19 +77,19 @@ blargg_err_t GmeFile::m_postLoad(blargg_err_t err) {
 
 blargg_err_t GmeFile::loadMem(void const *in, long size) {
   this->m_preLoad();
-  return this->m_postLoad(this->m_loadMem((uint8_t const *) in, size));
+  return this->m_postLoad(this->mLoadMem((uint8_t const *) in, size));
 }
 
 blargg_err_t GmeFile::load(DataReader &in) {
   this->m_preLoad();
-  return this->m_postLoad(this->m_load(in));
+  return this->m_postLoad(this->mLoad(in));
 }
 
 blargg_err_t GmeFile::loadFile(const char *path) {
   this->m_preLoad();
   GME_FILE_READER in;
   RETURN_ERR(in.open(path));
-  return this->m_postLoad(this->m_load(in));
+  return this->m_postLoad(this->mLoad(in));
 }
 
 blargg_err_t GmeFile::m_loadRemaining(void const *h, long s, DataReader &in) {
@@ -172,7 +172,7 @@ blargg_err_t GmeFile::getTrackInfo(track_info_t *out, int track) const {
 
   int remapped = track;
   RETURN_ERR(remapTrack(&remapped));
-  RETURN_ERR(m_getTrackInfo(out, remapped));
+  RETURN_ERR(mGetTrackInfo(out, remapped));
 
   // override with m3u info
   if (m_playlist.size()) {

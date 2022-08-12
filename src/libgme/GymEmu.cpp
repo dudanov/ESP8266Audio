@@ -69,7 +69,7 @@ static void get_gym_info(GymEmu::header_t const &h, long length, track_info_t *o
   }
 }
 
-blargg_err_t GymEmu::m_getTrackInfo(track_info_t *out, int) const {
+blargg_err_t GymEmu::mGetTrackInfo(track_info_t *out, int) const {
   get_gym_info(header_, track_length(), out);
   return 0;
 }
@@ -124,14 +124,14 @@ struct Gym_File : GmeInfo {
 
   Gym_File() { m_setType(gme_gym_type); }
 
-  blargg_err_t m_loadMem(uint8_t const *in, long size) {
+  blargg_err_t mLoadMem(uint8_t const *in, long size) {
     file_begin = in;
     file_end = in + size;
     data_offset = 0;
     return check_header(in, size, &data_offset);
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
     long length = gym_track_length(&file_begin[data_offset], file_end);
     get_gym_info(*(GymEmu::header_t const *) file_begin, length, out);
     return 0;
@@ -183,7 +183,7 @@ void GymEmu::m_muteChannels(int mask) {
   apu.setOutput((mask & 0x80) ? 0 : &blip_buf);
 }
 
-blargg_err_t GymEmu::m_loadMem(uint8_t const *in, long size) {
+blargg_err_t GymEmu::mLoadMem(uint8_t const *in, long size) {
   assert(offsetof(header_t, packed[4]) == header_size);
   int offset = 0;
   RETURN_ERR(check_header(in, size, &offset));

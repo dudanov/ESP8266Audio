@@ -43,9 +43,9 @@ GbsEmu::GbsEmu() {
 
 GbsEmu::~GbsEmu() {}
 
-void GbsEmu::m_unload() {
+void GbsEmu::mUnload() {
   m_rom.clear();
-  MusicEmu::m_unload();
+  MusicEmu::mUnload();
 }
 
 // Track info
@@ -56,7 +56,7 @@ static void copy_gbs_fields(GbsEmu::Header const &h, track_info_t *out) {
   GME_COPY_FIELD(h, out, copyright);
 }
 
-blargg_err_t GbsEmu::m_getTrackInfo(track_info_t *out, int) const {
+blargg_err_t GbsEmu::mGetTrackInfo(track_info_t *out, int) const {
   copy_gbs_fields(m_header, out);
   return 0;
 }
@@ -73,7 +73,7 @@ struct GbsFile : GmeInfo {
   GbsFile() { m_setType(gme_gbs_type); }
   static MusicEmu *createGbsFile() { return BLARGG_NEW GbsFile; }
 
-  blargg_err_t m_load(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) {
     blargg_err_t err = in.read(&h, GbsEmu::HEADER_SIZE);
     if (err)
       return (err == in.eof_error ? gme_wrong_file_type : err);
@@ -82,7 +82,7 @@ struct GbsFile : GmeInfo {
     return check_gbs_header(&h);
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
     copy_gbs_fields(h, out);
     return 0;
   }
@@ -90,7 +90,7 @@ struct GbsFile : GmeInfo {
 
 // Setup
 
-blargg_err_t GbsEmu::m_load(DataReader &in) {
+blargg_err_t GbsEmu::mLoad(DataReader &in) {
   assert(offsetof(Header, copyright[32]) == HEADER_SIZE);
   RETURN_ERR(m_rom.load(in, HEADER_SIZE, &m_header, 0));
 

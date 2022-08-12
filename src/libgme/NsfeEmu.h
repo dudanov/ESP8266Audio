@@ -64,10 +64,10 @@ class NsfeEmu : public NsfEmu {
   static MusicEmu *createNsfeEmu() { return BLARGG_NEW NsfeEmu; }
 
  protected:
-  blargg_err_t m_load(DataReader &) override;
-  blargg_err_t m_getTrackInfo(track_info_t *, int track) const override;
+  blargg_err_t mLoad(DataReader &) override;
+  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
   blargg_err_t m_startTrack(int) override;
-  void m_unload() override;
+  void mUnload() override;
   void m_clearPlaylist() override;
 
  private:

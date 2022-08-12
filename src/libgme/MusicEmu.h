@@ -163,7 +163,7 @@ struct MusicEmu : public GmeFile {
   virtual blargg_err_t m_skip(long);
 
  protected:
-  virtual void m_unload();
+  virtual void mUnload();
   virtual void m_preLoad();
   virtual void m_postLoad();
 

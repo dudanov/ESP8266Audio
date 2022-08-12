@@ -48,9 +48,9 @@ HesEmu::HesEmu() {
 
 HesEmu::~HesEmu() {}
 
-void HesEmu::m_unload() {
+void HesEmu::mUnload() {
   rom.clear();
-  MusicEmu::m_unload();
+  MusicEmu::mUnload();
 }
 
 // Track info
@@ -87,7 +87,7 @@ static void copy_hes_fields(uint8_t const *in, track_info_t *out) {
   }
 }
 
-blargg_err_t HesEmu::m_getTrackInfo(track_info_t *out, int) const {
+blargg_err_t HesEmu::mGetTrackInfo(track_info_t *out, int) const {
   copy_hes_fields(rom.begin() + 0x20, out);
   return 0;
 }
@@ -108,7 +108,7 @@ struct HesFile : GmeInfo {
   HesFile() { m_setType(gme_hes_type); }
   static MusicEmu *createHesFile() { return BLARGG_NEW HesFile; }
 
-  blargg_err_t m_load(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) {
     assert(offsetof(header_t, fields) == HesEmu::HEADER_SIZE + 0x20);
     blargg_err_t err = in.read(&h, sizeof h);
     if (err)
@@ -116,7 +116,7 @@ struct HesFile : GmeInfo {
     return check_hes_header(&h);
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
     copy_hes_fields(h.fields, out);
     return 0;
   }
@@ -124,7 +124,7 @@ struct HesFile : GmeInfo {
 
 // Setup
 
-blargg_err_t HesEmu::m_load(DataReader &in) {
+blargg_err_t HesEmu::mLoad(DataReader &in) {
   assert(offsetof(header_t, unused[4]) == HEADER_SIZE);
   RETURN_ERR(rom.load(in, HEADER_SIZE, &header_, unmapped));
 

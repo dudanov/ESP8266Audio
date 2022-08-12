@@ -88,7 +88,7 @@ static void copy_ay_fields(AyEmu::file_t const &file, track_info_t *out, int tra
   GmeFile::copyField(out->comment, (char const *) get_data(file, file.header->comment, 1));
 }
 
-blargg_err_t AyEmu::m_getTrackInfo(track_info_t *out, int track) const {
+blargg_err_t AyEmu::mGetTrackInfo(track_info_t *out, int track) const {
   copy_ay_fields(file, out, track);
   return 0;
 }
@@ -98,13 +98,13 @@ struct AyFile : GmeInfo {
   AyFile() { m_setType(gme_ay_type); }
   static MusicEmu *createAyFile() { return BLARGG_NEW AyFile; }
 
-  blargg_err_t m_loadMem(uint8_t const *begin, long size) {
+  blargg_err_t mLoadMem(uint8_t const *begin, long size) {
     RETURN_ERR(parse_header(begin, size, &file));
     m_setTrackNum(file.header->max_track + 1);
     return 0;
   }
 
-  blargg_err_t m_getTrackInfo(track_info_t *out, int track) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const {
     copy_ay_fields(file, out, track);
     return 0;
   }
@@ -112,7 +112,7 @@ struct AyFile : GmeInfo {
 
 // Setup
 
-blargg_err_t AyEmu::m_loadMem(uint8_t const *in, long size) {
+blargg_err_t AyEmu::mLoadMem(uint8_t const *in, long size) {
   assert(offsetof(header_t, track_info[2]) == header_size);
 
   RETURN_ERR(parse_header(in, size, &file));
