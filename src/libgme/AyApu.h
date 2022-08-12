@@ -54,6 +54,7 @@ class AyApu {
   void setTrebleEq(BlipEq const &eq) { this->m_synth.setTrebleEq(eq); }
 
  private:
+  static uint8_t mGetAmp(size_t idx);
   void mRunUntil(blip_time_t);
   void mWriteData(int addr, int data);
 

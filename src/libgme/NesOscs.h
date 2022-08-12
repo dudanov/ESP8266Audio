@@ -118,6 +118,9 @@ struct NesNoise : NesEnvelope {
     noise = 1 << 14;
     NesEnvelope::reset();
   }
+
+ private:
+  uint16_t mGetPeriod() const;
 };
 
 // NesDmc
@@ -156,6 +159,11 @@ struct NesDmc : NesOsc {
   void reset();
   int count_reads(nes_time_t, nes_time_t *) const;
   nes_time_t next_read_time() const;
+
+ private:
+  uint16_t mGetPeriod(int data) const;
+  void mWriteR0(int data);
+  void mWriteR1(int data);
 };
 
 }  // namespace nes

@@ -20,6 +20,9 @@ struct apu_state_t;
 
 class NesApu {
  public:
+  NesApu();
+  NesApu(const NesApu &) = delete;
+  NesApu &operator=(const NesApu &) = delete;
   // Set buffer to generate all sound into, or disable sound if NULL
   void SetOutput(BlipBuffer *);
 
@@ -111,8 +114,6 @@ class NesApu {
   // accounted for (i.e. inserting CPU wait states).
   void RunUntil(nes_time_t);
 
- public:
-  NesApu();
  private:
   void mEnableNonlinear(double volume);
   static double mNonlinearTndGain() { return 0.75; }
@@ -122,10 +123,6 @@ class NesApu {
   void mIrqChanged();
   void mStateRestored();
   void mRunUntil(nes_time_t);
-
-  // noncopyable
-  NesApu(const NesApu &);
-  NesApu &operator=(const NesApu &);
 
   NesSquare::Synth mSquareSynth;  // shared by squares
   NesSquare mSquare1{&mSquareSynth};

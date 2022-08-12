@@ -30,16 +30,19 @@ namespace ay {
 static const unsigned INAUDIBLE_FREQ = 16384;
 static const int PERIOD_FACTOR = 16;
 
-static const uint8_t AMP_TABLE[16] = {
+inline uint8_t AyApu::mGetAmp(size_t volume) {
 #define ENTRY(v) static_cast<uint8_t>(AyApu::AMP_RANGE * (v) + 0.5)
-    // With channels tied together and 1K resistor to ground (as datasheet
-    // recommends), output nearly matches logarithmic curve as claimed.
-    // Approx. 1.5 dB per step.
-    ENTRY(0.000000), ENTRY(0.007813), ENTRY(0.011049), ENTRY(0.015625), ENTRY(0.022097), ENTRY(0.031250),
-    ENTRY(0.044194), ENTRY(0.062500), ENTRY(0.088388), ENTRY(0.125000), ENTRY(0.176777), ENTRY(0.250000),
-    ENTRY(0.353553), ENTRY(0.500000), ENTRY(0.707107), ENTRY(1.000000),
+  static const uint8_t TABLE[] PROGMEM = {
+      // With channels tied together and 1K resistor to ground (as datasheet
+      // recommends), output nearly matches logarithmic curve as claimed.
+      // Approx. 1.5 dB per step.
+      ENTRY(0.000000), ENTRY(0.007813), ENTRY(0.011049), ENTRY(0.015625), ENTRY(0.022097), ENTRY(0.031250),
+      ENTRY(0.044194), ENTRY(0.062500), ENTRY(0.088388), ENTRY(0.125000), ENTRY(0.176777), ENTRY(0.250000),
+      ENTRY(0.353553), ENTRY(0.500000), ENTRY(0.707107), ENTRY(1.000000),
+  };
+  return pgm_read_byte(TABLE + volume);
 #undef ENTRY
-};
+}
 
 static const uint8_t MODES[8] = {
 #define MODE(a0, a1, b0, b1, c0, c1) (a0 << 0 | a1 << 1 | b0 << 2 | b1 << 3 | c0 << 4 | c1 << 5)
@@ -60,7 +63,7 @@ AyApu::Envelope::Envelope() {
       if (amp)
         amp = 15;
       for (auto end = it + 16; it != end; amp += step)
-        *it++ = AMP_TABLE[amp];
+        *it++ = AyApu::mGetAmp(amp);
       flags >>= 2;
     }
   }
@@ -161,7 +164,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
 
     // period
     int half_vol = 0;
-    blip_time_t inaudible_period = (blargg_ulong)(osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
+    blip_time_t inaudible_period = (blargg_ulong) (osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
     if (osc->period <= inaudible_period && !(osc_mode & TONE_OFF)) {
       half_vol = 1;  // Actually around 60%, but 50% is close enough
       osc_mode |= TONE_OFF;
@@ -171,7 +174,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     blip_time_t start_time = this->m_lastTime;
     blip_time_t end_time = final_end_time;
     const int vol_mode = this->m_regs[idx + 8];
-    int volume = AMP_TABLE[vol_mode & 0x0F] >> half_vol;
+    int volume = AyApu::mGetAmp(vol_mode & 15) >> half_vol;
     int osc_env_pos = this->m_envelope.pos;
     if (vol_mode & 0x10) {
       volume = this->m_envelope.wave[osc_env_pos] >> half_vol;

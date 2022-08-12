@@ -1,6 +1,7 @@
 // Nes_Snd_Emu 0.1.8. http://www.slack.net/~ant/
 
 #include "NesApu.h"
+#include <pgmspace.h>
 
 /* Copyright (C) 2003-2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -251,9 +252,9 @@ void NesApu::EndFrame(nes_time_t end_time) {
 // registers
 
 void NesApu::WriteRegister(nes_time_t time, nes_addr_t addr, uint8_t data) {
-  static const uint8_t LENGTH_TABLE[] = {0x0A, 0xFE, 0x14, 0x02, 0x28, 0x04, 0x50, 0x06, 0xA0, 0x08, 0x3C,
-                                         0x0A, 0x0E, 0x0C, 0x1A, 0x0E, 0x0C, 0x10, 0x18, 0x12, 0x30, 0x14,
-                                         0x60, 0x16, 0xC0, 0x18, 0x48, 0x1A, 0x10, 0x1C, 0x20, 0x1E};
+  static const uint8_t LENGTH_TABLE[] PROGMEM = {0x0A, 0xFE, 0x14, 0x02, 0x28, 0x04, 0x50, 0x06, 0xA0, 0x08, 0x3C,
+                                                 0x0A, 0x0E, 0x0C, 0x1A, 0x0E, 0x0C, 0x10, 0x18, 0x12, 0x30, 0x14,
+                                                 0x60, 0x16, 0xC0, 0x18, 0x48, 0x1A, 0x10, 0x1C, 0x20, 0x1E};
   require(addr > 0x20);  // addr must be actual address (i.e. 0x40xx)
 
   // Ignore addresses outside range
@@ -281,7 +282,7 @@ void NesApu::WriteRegister(nes_time_t time, nes_addr_t addr, uint8_t data) {
     if (reg == 3) {
       // load length counter
       if (this->m_oscEnables & (1 << channel))
-        osc->lengthCounter = LENGTH_TABLE[data >> 3];
+        osc->lengthCounter = pgm_read_byte(LENGTH_TABLE + (data >> 3));
       // reset square phase
       if (channel < 2)
         static_cast<NesSquare *>(osc)->phase = NesSquare::PHASE_RANGE - 1;
