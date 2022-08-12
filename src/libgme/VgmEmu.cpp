@@ -37,11 +37,11 @@ VgmEmu::VgmEmu() {
   m_setType(gme_vgm_type);
 
   static int const types[8] = {WAVE_TYPE | 1, WAVE_TYPE | 0, WAVE_TYPE | 2, NOISE_TYPE | 0};
-  m_setChannelsTypes(types);
+  mSetChannelsTypes(types);
 
   m_setSilenceLookahead(1);  // tracks should already be trimmed
 
-  set_equalizer(make_equalizer(-14.0, 80));
+  SetEqualizer(make_equalizer(-14.0, 80));
 }
 
 VgmEmu::~VgmEmu() {}
@@ -145,7 +145,7 @@ blargg_err_t VgmEmu::mGetTrackInfo(track_info_t *out, int) const {
   return 0;
 }
 
-static blargg_err_t check_vgm_header(VgmEmu::header_t const &h) {
+static blargg_err_t check_vgm_header(const VgmEmu::header_t &h) {
   if (memcmp(h.tag, "Vgm ", 4))
     return gme_wrong_file_type;
   return 0;
@@ -191,7 +191,7 @@ struct VgmFile : GmeInfo {
 
 // Setup
 
-void VgmEmu::m_setTempo(double t) {
+void VgmEmu::mSetTempo(double t) {
   if (m_psgRate) {
     m_vgmRate = (long) (44100 * t + 0.5);
     blip_time_factor = (long) floor(double(1L << blip_time_bits) / m_vgmRate * m_psgRate + 0.5);
@@ -207,9 +207,9 @@ void VgmEmu::m_setTempo(double t) {
   }
 }
 
-blargg_err_t VgmEmu::m_setSampleRate(long sample_rate) {
+blargg_err_t VgmEmu::mSetSampleRate(long sample_rate) {
   RETURN_ERR(blip_buf.SetSampleRate(sample_rate, 1000 / 30));
-  return ClassicEmu::m_setSampleRate(sample_rate);
+  return ClassicEmu::mSetSampleRate(sample_rate);
 }
 
 blargg_err_t VgmEmu::setMultiChannel(bool is_enabled) {
@@ -231,14 +231,14 @@ blargg_err_t VgmEmu::setMultiChannel(bool is_enabled) {
   }
 }
 
-void VgmEmu::m_updateEq(BlipEq const &eq) {
+void VgmEmu::mUpdateEq(BlipEq const &eq) {
   psg[0].setTrebleEq(eq);
   if (psg_dual)
     psg[1].setTrebleEq(eq);
   dac_synth.setTrebleEq(eq);
 }
 
-void VgmEmu::m_setChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) {
+void VgmEmu::mSetChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) {
   if (psg_dual) {
     if (psg_t6w28) {
       // TODO: Make proper output of each PSG chip: 0 - all right, 1 - all
@@ -259,8 +259,8 @@ void VgmEmu::m_setChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) {
   }
 }
 
-void VgmEmu::m_muteChannels(int mask) {
-  ClassicEmu::m_muteChannels(mask);
+void VgmEmu::mMuteChannel(int mask) {
+  ClassicEmu::mMuteChannel(mask);
   dac_synth.setOutput(&blip_buf);
   if (uses_fm) {
     psg[0].setOutput((mask & 0x80) ? 0 : &blip_buf);
@@ -323,7 +323,7 @@ blargg_err_t VgmEmu::mLoad(uint8_t const *new_data, long new_size) {
   m_setChannelsNames(uses_fm ? FM_NAMES : PSG_NAMES);
 
   // do after FM in case output buffer is changed
-  return ClassicEmu::m_setupBuffer(m_psgRate);
+  return ClassicEmu::mSetupBuffer(m_psgRate);
 }
 
 blargg_err_t VgmEmu::setup_fm() {
@@ -393,8 +393,8 @@ blargg_err_t VgmEmu::setup_fm() {
 
 // Emulation
 
-blargg_err_t VgmEmu::m_startTrack(int track) {
-  RETURN_ERR(ClassicEmu::m_startTrack(track));
+blargg_err_t VgmEmu::mStartTrack(int track) {
+  RETURN_ERR(ClassicEmu::mStartTrack(track));
   psg[0].reset(get_le16(header().noise_feedback), header().noise_width);
   if (psg_dual)
     psg[1].reset(get_le16(header().noise_feedback), header().noise_width);
@@ -432,7 +432,7 @@ blargg_err_t VgmEmu::m_startTrack(int track) {
   return 0;
 }
 
-blargg_err_t VgmEmu::m_runClocks(blip_time_t &time_io, int msec) {
+blargg_err_t VgmEmu::mRunClocks(blip_time_t &time_io, int msec) {
   time_io = run_commands(msec * m_vgmRate / 1000);
   psg[0].endFrame(time_io);
   if (psg_dual)
@@ -440,9 +440,9 @@ blargg_err_t VgmEmu::m_runClocks(blip_time_t &time_io, int msec) {
   return 0;
 }
 
-blargg_err_t VgmEmu::m_play(long count, sample_t *out) {
+blargg_err_t VgmEmu::mPlay(long count, sample_t *out) {
   if (!uses_fm)
-    return ClassicEmu::m_play(count, out);
+    return ClassicEmu::mPlay(count, out);
 
   DualResampler::dualPlay(count, out, blip_buf);
   return 0;

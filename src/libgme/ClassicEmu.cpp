@@ -18,9 +18,9 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #include "blargg_source.h"
 
 ClassicEmu::ClassicEmu() {
-  this->m_buf = 0;
-  this->m_stereoBuf = 0;
-  this->m_channelTypes = 0;
+  this->mBuf = 0;
+  this->mStereoBuf = 0;
+  this->mChannelTypes = 0;
 
   // avoid inconsistency in our duplicated constants
   assert((int) WAVE_TYPE == (int) MultiBuffer::WAVE_TYPE);
@@ -28,22 +28,22 @@ ClassicEmu::ClassicEmu() {
   assert((int) MIXED_TYPE == (int) MultiBuffer::MIXED_TYPE);
 }
 
-ClassicEmu::~ClassicEmu() { delete this->m_stereoBuf; }
+ClassicEmu::~ClassicEmu() { delete this->mStereoBuf; }
 
-void ClassicEmu::m_setEqualizer(equalizer_t const &eq) {
-  MusicEmu::m_setEqualizer(eq);
-  m_updateEq(eq.treble);
-  if (this->m_buf)
-    this->m_buf->setBassFreq((int) equalizer().bass);
+void ClassicEmu::mSetEqualizer(equalizer_t const &eq) {
+  MusicEmu::mSetEqualizer(eq);
+  mUpdateEq(eq.treble);
+  if (this->mBuf)
+    this->mBuf->setBassFreq((int) GetEqualizer().bass);
 }
 
-blargg_err_t ClassicEmu::m_setSampleRate(long rate) {
-  if (this->m_buf == nullptr) {
-    if (this->m_stereoBuf == nullptr)
-      CHECK_ALLOC(this->m_stereoBuf = BLARGG_NEW StereoBuffer);
-    this->m_buf = this->m_stereoBuf;
+blargg_err_t ClassicEmu::mSetSampleRate(long rate) {
+  if (this->mBuf == nullptr) {
+    if (this->mStereoBuf == nullptr)
+      CHECK_ALLOC(this->mStereoBuf = BLARGG_NEW StereoBuffer);
+    this->mBuf = this->mStereoBuf;
   }
-  return this->m_buf->setSampleRate(rate, 1000 / 20);
+  return this->mBuf->setSampleRate(rate, 1000 / 20);
 }
 
 blargg_err_t ClassicEmu::setMultiChannel(bool enable) {
@@ -51,52 +51,52 @@ blargg_err_t ClassicEmu::setMultiChannel(bool enable) {
   return 0;
 }
 
-void ClassicEmu::m_muteChannels(int mask) {
-  MusicEmu::m_muteChannels(mask);
+void ClassicEmu::mMuteChannel(int mask) {
+  MusicEmu::mMuteChannel(mask);
   for (int i = 0; i < this->getChannelsNum(); i++, mask >>= 1) {
     if (mask & 1) {
-      this->m_setChannel(i, nullptr, nullptr, nullptr);
+      this->mSetChannel(i, nullptr, nullptr, nullptr);
     } else {
-      auto &ch = this->m_buf->getChannelBuffers(i, this->m_getChannelType(i));
+      auto &ch = this->mBuf->getChannelBuffers(i, this->mGetChannelType(i));
       assert((ch.center && ch.left && ch.right) || (!ch.center && !ch.left && !ch.right));  // all or nothing
-      this->m_setChannel(i, ch.center, ch.left, ch.right);
+      this->mSetChannel(i, ch.center, ch.left, ch.right);
     }
   }
 }
 
-void ClassicEmu::m_changeClockRate(long rate) {
-  this->m_clockRate = rate;
-  this->m_buf->setClockRate(rate);
+void ClassicEmu::mChangeClockRate(long rate) {
+  this->mClockRate = rate;
+  this->mBuf->setClockRate(rate);
 }
 
-blargg_err_t ClassicEmu::m_setupBuffer(long rate) {
-  this->m_changeClockRate(rate);
-  RETURN_ERR(this->m_buf->setChannelCount(getChannelsNum()));
-  set_equalizer(equalizer());
-  this->m_bufChangedNum = this->m_buf->getChangedChannelsNumber();
+blargg_err_t ClassicEmu::mSetupBuffer(long rate) {
+  this->mChangeClockRate(rate);
+  RETURN_ERR(this->mBuf->setChannelCount(getChannelsNum()));
+  SetEqualizer(GetEqualizer());
+  this->mBufChangedNum = this->mBuf->getChangedChannelsNumber();
   return 0;
 }
 
-blargg_err_t ClassicEmu::m_startTrack(int track) {
-  RETURN_ERR(MusicEmu::m_startTrack(track));
-  this->m_buf->clear();
+blargg_err_t ClassicEmu::mStartTrack(int track) {
+  RETURN_ERR(MusicEmu::mStartTrack(track));
+  this->mBuf->clear();
   return 0;
 }
 
-blargg_err_t ClassicEmu::m_play(long count, sample_t *out) {
+blargg_err_t ClassicEmu::mPlay(long count, sample_t *out) {
   long remain = count;
   while (remain) {
-    remain -= this->m_buf->readSamples(&out[count - remain], remain);
+    remain -= this->mBuf->readSamples(&out[count - remain], remain);
     if (remain) {
-      if (this->m_bufChangedNum != this->m_buf->getChangedChannelsNumber()) {
-        this->m_bufChangedNum = this->m_buf->getChangedChannelsNumber();
+      if (this->mBufChangedNum != this->mBuf->getChangedChannelsNumber()) {
+        this->mBufChangedNum = this->mBuf->getChangedChannelsNumber();
         this->m_remuteChannels();
       }
-      int msec = this->m_buf->getLength();
-      blip_time_t clocks_emulated = (blargg_long) msec * this->m_clockRate / 1000;
-      RETURN_ERR(m_runClocks(clocks_emulated, msec));
+      int msec = this->mBuf->getLength();
+      blip_time_t clocks_emulated = (blargg_long) msec * this->mClockRate / 1000;
+      RETURN_ERR(mRunClocks(clocks_emulated, msec));
       assert(clocks_emulated);
-      this->m_buf->endFrame(clocks_emulated);
+      this->mBuf->endFrame(clocks_emulated);
     }
   }
   return 0;

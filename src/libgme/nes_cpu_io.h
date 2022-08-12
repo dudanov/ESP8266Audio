@@ -10,7 +10,7 @@ namespace gme {
 namespace emu {
 namespace nes {
 
-uint8_t NsfEmu::m_cpuRead(nes_addr_t addr) {
+uint8_t NsfEmu::mCpuRead(nes_addr_t addr) {
   uint8_t result;
 
   result = this->m_lowMem[addr & 0x7FF];
@@ -42,7 +42,7 @@ exit:
   return result;
 }
 
-void NsfEmu::m_cpuWrite(nes_addr_t addr, uint8_t data) {
+void NsfEmu::mCpuWrite(nes_addr_t addr, uint8_t data) {
   {
     nes_addr_t offset = addr ^ SRAM_ADDR;
     if (offset < sizeof m_sram) {
@@ -73,11 +73,11 @@ void NsfEmu::m_cpuWrite(nes_addr_t addr, uint8_t data) {
     return;
   }
 
-  m_cpuWriteMisc(addr, data);
+  mCpuWriteMisc(addr, data);
 }
 
-#define CPU_READ(cpu, addr, time) STATIC_CAST(NsfEmu &, *cpu).m_cpuRead(addr)
-#define CPU_WRITE(cpu, addr, data, time) STATIC_CAST(NsfEmu &, *cpu).m_cpuWrite(addr, data)
+#define CPU_READ(cpu, addr, time) STATIC_CAST(NsfEmu &, *cpu).mCpuRead(addr)
+#define CPU_WRITE(cpu, addr, data, time) STATIC_CAST(NsfEmu &, *cpu).mCpuWrite(addr, data)
 
 }  // namespace nes
 }  // namespace emu

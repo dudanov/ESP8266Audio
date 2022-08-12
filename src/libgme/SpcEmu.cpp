@@ -345,7 +345,7 @@ struct RsnFile : SpcFile {
 
 // Setup
 
-blargg_err_t SpcEmu::m_setSampleRate(long sample_rate) {
+blargg_err_t SpcEmu::mSetSampleRate(long sample_rate) {
   RETURN_ERR(m_apu.init());
   setAccuracy(false);
   if (sample_rate != NATIVE_SAMPLE_RATE) {
@@ -360,8 +360,8 @@ void SpcEmu::m_setAccuracy(bool b) {
   m_filter.SetEnable(b);
 }
 
-void SpcEmu::m_muteChannels(int m) {
-  MusicEmu::m_muteChannels(m);
+void SpcEmu::mMuteChannel(int m) {
+  MusicEmu::mMuteChannel(m);
   m_apu.mute_voices(m);
 }
 
@@ -379,10 +379,10 @@ blargg_err_t SpcEmu::mLoad(uint8_t const *in, long size) {
 
 // Emulation
 
-void SpcEmu::m_setTempo(double t) { m_apu.set_tempo((int) (t * m_apu.TEMPO_UNIT)); }
+void SpcEmu::mSetTempo(double t) { m_apu.set_tempo((int) (t * m_apu.TEMPO_UNIT)); }
 
-blargg_err_t SpcEmu::m_startTrack(int track) {
-  RETURN_ERR(MusicEmu::m_startTrack(track));
+blargg_err_t SpcEmu::mStartTrack(int track) {
+  RETURN_ERR(MusicEmu::mStartTrack(track));
   m_resampler.clear();
   m_filter.Clear();
   RETURN_ERR(m_apu.load_spc(m_fileData, m_fileSize));
@@ -419,10 +419,10 @@ blargg_err_t SpcEmu::m_skip(long count) {
   // eliminate pop due to resampler
   const int resampler_latency = 64;
   sample_t buf[resampler_latency];
-  return m_play(resampler_latency, buf);
+  return mPlay(resampler_latency, buf);
 }
 
-blargg_err_t SpcEmu::m_play(long count, sample_t *out) {
+blargg_err_t SpcEmu::mPlay(long count, sample_t *out) {
   if (getSampleRate() == NATIVE_SAMPLE_RATE)
     return m_playAndFilter(count, out);
 
@@ -484,12 +484,12 @@ blargg_err_t RsnEmu::loadArchive(const char *path) {
 #endif
 }
 
-blargg_err_t RsnEmu::m_startTrack(int track) {
+blargg_err_t RsnEmu::mStartTrack(int track) {
   if (static_cast<size_t>(track) >= m_spc.size())
     return "Invalid track requested";
   m_fileData = m_spc[track];
   m_fileSize = m_spc[track + 1] - m_spc[track];
-  return SpcEmu::m_startTrack(track);
+  return SpcEmu::mStartTrack(track);
 }
 
 RsnEmu::~RsnEmu() {}

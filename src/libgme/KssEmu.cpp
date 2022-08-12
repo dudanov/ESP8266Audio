@@ -39,7 +39,7 @@ KssEmu::KssEmu() {
 
   static int const types[OSCS_NUM] = {WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2, WAVE_TYPE | 3,
                                       WAVE_TYPE | 4, WAVE_TYPE | 5, WAVE_TYPE | 6, WAVE_TYPE | 7};
-  m_setChannelsTypes(types);
+  mSetChannelsTypes(types);
 
   memset(unmapped_read, 0xFF, sizeof unmapped_read);
 }
@@ -142,17 +142,17 @@ blargg_err_t KssEmu::mLoad(DataReader &in) {
 
   m_setChannelsNumber(OSCS_NUM);
 
-  return m_setupBuffer(CLOCK_RATE);
+  return mSetupBuffer(CLOCK_RATE);
 }
 
-void KssEmu::m_updateEq(BlipEq const &eq) {
+void KssEmu::mUpdateEq(BlipEq const &eq) {
   ay.setTrebleEq(eq);
   scc.treble_eq(eq);
   if (sn)
     sn->setTrebleEq(eq);
 }
 
-void KssEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
+void KssEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
   int i2 = i - ay.OSCS_NUM;
   if (i2 >= 0)
     scc.osc_output(i2, center);
@@ -164,13 +164,13 @@ void KssEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffe
 
 // Emulation
 
-void KssEmu::m_setTempo(double t) {
+void KssEmu::mSetTempo(double t) {
   blip_time_t period = (header_.device_flags & 0x40 ? CLOCK_RATE / 50 : CLOCK_RATE / 60);
   play_period = blip_time_t(period / t);
 }
 
-blargg_err_t KssEmu::m_startTrack(int track) {
-  RETURN_ERR(ClassicEmu::m_startTrack(track));
+blargg_err_t KssEmu::mStartTrack(int track) {
+  RETURN_ERR(ClassicEmu::mStartTrack(track));
 
   memset(ram, 0xC9, 0x4000);
   memset(ram + 0x4000, 0, sizeof ram - 0x4000);
@@ -337,7 +337,7 @@ int kss_cpu_in(KssCpu *, cpu_time_t, unsigned addr) {
 
 // Emulation
 
-blargg_err_t KssEmu::m_runClocks(blip_time_t &duration, int) {
+blargg_err_t KssEmu::mRunClocks(blip_time_t &duration, int) {
   while (time() < duration) {
     blip_time_t end = min(duration, next_play);
     cpu::run(min(duration, next_play));

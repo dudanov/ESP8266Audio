@@ -52,12 +52,12 @@ class SpcEmu : public MusicEmu {
  protected:
   blargg_err_t mLoad(uint8_t const *, long) override;
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
-  blargg_err_t m_setSampleRate(long) override;
-  blargg_err_t m_startTrack(int) override;
-  blargg_err_t m_play(long, sample_t *) override;
+  blargg_err_t mSetSampleRate(long) override;
+  blargg_err_t mStartTrack(int) override;
+  blargg_err_t mPlay(long, sample_t *) override;
   blargg_err_t m_skip(long) override;
-  void m_muteChannels(int) override;
-  void m_setTempo(double) override;
+  void mMuteChannel(int) override;
+  void mSetTempo(double) override;
   void m_setAccuracy(bool) override;
 
   // Pointer to file data
@@ -87,7 +87,7 @@ class RsnEmu : public SpcEmu {
 
  protected:
   blargg_err_t mGetTrackInfo(track_info_t *, int) const override;
-  blargg_err_t m_startTrack(int) override;
+  blargg_err_t mStartTrack(int) override;
 
  private:
   blargg_vector<uint8_t> m_rsn;

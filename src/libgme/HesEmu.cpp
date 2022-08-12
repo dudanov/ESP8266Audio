@@ -41,7 +41,7 @@ HesEmu::HesEmu() {
 
   static int const types[HesApu::OSCS_NUM] = {WAVE_TYPE | 0, WAVE_TYPE | 1,  WAVE_TYPE | 2,
                                               WAVE_TYPE | 3, MIXED_TYPE | 0, MIXED_TYPE | 1};
-  m_setChannelsTypes(types);
+  mSetChannelsTypes(types);
   m_setSilenceLookahead(6);
   setGain(1.11);
 }
@@ -168,12 +168,12 @@ blargg_err_t HesEmu::mLoad(DataReader &in) {
 
   apu.volume(m_getGain());
 
-  return m_setupBuffer(7159091);
+  return mSetupBuffer(7159091);
 }
 
-void HesEmu::m_updateEq(BlipEq const &eq) { apu.treble_eq(eq); }
+void HesEmu::mUpdateEq(BlipEq const &eq) { apu.treble_eq(eq); }
 
-void HesEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
+void HesEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
   apu.osc_output(i, center, left, right);
 }
 
@@ -181,14 +181,14 @@ void HesEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffe
 
 void HesEmu::recalc_timer_load() { timer.load = timer.raw_load * timer_base + 1; }
 
-void HesEmu::m_setTempo(double t) {
+void HesEmu::mSetTempo(double t) {
   play_period = hes_time_t(period_60hz / t);
   timer_base = int(1024 / t);
   recalc_timer_load();
 }
 
-blargg_err_t HesEmu::m_startTrack(int track) {
-  RETURN_ERR(ClassicEmu::m_startTrack(track));
+blargg_err_t HesEmu::mStartTrack(int track) {
+  RETURN_ERR(ClassicEmu::mStartTrack(track));
 
   memset(ram, 0, sizeof ram);  // some HES music relies on zero fill
   memset(sgx, 0, sizeof sgx);
@@ -458,7 +458,7 @@ static void adjTime(blargg_long &time, hes_time_t delta) {
   }
 }
 
-blargg_err_t HesEmu::m_runClocks(blip_time_t &duration_, int) {
+blargg_err_t HesEmu::mRunClocks(blip_time_t &duration_, int) {
   blip_time_t const duration = duration_;  // cache
 
   if (cpu::run(duration))

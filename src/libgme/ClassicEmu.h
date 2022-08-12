@@ -11,38 +11,38 @@ class ClassicEmu : public MusicEmu {
   ClassicEmu();
   ~ClassicEmu();
   void setBuffer(MultiBuffer *pbuf) {
-    assert(this->m_buf == nullptr && pbuf != nullptr);
-    this->m_buf = pbuf;
+    assert(this->mBuf == nullptr && pbuf != nullptr);
+    this->mBuf = pbuf;
   }
   blargg_err_t setMultiChannel(bool is_enabled) override;
 
  protected:
   // Services
   enum { WAVE_TYPE = 0x100, NOISE_TYPE = 0x200, MIXED_TYPE = WAVE_TYPE | NOISE_TYPE };
-  void m_setChannelsTypes(int const *t) { this->m_channelTypes = t; }
-  blargg_err_t m_setupBuffer(long clock_rate);
-  long m_getClockRate() const { return this->m_clockRate; }
-  void m_changeClockRate(long);  // experimental
-  int m_getChannelType(int idx) const { return (this->m_channelTypes != nullptr) ? this->m_channelTypes[idx] : 0; }
+  void mSetChannelsTypes(const int *t) { this->mChannelTypes = t; }
+  int mGetChannelType(int idx) const { return (this->mChannelTypes != nullptr) ? this->mChannelTypes[idx] : 0; }
+  long mGetClockRate() const { return this->mClockRate; }
+  void mChangeClockRate(long);  // experimental
+  blargg_err_t mSetupBuffer(long clock_rate);
 
   // Overridable
-  virtual void m_setChannel(int index, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) = 0;
-  virtual void m_updateEq(BlipEq const &) = 0;
-  virtual blargg_err_t m_startTrack(int track) override;
-  virtual blargg_err_t m_runClocks(blip_time_t &time_io, int msec) = 0;
+  virtual void mSetChannel(int index, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) = 0;
+  virtual void mUpdateEq(BlipEq const &) = 0;
+  virtual blargg_err_t mStartTrack(int track) override;
+  virtual blargg_err_t mRunClocks(blip_time_t &time_io, int msec) = 0;
 
  protected:
-  blargg_err_t m_setSampleRate(long sample_rate) override;
-  void m_muteChannels(int) override;
-  void m_setEqualizer(equalizer_t const &) override;
-  blargg_err_t m_play(long, sample_t *) override;
+  blargg_err_t mSetSampleRate(long sample_rate) override;
+  void mMuteChannel(int) override;
+  void mSetEqualizer(equalizer_t const &) override;
+  blargg_err_t mPlay(long, sample_t *) override;
 
  private:
-  MultiBuffer *m_buf;
-  MultiBuffer *m_stereoBuf;  // NULL if using custom buffer
-  long m_clockRate;
-  unsigned m_bufChangedNum;
-  int const *m_channelTypes;
+  MultiBuffer *mBuf;
+  MultiBuffer *mStereoBuf;  // NULL if using custom buffer
+  long mClockRate;
+  unsigned mBufChangedNum;
+  const int *mChannelTypes;
 };
 
 // ROM data handler, used by several ClassicEmu derivitives. Loads file data

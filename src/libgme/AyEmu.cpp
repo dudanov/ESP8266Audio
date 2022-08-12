@@ -41,7 +41,7 @@ AyEmu::AyEmu() {
 
   m_setChannelsNames(CHANNELS_NAMES);
 
-  m_setChannelsTypes(CHANNELS_TYPES);
+  mSetChannelsTypes(CHANNELS_TYPES);
   m_setSilenceLookahead(6);
 }
 
@@ -124,12 +124,12 @@ blargg_err_t AyEmu::mLoad(uint8_t const *in, long size) {
   m_setChannelsNumber(OSCS_NUM);
   apu.SetVolume(m_getGain());
 
-  return m_setupBuffer(CLK_SPECTRUM);
+  return mSetupBuffer(CLK_SPECTRUM);
 }
 
-void AyEmu::m_updateEq(BlipEq const &eq) { apu.setTrebleEq(eq); }
+void AyEmu::mUpdateEq(BlipEq const &eq) { apu.setTrebleEq(eq); }
 
-void AyEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) {
+void AyEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) {
   if (i >= AyApu::OSCS_NUM)
     beeper_output = center;
   else
@@ -138,10 +138,10 @@ void AyEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 
 // Emulation
 
-void AyEmu::m_setTempo(double t) { play_period = blip_time_t(m_getClockRate() / 50 / t); }
+void AyEmu::mSetTempo(double t) { play_period = blip_time_t(mGetClockRate() / 50 / t); }
 
-blargg_err_t AyEmu::m_startTrack(int track) {
-  RETURN_ERR(ClassicEmu::m_startTrack(track));
+blargg_err_t AyEmu::mStartTrack(int track) {
+  RETURN_ERR(ClassicEmu::mStartTrack(track));
 
   memset(mem.ram + 0x0000, 0xC9, 0x100);  // fill RST vectors with RET
   memset(mem.ram + 0x0100, 0xFF, 0x4000 - 0x100);
@@ -244,7 +244,7 @@ blargg_err_t AyEmu::m_startTrack(int track) {
   next_play = play_period;
 
   // start at spectrum speed
-  m_changeClockRate(CLK_SPECTRUM);
+  mChangeClockRate(CLK_SPECTRUM);
   setTempo(m_getTempo());
 
   spectrum_mode = false;
@@ -297,7 +297,7 @@ void AyEmu::cpu_out_misc(cpu_time_t time, unsigned addr, int data) {
 enable_cpc:
   if (!cpc_mode) {
     cpc_mode = true;
-    m_changeClockRate(CLK_CPC);
+    mChangeClockRate(CLK_CPC);
     setTempo(m_getTempo());
   }
 }
@@ -329,7 +329,7 @@ int ay_cpu_in(AyCpu *, unsigned addr) {
   return 0xFF;
 }
 
-blargg_err_t AyEmu::m_runClocks(blip_time_t &duration, int) {
+blargg_err_t AyEmu::mRunClocks(blip_time_t &duration, int) {
   SetTime(0);
   if (!(spectrum_mode | cpc_mode))
     duration /= 2;  // until mode is set, leave room for halved clock rate

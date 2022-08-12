@@ -72,7 +72,7 @@ MusicEmu::~MusicEmu() { delete m_effectsBuffer; }
 
 blargg_err_t MusicEmu::setSampleRate(long rate) {
   require(!this->getSampleRate());  // sample rate can't be changed once set
-  RETURN_ERR(this->m_setSampleRate(rate));
+  RETURN_ERR(this->mSetSampleRate(rate));
   RETURN_ERR(this->m_samplesBuffer.resize(BUF_SIZE));
   this->m_sampleRate = rate;
   return 0;
@@ -83,9 +83,9 @@ void MusicEmu::m_preLoad() {
   GmeFile::m_preLoad();
 }
 
-void MusicEmu::set_equalizer(equalizer_t const &eq) {
+void MusicEmu::SetEqualizer(equalizer_t const &eq) {
   this->m_equalizer = eq;
-  this->m_setEqualizer(eq);
+  this->mSetEqualizer(eq);
 }
 
 blargg_err_t MusicEmu::setMultiChannel(bool) {
@@ -112,7 +112,7 @@ void MusicEmu::muteChannel(int idx, bool mute) {
 void MusicEmu::muteChannels(int mask) {
   require(this->getSampleRate());  // sample rate must be set first
   this->m_muteMask = mask;
-  this->m_muteChannels(mask);
+  this->mMuteChannel(mask);
 }
 
 void MusicEmu::setTempo(double t) {
@@ -124,7 +124,7 @@ void MusicEmu::setTempo(double t) {
   if (t > max)
     t = max;
   this->m_tempo = t;
-  this->m_setTempo(t);
+  this->mSetTempo(t);
 }
 
 void MusicEmu::m_postLoad() {
@@ -138,7 +138,7 @@ blargg_err_t MusicEmu::startTrack(int track) {
   int remapped = track;
   RETURN_ERR(remapTrack(&remapped));
   this->m_currentTrack = track;
-  RETURN_ERR(this->m_startTrack(remapped));
+  RETURN_ERR(this->mStartTrack(remapped));
 
   this->m_emuTrackEnded = false;
   this->m_trackEnded = false;
@@ -216,14 +216,14 @@ blargg_err_t MusicEmu::m_skip(long count) {
   static const long THRESHOLD = 30000;
   if (count > THRESHOLD) {
     int saved_mute = this->m_muteMask;
-    this->m_muteChannels(~0);
+    this->mMuteChannel(~0);
 
     while (count > THRESHOLD / 2 && !this->m_emuTrackEnded) {
-      RETURN_ERR(this->m_play(BUF_SIZE, this->m_samplesBuffer.begin()));
+      RETURN_ERR(this->mPlay(BUF_SIZE, this->m_samplesBuffer.begin()));
       count -= BUF_SIZE;
     }
 
-    this->m_muteChannels(saved_mute);
+    this->mMuteChannel(saved_mute);
   }
 
   while (count && !this->m_emuTrackEnded) {
@@ -231,7 +231,7 @@ blargg_err_t MusicEmu::m_skip(long count) {
     if (n > count)
       n = count;
     count -= n;
-    RETURN_ERR(this->m_play(n, this->m_samplesBuffer.begin()));
+    RETURN_ERR(this->mPlay(n, this->m_samplesBuffer.begin()));
   }
   return 0;
 }
@@ -271,7 +271,7 @@ void MusicEmu::m_emuPlay(long count, sample_t *out) {
   check(this->m_currentTrack >= 0);
   this->m_emuTime += count;
   if (this->m_currentTrack >= 0 && !this->m_emuTrackEnded)
-    this->m_endTrackIfError(this->m_play(count, out));
+    this->m_endTrackIfError(this->mPlay(count, out));
   else
     memset(out, 0, count * sizeof(*out));
 }
@@ -368,5 +368,5 @@ blargg_err_t MusicEmu::play(long out_count, sample_t *out) {
 
 // GmeInfo
 
-blargg_err_t GmeInfo::m_startTrack(int) { return "Use full emulator for playback"; }
-blargg_err_t GmeInfo::m_play(long, sample_t *) { return "Use full emulator for playback"; }
+blargg_err_t GmeInfo::mStartTrack(int) { return "Use full emulator for playback"; }
+blargg_err_t GmeInfo::mPlay(long, sample_t *) { return "Use full emulator for playback"; }

@@ -55,20 +55,20 @@ class NsfEmu : private NesCpu, public ClassicEmu {
  protected:
   /* GmeFile methods */
 
-  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
-  blargg_err_t mLoad(DataReader &) override;
   void mUnload() override;
+  blargg_err_t mLoad(DataReader &) override;
+  blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
 
   /* MusicEmu methods */
 
-  blargg_err_t m_startTrack(int) override;
-  void m_setTempo(double) override;
+  blargg_err_t mStartTrack(int) override;
+  void mSetTempo(double) override;
 
   /* ClassicEmu methods */
 
-  blargg_err_t m_runClocks(blip_time_t &, int) override;
-  void m_setChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
-  void m_updateEq(const BlipEq &) override;
+  blargg_err_t mRunClocks(blip_time_t &, int) override;
+  void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
+  void mUpdateEq(const BlipEq &) override;
 
  protected:
   static const size_t BANKS_NUM = 8;
@@ -92,9 +92,9 @@ class NsfEmu : private NesCpu, public ClassicEmu {
 
  private:
   friend class NesCpu;
-  uint8_t m_cpuRead(nes_addr_t);
-  void m_cpuWrite(nes_addr_t, uint8_t);
-  void m_cpuWriteMisc(nes_addr_t, uint8_t);
+  uint8_t mCpuRead(nes_addr_t);
+  void mCpuWrite(nes_addr_t, uint8_t);
+  void mCpuWriteMisc(nes_addr_t, uint8_t);
   static const nes_addr_t BADOP_ADDR = BANK_SELECT_ADDR;
 
   static int pcmRead(void *, nes_addr_t);
@@ -107,7 +107,7 @@ class NsfEmu : private NesCpu, public ClassicEmu {
   // Header of current opened file
   Header m_header;
 
-  blargg_err_t m_initSound();
+  blargg_err_t mInitSound();
 
   static const nes_addr_t SRAM_ADDR = 0x6000;
   std::array<uint8_t, 8192> m_sram;

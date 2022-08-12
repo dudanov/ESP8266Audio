@@ -372,16 +372,16 @@ int gme_type_multitrack(gme_type_t t) { return t->track_count != 1; }
 int gme_multi_channel(MusicEmu const *me) { return me->getMultiChannel(); }
 
 void gme_set_equalizer(MusicEmu *me, gme_equalizer_t const *eq) {
-  MusicEmu::equalizer_t e = me->equalizer();
+  MusicEmu::equalizer_t e = me->GetEqualizer();
   e.treble = eq->treble;
   e.bass = eq->bass;
-  me->set_equalizer(e);
+  me->SetEqualizer(e);
 }
 
 void gme_equalizer(MusicEmu const *me, gme_equalizer_t *out) {
   gme_equalizer_t e = gme_equalizer_t();  // Default-init all fields to 0.0f
-  e.treble = me->equalizer().treble;
-  e.bass = me->equalizer().bass;
+  e.treble = me->GetEqualizer().treble;
+  e.bass = me->GetEqualizer().bass;
   *out = e;
 }
 

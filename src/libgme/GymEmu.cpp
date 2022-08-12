@@ -143,7 +143,7 @@ extern gme_type_t const gme_gym_type = &gme_gym_type_;
 
 // Setup
 
-blargg_err_t GymEmu::m_setSampleRate(long sample_rate) {
+blargg_err_t GymEmu::mSetSampleRate(long sample_rate) {
   BlipEq eq(-32, 8000, sample_rate);
   apu.setTrebleEq(eq);
   dac_synth.setTrebleEq(eq);
@@ -161,7 +161,7 @@ blargg_err_t GymEmu::m_setSampleRate(long sample_rate) {
   return 0;
 }
 
-void GymEmu::m_setTempo(double t) {
+void GymEmu::mSetTempo(double t) {
   if (t < MIN_TEMPO) {
     setTempo(MIN_TEMPO);
     return;
@@ -173,8 +173,8 @@ void GymEmu::m_setTempo(double t) {
   }
 }
 
-void GymEmu::m_muteChannels(int mask) {
-  MusicEmu::m_muteChannels(mask);
+void GymEmu::mMuteChannel(int mask) {
+  MusicEmu::mMuteChannel(mask);
   fm.mute_voices(mask);
   dac_muted = (mask & 0x40) != 0;
   apu.setOutput((mask & 0x80) ? 0 : &blip_buf);
@@ -200,8 +200,8 @@ blargg_err_t GymEmu::mLoad(uint8_t const *in, long size) {
 
 // Emulation
 
-blargg_err_t GymEmu::m_startTrack(int track) {
-  RETURN_ERR(MusicEmu::m_startTrack(track));
+blargg_err_t GymEmu::mStartTrack(int track) {
+  RETURN_ERR(MusicEmu::mStartTrack(track));
 
   pos = data;
   loop_remain = get_le32(header_.loop_start);
@@ -323,7 +323,7 @@ int GymEmu::m_playFrame(blip_time_t blip_time, int sample_count, sample_t *buf) 
   return sample_count;
 }
 
-blargg_err_t GymEmu::m_play(long count, sample_t *out) {
+blargg_err_t GymEmu::mPlay(long count, sample_t *out) {
   DualResampler::dualPlay(count, out, blip_buf);
   return 0;
 }

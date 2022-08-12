@@ -32,13 +32,13 @@ GbsEmu::GbsEmu() {
   m_setChannelsNames(names);
 
   static int const types[GbApu::OSC_NUM] = {WAVE_TYPE | 1, WAVE_TYPE | 2, WAVE_TYPE | 0, MIXED_TYPE | 0};
-  m_setChannelsTypes(types);
+  mSetChannelsTypes(types);
 
   m_setSilenceLookahead(6);
   m_setMaxInitSilence(21);
   setGain(1.2);
 
-  set_equalizer(make_equalizer(-1.0, 120));
+  SetEqualizer(make_equalizer(-1.0, 120));
 }
 
 GbsEmu::~GbsEmu() {}
@@ -111,12 +111,12 @@ blargg_err_t GbsEmu::mLoad(DataReader &in) {
 
   m_apu.setVolume(m_getGain());
 
-  return m_setupBuffer(4194304);
+  return mSetupBuffer(4194304);
 }
 
-void GbsEmu::m_updateEq(BlipEq const &eq) { m_apu.setTrebleEq(eq); }
+void GbsEmu::mUpdateEq(BlipEq const &eq) { m_apu.setTrebleEq(eq); }
 
-void GbsEmu::m_setChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) { m_apu.setOscOutput(i, c, l, r); }
+void GbsEmu::mSetChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) { m_apu.setOscOutput(i, c, l, r); }
 
 // Emulation
 
@@ -164,13 +164,13 @@ void GbsEmu::m_cpuJsr(gb_addr_t addr) {
   cpu_write(--cpu::r.sp, IDLE_ADDR & 0xFF);
 }
 
-void GbsEmu::m_setTempo(double t) {
+void GbsEmu::mSetTempo(double t) {
   m_apu.setTempo(t);
   m_updateTimer();
 }
 
-blargg_err_t GbsEmu::m_startTrack(int track) {
-  RETURN_ERR(ClassicEmu::m_startTrack(track));
+blargg_err_t GbsEmu::mStartTrack(int track) {
+  RETURN_ERR(ClassicEmu::mStartTrack(track));
 
   std::fill_n(m_ram.begin(), 0x4000, 0x00);
   std::fill_n(m_ram.begin() + 0x4000, 0x1F00, 0xFF);
@@ -205,7 +205,7 @@ blargg_err_t GbsEmu::m_startTrack(int track) {
   return 0;
 }
 
-blargg_err_t GbsEmu::m_runClocks(blip_time_t &duration, int) {
+blargg_err_t GbsEmu::mRunClocks(blip_time_t &duration, int) {
   m_cpuTime = 0;
   while (m_cpuTime < duration) {
     long count = duration - m_cpuTime;

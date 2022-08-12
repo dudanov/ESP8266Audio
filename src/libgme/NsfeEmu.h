@@ -66,7 +66,7 @@ class NsfeEmu : public NsfEmu {
  protected:
   blargg_err_t mLoad(DataReader &) override;
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
-  blargg_err_t m_startTrack(int) override;
+  blargg_err_t mStartTrack(int) override;
   void mUnload() override;
   void m_clearPlaylist() override;
 

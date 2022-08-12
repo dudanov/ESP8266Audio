@@ -40,7 +40,7 @@ SapEmu::SapEmu() {
       WAVE_TYPE | 1, WAVE_TYPE | 2, WAVE_TYPE | 3, WAVE_TYPE | 0,
       WAVE_TYPE | 5, WAVE_TYPE | 6, WAVE_TYPE | 7, WAVE_TYPE | 4,
   };
-  m_setChannelsTypes(types);
+  mSetChannelsTypes(types);
   m_setSilenceLookahead(6);
 }
 
@@ -221,12 +221,12 @@ blargg_err_t SapEmu::mLoad(uint8_t const *in, long size) {
   m_setChannelsNumber(SapApu::OSCS_NUM << info.stereo);
   apu_impl.volume(m_getGain());
 
-  return m_setupBuffer(1773447);
+  return mSetupBuffer(1773447);
 }
 
-void SapEmu::m_updateEq(BlipEq const &eq) { apu_impl.synth.setTrebleEq(eq); }
+void SapEmu::mUpdateEq(BlipEq const &eq) { apu_impl.synth.setTrebleEq(eq); }
 
-void SapEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
+void SapEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
   int i2 = i - SapApu::OSCS_NUM;
   if (i2 >= 0)
     apu2.osc_output(i2, right);
@@ -236,7 +236,7 @@ void SapEmu::m_setChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffe
 
 // Emulation
 
-void SapEmu::m_setTempo(double t) { scanline_period = sap_time_t(base_scanline_period / t); }
+void SapEmu::mSetTempo(double t) { scanline_period = sap_time_t(base_scanline_period / t); }
 
 inline sap_time_t SapEmu::play_period() const { return info.fastplay * scanline_period; }
 
@@ -276,8 +276,8 @@ inline void SapEmu::call_init(int track) {
   }
 }
 
-blargg_err_t SapEmu::m_startTrack(int track) {
-  RETURN_ERR(ClassicEmu::m_startTrack(track));
+blargg_err_t SapEmu::mStartTrack(int track) {
+  RETURN_ERR(ClassicEmu::mStartTrack(track));
 
   memset(&mem, 0, sizeof mem);
 
@@ -348,7 +348,7 @@ inline void SapEmu::call_play() {
   }
 }
 
-blargg_err_t SapEmu::m_runClocks(blip_time_t &duration, int) {
+blargg_err_t SapEmu::mRunClocks(blip_time_t &duration, int) {
   set_time(0);
   while (time() < duration) {
     if (cpu::run(duration) || r.pc > idle_addr)

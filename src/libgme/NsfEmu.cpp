@@ -48,7 +48,7 @@ NsfEmu::NsfEmu() {
   this->m_setType(gme_nsf_type);
   this->m_setSilenceLookahead(6);
   this->m_apu.SetDmcReader(pcmRead, this);
-  MusicEmu::set_equalizer(nes_eq);
+  MusicEmu::SetEqualizer(nes_eq);
   setGain(1.4);
   std::fill(this->m_unMappedCode.begin(), this->m_unMappedCode.end(), NesCpu::BAD_OPCODE);
 }
@@ -118,7 +118,7 @@ struct NsfFile : GmeInfo {
 
 // Setup
 
-void NsfEmu::m_setTempo(double t) {
+void NsfEmu::mSetTempo(double t) {
   uint16_t playback_rate = get_le16(this->m_header.ntsc_speed);
   uint16_t standard_rate = 0x411A;
   this->m_clockRate = 1789772.72727f;
@@ -140,7 +140,7 @@ void NsfEmu::m_setTempo(double t) {
   this->m_apu.SetTempo(t);
 }
 
-blargg_err_t NsfEmu::m_initSound() {
+blargg_err_t NsfEmu::mInitSound() {
   if (this->m_header.chip_flags & ~(NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
     this->m_setWarning("Uses unsupported audio expansion hardware");
 
@@ -157,7 +157,7 @@ blargg_err_t NsfEmu::m_initSound() {
                               MIXED_TYPE | 1, WAVE_TYPE | 3,  WAVE_TYPE | 4,  WAVE_TYPE | 5,
                               WAVE_TYPE | 6,  WAVE_TYPE | 7,  WAVE_TYPE | 8,  WAVE_TYPE | 9,
                               WAVE_TYPE | 10, WAVE_TYPE | 11, WAVE_TYPE | 12, WAVE_TYPE | 13};
-  this->m_setChannelsTypes(types);  // common to all sound chip configurations
+  this->mSetChannelsTypes(types);  // common to all sound chip configurations
 
   double adjusted_gain = this->m_getGain();
 
@@ -234,7 +234,7 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
     this->m_setWarning("Unknown file version");
 
   // sound and memory
-  blargg_err_t err = this->m_initSound();
+  blargg_err_t err = this->mInitSound();
   if (err)
     return err;
 
@@ -281,10 +281,10 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
 
   setTempo(this->m_getTempo());
 
-  return this->m_setupBuffer((long) (this->m_clockRate + 0.5));
+  return this->mSetupBuffer((long) (this->m_clockRate + 0.5));
 }
 
-void NsfEmu::m_updateEq(BlipEq const &eq) {
+void NsfEmu::mUpdateEq(BlipEq const &eq) {
   this->m_apu.SetTrebleEq(eq);
 
 #if !NSF_EMU_APU_ONLY
@@ -299,7 +299,7 @@ void NsfEmu::m_updateEq(BlipEq const &eq) {
 #endif
 }
 
-void NsfEmu::m_setChannel(int i, BlipBuffer *buf, BlipBuffer *, BlipBuffer *) {
+void NsfEmu::mSetChannel(int i, BlipBuffer *buf, BlipBuffer *, BlipBuffer *) {
   if (i < NesApu::OSCS_NUM) {
     this->m_apu.SetOscOutput(i, buf);
     return;
@@ -336,7 +336,7 @@ void NsfEmu::m_setChannel(int i, BlipBuffer *buf, BlipBuffer *, BlipBuffer *) {
 
 // see nes_cpu_io.h for read/write functions
 
-void NsfEmu::m_cpuWriteMisc(nes_addr_t addr, uint8_t data) {
+void NsfEmu::mCpuWriteMisc(nes_addr_t addr, uint8_t data) {
 #if !NSF_EMU_APU_ONLY
   {
     if (namco) {
@@ -395,8 +395,8 @@ void NsfEmu::m_cpuWriteMisc(nes_addr_t addr, uint8_t data) {
 #endif
 }
 
-blargg_err_t NsfEmu::m_startTrack(int track) {
-  RETURN_ERR(ClassicEmu::m_startTrack(track));
+blargg_err_t NsfEmu::mStartTrack(int track) {
+  RETURN_ERR(ClassicEmu::mStartTrack(track));
 
   std::fill(this->m_lowMem.begin(), this->m_lowMem.end(), 0);
   std::fill(this->m_sram.begin(), this->m_sram.end(), 0);
@@ -404,7 +404,7 @@ blargg_err_t NsfEmu::m_startTrack(int track) {
   cpu::reset(this->m_unMappedCode.data());  // also maps lowMem
   cpu::mapCode(SRAM_ADDR, this->m_sram.size(), this->m_sram.data());
   for (size_t i = 0; i < BANKS_NUM; ++i)
-    this->m_cpuWrite(BANK_SELECT_ADDR + i, this->m_initBanks[i]);
+    this->mCpuWrite(BANK_SELECT_ADDR + i, this->m_initBanks[i]);
 
   this->m_apu.Reset(this->m_palMode, (this->m_header.speed_flags & 0x20) ? 0x3F : 0);
   this->m_apu.WriteRegister(0, 0x4015, 0x0F);
@@ -435,7 +435,7 @@ blargg_err_t NsfEmu::m_startTrack(int track) {
   return 0;
 }
 
-blargg_err_t NsfEmu::m_runClocks(blip_time_t &duration, int) {
+blargg_err_t NsfEmu::mRunClocks(blip_time_t &duration, int) {
   setTime(0);
   while (time() < duration) {
     nes_time_t end = std::min((blip_time_t) this->m_nextPlay, duration);

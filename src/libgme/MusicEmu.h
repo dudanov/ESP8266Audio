@@ -119,20 +119,18 @@ struct MusicEmu : public GmeFile {
   // See gme.h for definition of struct gme_equalizer_t.
   typedef gme_equalizer_t equalizer_t;
 
-  // Current frequency equalizater parameters
-  equalizer_t const &equalizer() const { return this->m_equalizer; }
-
   // Set frequency equalizer parameters
-  void set_equalizer(equalizer_t const &);
+  void SetEqualizer(const equalizer_t &);
+  // Current frequency equalizater parameters
+  const equalizer_t &GetEqualizer() const { return this->m_equalizer; }
 
   // Construct equalizer of given treble/bass settings
-  static const equalizer_t make_equalizer(double treble, double bass) {
-    const MusicEmu::equalizer_t e = {treble, bass, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    return e;
+  static equalizer_t make_equalizer(double treble, double bass) {
+    return {treble, bass, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   }
 
   // Equalizer settings for TV speaker
-  static equalizer_t const tv_eq;
+  static const equalizer_t tv_eq;
 
  public:
   MusicEmu();
@@ -153,13 +151,13 @@ struct MusicEmu : public GmeFile {
   void m_remuteChannels() { this->muteChannels(this->m_muteMask); }
   blargg_err_t m_setMultiChannel(bool is_enabled);
 
-  virtual blargg_err_t m_setSampleRate(long) = 0;
-  virtual void m_setEqualizer(equalizer_t const &) {}
+  virtual blargg_err_t mSetSampleRate(long) = 0;
+  virtual void mSetEqualizer(equalizer_t const &) {}
   virtual void m_setAccuracy(bool) {}
-  virtual void m_muteChannels(int) {}
-  virtual void m_setTempo(double t) { this->m_tempo = t; }
-  virtual blargg_err_t m_startTrack(int) { return 0; }  // tempo is set before this
-  virtual blargg_err_t m_play(long, sample_t *) = 0;
+  virtual void mMuteChannel(int) {}
+  virtual void mSetTempo(double t) { this->m_tempo = t; }
+  virtual blargg_err_t mStartTrack(int) { return 0; }  // tempo is set before this
+  virtual blargg_err_t mPlay(long, sample_t *) = 0;
   virtual blargg_err_t m_skip(long);
 
  protected:
@@ -231,13 +229,13 @@ struct MusicEmu : public GmeFile {
 
 // base class for info-only derivations
 struct GmeInfo : MusicEmu {
-  virtual blargg_err_t m_setSampleRate(long) override { return 0; };
-  virtual void m_setEqualizer(equalizer_t const &) override { check(false); };
+  virtual blargg_err_t mSetSampleRate(long) override { return 0; };
+  virtual void mSetEqualizer(equalizer_t const &) override { check(false); };
   virtual void m_setAccuracy(bool) override { check(false); };
-  virtual void m_muteChannels(int) override { check(false); };
-  virtual void m_setTempo(double) override { check(false); };
-  virtual blargg_err_t m_startTrack(int);
-  virtual blargg_err_t m_play(long, sample_t *) override;
+  virtual void mMuteChannel(int) override { check(false); };
+  virtual void mSetTempo(double) override { check(false); };
+  virtual blargg_err_t mStartTrack(int);
+  virtual blargg_err_t mPlay(long, sample_t *) override;
   virtual void m_preLoad() override { GmeFile::m_preLoad(); }    // skip MusicEmu;
   virtual void m_postLoad() override { GmeFile::m_postLoad(); }  // skip MusicEmu;
 };

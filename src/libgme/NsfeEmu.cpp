@@ -307,7 +307,7 @@ void NsfeEmu::m_clearPlaylist() {
   NsfEmu::m_clearPlaylist();
 }
 
-blargg_err_t NsfeEmu::m_startTrack(int track) { return NsfEmu::m_startTrack(info.remap_track(track)); }
+blargg_err_t NsfeEmu::mStartTrack(int track) { return NsfEmu::mStartTrack(info.remap_track(track)); }
 
 }  // namespace nes
 }  // namespace emu
