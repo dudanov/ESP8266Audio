@@ -38,35 +38,35 @@ GymEmu::~GymEmu() {}
 
 // Track info
 
-static void get_gym_info(GymEmu::header_t const &h, long length, track_info_t *out) {
-  if (!memcmp(h.tag, "GYMX", 4)) {
-    length = length * 50 / 3;  // 1000 / 60
-    long loop = get_le32(h.loop_start);
-    if (loop) {
-      out->intro_length = loop * 50 / 3;
-      out->loop_length = length - out->intro_length;
-    } else {
-      out->length = length;
-      out->intro_length = length;  // make it clear that track is no longer than length
-      out->loop_length = 0;
-    }
-
-    // more stupidity where the field should have been left
-    if (strcmp(h.song, "Unknown Song"))
-      GME_COPY_FIELD(h, out, song);
-
-    if (strcmp(h.game, "Unknown Game"))
-      GME_COPY_FIELD(h, out, game);
-
-    if (strcmp(h.copyright, "Unknown Publisher"))
-      GME_COPY_FIELD(h, out, copyright);
-
-    if (strcmp(h.dumper, "Unknown Person"))
-      GME_COPY_FIELD(h, out, dumper);
-
-    if (strcmp(h.comment, "Header added by YMAMP"))
-      GME_COPY_FIELD(h, out, comment);
+static void get_gym_info(const GymEmu::header_t &h, long length, track_info_t *out) {
+  if (memcmp(h.tag, "GYMX", 4))
+    return;
+  length = length * 50 / 3;  // 1000 / 60
+  long loop = get_le32(h.loop_start);
+  if (loop) {
+    out->intro_length = loop * 50 / 3;
+    out->loop_length = length - out->intro_length;
+  } else {
+    out->length = length;
+    out->intro_length = length;  // make it clear that track is no longer than length
+    out->loop_length = 0;
   }
+
+  // more stupidity where the field should have been left
+  if (strcmp(h.song, "Unknown Song"))
+    GME_COPY_FIELD(h, out, song);
+
+  if (strcmp(h.game, "Unknown Game"))
+    GME_COPY_FIELD(h, out, game);
+
+  if (strcmp(h.copyright, "Unknown Publisher"))
+    GME_COPY_FIELD(h, out, copyright);
+
+  if (strcmp(h.dumper, "Unknown Person"))
+    GME_COPY_FIELD(h, out, dumper);
+
+  if (strcmp(h.comment, "Header added by YMAMP"))
+    GME_COPY_FIELD(h, out, comment);
 }
 
 blargg_err_t GymEmu::mGetTrackInfo(track_info_t *out, int) const {
@@ -81,12 +81,10 @@ static long gym_track_length(uint8_t const *p, uint8_t const *end) {
       case 0:
         time++;
         break;
-
       case 1:
       case 2:
         p += 2;
         break;
-
       case 3:
         p += 1;
         break;
@@ -97,7 +95,7 @@ static long gym_track_length(uint8_t const *p, uint8_t const *end) {
 
 long GymEmu::track_length() const { return gym_track_length(data, data_end); }
 
-static blargg_err_t check_header(uint8_t const *in, long size, int *data_offset = 0) {
+static blargg_err_t check_header(const uint8_t *in, long size, int *data_offset = nullptr) {
   if (size < 4)
     return gme_wrong_file_type;
 
@@ -117,12 +115,11 @@ static blargg_err_t check_header(uint8_t const *in, long size, int *data_offset 
   return 0;
 }
 
-struct Gym_File : GmeInfo {
-  uint8_t const *file_begin;
-  uint8_t const *file_end;
+struct GymFile : GmeInfo {
+  GymFile() { m_setType(gme_gym_type); }
+  const uint8_t *file_begin;
+  const uint8_t *file_end;
   int data_offset;
-
-  Gym_File() { m_setType(gme_gym_type); }
 
   blargg_err_t mLoadMem(uint8_t const *in, long size) override {
     file_begin = in;
@@ -133,13 +130,13 @@ struct Gym_File : GmeInfo {
 
   blargg_err_t mGetTrackInfo(track_info_t *out, int) const override {
     long length = gym_track_length(&file_begin[data_offset], file_end);
-    get_gym_info(*(GymEmu::header_t const *) file_begin, length, out);
+    get_gym_info(*(const GymEmu::header_t *) file_begin, length, out);
     return 0;
   }
 };
 
 static MusicEmu *new_gym_emu() { return BLARGG_NEW GymEmu; }
-static MusicEmu *new_gym_file() { return BLARGG_NEW Gym_File; }
+static MusicEmu *new_gym_file() { return BLARGG_NEW GymFile; }
 
 static gme_type_t_ const gme_gym_type_ = {"Sega Genesis", 1, &new_gym_emu, &new_gym_file, "GYM", 0};
 extern gme_type_t const gme_gym_type = &gme_gym_type_;
