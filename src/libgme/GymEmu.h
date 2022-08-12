@@ -47,7 +47,7 @@ class GymEmu : public MusicEmu, private DualResampler {
   ~GymEmu();
 
  protected:
-  blargg_err_t mLoadMem(uint8_t const *, long) override;
+  blargg_err_t mLoad(uint8_t const *, long) override;
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
   blargg_err_t m_setSampleRate(long sample_rate) override;
   blargg_err_t m_startTrack(int) override;

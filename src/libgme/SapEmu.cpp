@@ -190,7 +190,7 @@ struct SapFile : GmeInfo {
   SapFile() { m_setType(gme_sap_type); }
   static MusicEmu *createSapFile() { return BLARGG_NEW SapFile; }
 
-  blargg_err_t mLoadMem(uint8_t const *begin, long size) {
+  blargg_err_t mLoad(uint8_t const *begin, long size) {
     RETURN_ERR(parse_info(begin, size, &info));
     m_setTrackNum(info.track_count);
     return 0;
@@ -204,7 +204,7 @@ struct SapFile : GmeInfo {
 
 // Setup
 
-blargg_err_t SapEmu::mLoadMem(uint8_t const *in, long size) {
+blargg_err_t SapEmu::mLoad(uint8_t const *in, long size) {
   file_end = in + size;
 
   info.warning = 0;

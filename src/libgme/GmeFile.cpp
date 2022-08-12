@@ -44,8 +44,8 @@ GmeFile::~GmeFile() {
     this->m_userCleanupFn(this->m_userData);
 }
 
-blargg_err_t GmeFile::mLoadMem(const uint8_t *data, long size) {
-  require(data != this->m_fileData.begin());  // mLoadMem() or mLoad() must be overridden
+blargg_err_t GmeFile::mLoad(const uint8_t *data, long size) {
+  require(data != this->m_fileData.begin());  // mLoad() or mLoad() must be overridden
   MemFileReader in(data, size);
   return this->mLoad(in);
 }
@@ -53,7 +53,7 @@ blargg_err_t GmeFile::mLoadMem(const uint8_t *data, long size) {
 blargg_err_t GmeFile::mLoad(DataReader &in) {
   RETURN_ERR(this->m_fileData.resize(in.remain()));
   RETURN_ERR(in.read(this->m_fileData.begin(), this->m_fileData.size()));
-  return this->mLoadMem(this->m_fileData.begin(), this->m_fileData.size());
+  return this->mLoad(this->m_fileData.begin(), this->m_fileData.size());
 }
 
 // public load functions call this at beginning
@@ -77,7 +77,7 @@ blargg_err_t GmeFile::m_postLoad(blargg_err_t err) {
 
 blargg_err_t GmeFile::loadMem(void const *in, long size) {
   this->m_preLoad();
-  return this->m_postLoad(this->mLoadMem((uint8_t const *) in, size));
+  return this->m_postLoad(this->mLoad((uint8_t const *) in, size));
 }
 
 blargg_err_t GmeFile::load(DataReader &in) {

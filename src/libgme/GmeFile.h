@@ -114,11 +114,11 @@ struct GmeFile {
   void m_setType(gme_type_t t) { m_type = t; }
   blargg_err_t m_loadRemaining(void const *header, long header_size, DataReader &remaining);
 
-  // Overridable
-  virtual void mUnload();                   // called before loading file and if loading fails
-  virtual blargg_err_t mLoad(DataReader &);  // default loads then calls mLoadMem()
-  virtual blargg_err_t mLoadMem(uint8_t const *data,
-                                 long size);  // use data in memory
+  // Unload file. Called before loading file and if loading fails.
+  virtual void mUnload();
+  // Load GmeFile from DataReader
+  virtual blargg_err_t mLoad(DataReader &);                       // default loads then calls mLoad()
+  virtual blargg_err_t mLoad(uint8_t const *data, long size);  // use data in memory
   virtual blargg_err_t mGetTrackInfo(track_info_t *out, int track) const = 0;
   virtual void m_preLoad();
   virtual void m_postLoad();

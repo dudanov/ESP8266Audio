@@ -285,7 +285,7 @@ void VgmEmu::m_muteChannels(int mask) {
   }
 }
 
-blargg_err_t VgmEmu::mLoadMem(uint8_t const *new_data, long new_size) {
+blargg_err_t VgmEmu::mLoad(uint8_t const *new_data, long new_size) {
   assert(offsetof(header_t, unused2[8]) == HEADER_SIZE);
 
   if (new_size <= HEADER_SIZE)

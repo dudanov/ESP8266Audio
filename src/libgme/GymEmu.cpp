@@ -121,7 +121,7 @@ struct GymFile : GmeInfo {
   const uint8_t *file_end;
   int data_offset;
 
-  blargg_err_t mLoadMem(uint8_t const *in, long size) override {
+  blargg_err_t mLoad(uint8_t const *in, long size) override {
     file_begin = in;
     file_end = in + size;
     data_offset = 0;
@@ -180,7 +180,7 @@ void GymEmu::m_muteChannels(int mask) {
   apu.setOutput((mask & 0x80) ? 0 : &blip_buf);
 }
 
-blargg_err_t GymEmu::mLoadMem(uint8_t const *in, long size) {
+blargg_err_t GymEmu::mLoad(uint8_t const *in, long size) {
   assert(offsetof(header_t, packed[4]) == header_size);
   int offset = 0;
   RETURN_ERR(check_header(in, size, &offset));

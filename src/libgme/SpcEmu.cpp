@@ -365,7 +365,7 @@ void SpcEmu::m_muteChannels(int m) {
   m_apu.mute_voices(m);
 }
 
-blargg_err_t SpcEmu::mLoadMem(uint8_t const *in, long size) {
+blargg_err_t SpcEmu::mLoad(uint8_t const *in, long size) {
   assert(offsetof(header_t, unused2[46]) == HEADER_SIZE);
   m_fileData = in;
   m_fileSize = size;
