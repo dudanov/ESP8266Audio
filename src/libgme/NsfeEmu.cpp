@@ -275,14 +275,14 @@ struct NsfeFile : GmeInfo {
   NsfeFile() { m_setType(gme_nsfe_type); }
   static MusicEmu *createNsfeFile() { return BLARGG_NEW NsfeFile; }
 
-  blargg_err_t mLoad(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) override {
     RETURN_ERR(info.load(in, 0));
     info.disable_playlist(false);
     m_setTrackNum(info.info.track_count);
     return 0;
   }
 
-  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const { return info.track_info_(out, track); }
+  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override { return info.track_info_(out, track); }
 };
 
 blargg_err_t NsfeEmu::mLoad(DataReader &in) {

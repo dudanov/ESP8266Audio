@@ -98,7 +98,7 @@ struct NsfFile : GmeInfo {
   NsfEmu::Header hdr;
   NsfFile() { this->m_setType(gme_nsf_type); }
   static MusicEmu *createNsfFile() { return BLARGG_NEW NsfFile; }
-  blargg_err_t mLoad(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) override {
     blargg_err_t err = in.read(&hdr, NsfEmu::HEADER_SIZE);
     if (err)
       return (err == in.eof_error ? gme_wrong_file_type : err);
@@ -110,7 +110,7 @@ struct NsfFile : GmeInfo {
     return check_nsf_header(&hdr);
   }
 
-  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const override {
     copy_nsf_fields(hdr, out);
     return 0;
   }

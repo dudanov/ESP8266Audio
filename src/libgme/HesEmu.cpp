@@ -108,7 +108,7 @@ struct HesFile : GmeInfo {
   HesFile() { m_setType(gme_hes_type); }
   static MusicEmu *createHesFile() { return BLARGG_NEW HesFile; }
 
-  blargg_err_t mLoad(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) override {
     assert(offsetof(header_t, fields) == HesEmu::HEADER_SIZE + 0x20);
     blargg_err_t err = in.read(&h, sizeof h);
     if (err)
@@ -116,7 +116,7 @@ struct HesFile : GmeInfo {
     return check_hes_header(&h);
   }
 
-  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const override {
     copy_hes_fields(h.fields, out);
     return 0;
   }

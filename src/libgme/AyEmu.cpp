@@ -98,13 +98,13 @@ struct AyFile : GmeInfo {
   AyFile() { m_setType(gme_ay_type); }
   static MusicEmu *createAyFile() { return BLARGG_NEW AyFile; }
 
-  blargg_err_t mLoadMem(uint8_t const *begin, long size) {
+  blargg_err_t mLoadMem(uint8_t const *begin, long size) override {
     RETURN_ERR(parse_header(begin, size, &file));
     m_setTrackNum(file.header->max_track + 1);
     return 0;
   }
 
-  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override {
     copy_ay_fields(file, out, track);
     return 0;
   }

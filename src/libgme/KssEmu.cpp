@@ -81,14 +81,14 @@ struct KssFile : GmeInfo {
   KssFile() { m_setType(gme_kss_type); }
   static MusicEmu *createKssFile() { return BLARGG_NEW KssFile; }
 
-  blargg_err_t mLoad(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) override {
     blargg_err_t err = in.read(&header_, KssEmu::HEADER_SIZE);
     if (err)
       return (err == in.eof_error ? gme_wrong_file_type : err);
     return check_kss_header(&header_);
   }
 
-  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const override {
     copy_kss_fields(header_, out);
     return 0;
   }

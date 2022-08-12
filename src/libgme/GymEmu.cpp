@@ -124,14 +124,14 @@ struct Gym_File : GmeInfo {
 
   Gym_File() { m_setType(gme_gym_type); }
 
-  blargg_err_t mLoadMem(uint8_t const *in, long size) {
+  blargg_err_t mLoadMem(uint8_t const *in, long size) override {
     file_begin = in;
     file_end = in + size;
     data_offset = 0;
     return check_header(in, size, &data_offset);
   }
 
-  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const override {
     long length = gym_track_length(&file_begin[data_offset], file_end);
     get_gym_info(*(GymEmu::header_t const *) file_begin, length, out);
     return 0;

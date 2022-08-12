@@ -181,7 +181,7 @@ struct VgmFile : GmeInfo {
     return 0;
   }
 
-  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const override {
     get_vgm_length(h, out);
     if (gd3.size())
       parse_gd3(gd3.begin(), gd3.end(), out);

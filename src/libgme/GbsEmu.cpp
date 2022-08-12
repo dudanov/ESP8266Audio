@@ -73,7 +73,7 @@ struct GbsFile : GmeInfo {
   GbsFile() { m_setType(gme_gbs_type); }
   static MusicEmu *createGbsFile() { return BLARGG_NEW GbsFile; }
 
-  blargg_err_t mLoad(DataReader &in) {
+  blargg_err_t mLoad(DataReader &in) override {
     blargg_err_t err = in.read(&h, GbsEmu::HEADER_SIZE);
     if (err)
       return (err == in.eof_error ? gme_wrong_file_type : err);
@@ -82,7 +82,7 @@ struct GbsFile : GmeInfo {
     return check_gbs_header(&h);
   }
 
-  blargg_err_t mGetTrackInfo(track_info_t *out, int) const {
+  blargg_err_t mGetTrackInfo(track_info_t *out, int) const override {
     copy_gbs_fields(h, out);
     return 0;
   }
