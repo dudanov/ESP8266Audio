@@ -346,7 +346,7 @@ struct RsnFile : SpcFile {
 // Setup
 
 blargg_err_t SpcEmu::mSetSampleRate(long sample_rate) {
-  RETURN_ERR(m_apu.init());
+  RETURN_ERR(mApu.init());
   SetAccuracy(false);
   if (sample_rate != NATIVE_SAMPLE_RATE) {
     RETURN_ERR(m_resampler.setBufferSize(NATIVE_SAMPLE_RATE / 20 * 2));
@@ -362,7 +362,7 @@ void SpcEmu::mSetAccuracy(bool b) {
 
 void SpcEmu::mMuteChannel(int m) {
   MusicEmu::mMuteChannel(m);
-  m_apu.mute_voices(m);
+  mApu.mute_voices(m);
 }
 
 blargg_err_t SpcEmu::mLoad(uint8_t const *in, long size) {
@@ -379,15 +379,15 @@ blargg_err_t SpcEmu::mLoad(uint8_t const *in, long size) {
 
 // Emulation
 
-void SpcEmu::mSetTempo(double t) { m_apu.set_tempo((int) (t * m_apu.TEMPO_UNIT)); }
+void SpcEmu::mSetTempo(double t) { mApu.set_tempo((int) (t * mApu.TEMPO_UNIT)); }
 
 blargg_err_t SpcEmu::mStartTrack(int track) {
   RETURN_ERR(MusicEmu::mStartTrack(track));
   m_resampler.clear();
   m_filter.Clear();
-  RETURN_ERR(m_apu.load_spc(m_fileData, m_fileSize));
+  RETURN_ERR(mApu.load_spc(m_fileData, m_fileSize));
   m_filter.SetGain((int) (mGetGain() * SpcFilter::GAIN_UNIT));
-  m_apu.clear_echo();
+  mApu.clear_echo();
   track_info_t spc_info;
   RETURN_ERR(mGetTrackInfo(&spc_info, track));
 
@@ -398,7 +398,7 @@ blargg_err_t SpcEmu::mStartTrack(int track) {
 }
 
 blargg_err_t SpcEmu::m_playAndFilter(long count, sample_t out[]) {
-  RETURN_ERR(m_apu.Play(count, out));
+  RETURN_ERR(mApu.Play(count, out));
   m_filter.Run(out, count);
   return 0;
 }
@@ -412,7 +412,7 @@ blargg_err_t SpcEmu::mSkipSamples(long count) {
   // TODO: shouldn't skip be adjusted for the 64 samples read afterwards?
 
   if (count > 0) {
-    RETURN_ERR(m_apu.SkipSamples(count));
+    RETURN_ERR(mApu.SkipSamples(count));
     m_filter.Clear();
   }
 

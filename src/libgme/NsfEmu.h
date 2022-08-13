@@ -50,7 +50,7 @@ class NsfEmu : private NesCpu, public ClassicEmu {
  public:
   NsfEmu();
   ~NsfEmu();
-  // NesApu *apu_() { return &this->m_apu; }
+  // NesApu *apu_() { return &this->mApu; }
 
  protected:
   /* GmeFile methods */
@@ -103,7 +103,7 @@ class NsfEmu : private NesCpu, public ClassicEmu {
   class NesVrc6Apu *vrc6;
   class NesFme7Apu *fme7;
   // NES APU instance
-  NesApu m_apu;
+  NesApu mApu;
   // Header of current opened file
   Header m_header;
 

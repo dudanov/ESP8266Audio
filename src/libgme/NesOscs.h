@@ -30,8 +30,8 @@ struct NesOsc {
 
  protected:
   NesOsc() = delete;
-  NesOsc(NesApu *apu) : m_apu(apu) {}
-  NesApu *m_apu;
+  NesOsc(NesApu *apu) : mApu(apu) {}
+  NesApu *mApu;
   void m_reset() {
     this->delay = 0;
     this->lastAmp = 0;

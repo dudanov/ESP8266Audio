@@ -152,7 +152,7 @@ inline nes_time_t NesDmc::next_read_time() const {
   if (lengthCounter == 0)
     return NesApu::NO_IRQ;  // not reading
 
-  return m_apu->m_lastDmcTime + delay + long(bits_remain - 1) * period;
+  return mApu->m_lastDmcTime + delay + long(bits_remain - 1) * period;
 }
 
 }  // namespace nes

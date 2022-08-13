@@ -258,11 +258,11 @@ void NesDmc::reset() {
 void NesDmc::recalc_irq() {
   nes_time_t irq = NesApu::NO_IRQ;
   if (this->irq_enabled && this->lengthCounter)
-    irq = this->m_apu->m_lastDmcTime + this->delay +
+    irq = this->mApu->m_lastDmcTime + this->delay +
           ((this->lengthCounter - 1) * 8 + this->bits_remain - 1) * nes_time_t(this->period) + 1;
   if (irq != this->m_nextIrq) {
     this->m_nextIrq = irq;
-    this->m_apu->mIrqChanged();
+    this->mApu->mIrqChanged();
   }
 }
 
@@ -302,7 +302,7 @@ inline uint16_t NesDmc::mGetPeriod(uint8_t data) const {
       {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54},  // NTSC
       {398, 354, 316, 298, 276, 236, 210, 198, 176, 148, 132, 118, 98, 78, 66, 50},   // PAL
   };
-  return pgm_read_word(&PERIOD_TABLE[this->m_apu->IsPAL()][data & 15]);
+  return pgm_read_word(&PERIOD_TABLE[this->mApu->IsPAL()][data & 15]);
 }
 
 inline void NesDmc::mWriteR0(uint8_t data) {
@@ -355,10 +355,10 @@ void NesDmc::fill_buffer() {
       if (this->regs[0] & LOOP_FLAG) {
         this->reload_sample();
       } else {
-        this->m_apu->m_oscEnables &= ~0x10;
+        this->mApu->m_oscEnables &= ~0x10;
         this->m_irqFlag = this->irq_enabled;
         this->m_nextIrq = NesApu::NO_IRQ;
-        this->m_apu->mIrqChanged();
+        this->mApu->mIrqChanged();
       }
     }
   }
@@ -419,7 +419,7 @@ inline uint16_t NesNoise::mGetPeriod() const {
       {4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068},  // NTSC
       {4, 8, 14, 30, 60, 88, 118, 148, 188, 236, 354, 472, 708, 944, 1890, 3778},   // PAL
   };
-  return pgm_read_word(&PERIOD_TABLE[this->m_apu->IsPAL()][this->regs[2] & 15]);
+  return pgm_read_word(&PERIOD_TABLE[this->mApu->IsPAL()][this->regs[2] & 15]);
 }
 
 void NesNoise::run(nes_time_t time, nes_time_t end_time) {

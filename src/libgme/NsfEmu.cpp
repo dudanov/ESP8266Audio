@@ -47,7 +47,7 @@ NsfEmu::NsfEmu() {
 
   this->m_setType(gme_nsf_type);
   this->mSetSilenceLookahead(6);
-  this->m_apu.SetDmcReader(pcmRead, this);
+  this->mApu.SetDmcReader(pcmRead, this);
   MusicEmu::SetEqualizer(nes_eq);
   SetGain(1.4);
   std::fill(this->m_unMappedCode.begin(), this->m_unMappedCode.end(), NesCpu::BAD_OPCODE);
@@ -137,7 +137,7 @@ void NsfEmu::mSetTempo(double t) {
   if (playback_rate != standard_rate || t != 1.0)
     this->m_playPeriod = long(playback_rate * this->m_clockRate / (1000000.0 / CLK_DIV * t));
 
-  this->m_apu.SetTempo(t);
+  this->mApu.SetTempo(t);
 }
 
 blargg_err_t NsfEmu::mInitSound() {
@@ -218,7 +218,7 @@ blargg_err_t NsfEmu::mInitSound() {
     fme7->volume(adjusted_gain);
 #endif
 
-  this->m_apu.SetVolume(adjusted_gain);
+  this->mApu.SetVolume(adjusted_gain);
 
   return 0;
 }
@@ -285,7 +285,7 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
 }
 
 void NsfEmu::mUpdateEq(BlipEq const &eq) {
-  this->m_apu.SetTrebleEq(eq);
+  this->mApu.SetTrebleEq(eq);
 
 #if !NSF_EMU_APU_ONLY
   {
@@ -301,7 +301,7 @@ void NsfEmu::mUpdateEq(BlipEq const &eq) {
 
 void NsfEmu::mSetChannel(int i, BlipBuffer *buf, BlipBuffer *, BlipBuffer *) {
   if (i < NesApu::OSCS_NUM) {
-    this->m_apu.SetOscOutput(i, buf);
+    this->mApu.SetOscOutput(i, buf);
     return;
   }
   i -= NesApu::OSCS_NUM;
@@ -406,9 +406,9 @@ blargg_err_t NsfEmu::mStartTrack(int track) {
   for (size_t i = 0; i < BANKS_NUM; ++i)
     this->mCpuWrite(BANK_SELECT_ADDR + i, this->m_initBanks[i]);
 
-  this->m_apu.Reset(this->m_palMode, (this->m_header.speed_flags & 0x20) ? 0x3F : 0);
-  this->m_apu.WriteRegister(0, 0x4015, 0x0F);
-  this->m_apu.WriteRegister(0, 0x4017, (this->m_header.speed_flags & 0x10) ? 0x80 : 0);
+  this->mApu.Reset(this->m_palMode, (this->m_header.speed_flags & 0x20) ? 0x3F : 0);
+  this->mApu.WriteRegister(0, 0x4015, 0x0F);
+  this->mApu.WriteRegister(0, 0x4017, (this->m_header.speed_flags & 0x10) ? 0x80 : 0);
 #if !NSF_EMU_APU_ONLY
   {
     if (namco)
@@ -483,7 +483,7 @@ blargg_err_t NsfEmu::mRunClocks(blip_time_t &duration, int) {
   if (this->m_nextPlay < 0)
     this->m_nextPlay = 0;
 
-  this->m_apu.EndFrame(duration);
+  this->mApu.EndFrame(duration);
 
 #if !NSF_EMU_APU_ONLY
   {

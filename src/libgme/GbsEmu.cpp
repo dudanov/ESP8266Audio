@@ -109,14 +109,14 @@ blargg_err_t GbsEmu::mLoad(DataReader &in) {
 
   mSetChannelsNumber(GbApu::OSC_NUM);
 
-  m_apu.setVolume(mGetGain());
+  mApu.setVolume(mGetGain());
 
   return mSetupBuffer(4194304);
 }
 
-void GbsEmu::mUpdateEq(BlipEq const &eq) { m_apu.setTrebleEq(eq); }
+void GbsEmu::mUpdateEq(BlipEq const &eq) { mApu.setTrebleEq(eq); }
 
-void GbsEmu::mSetChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) { m_apu.setOscOutput(i, c, l, r); }
+void GbsEmu::mSetChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) { mApu.setOscOutput(i, c, l, r); }
 
 // Emulation
 
@@ -165,7 +165,7 @@ void GbsEmu::m_cpuJsr(gb_addr_t addr) {
 }
 
 void GbsEmu::mSetTempo(double t) {
-  m_apu.SetTempo(t);
+  mApu.SetTempo(t);
   m_updateTimer();
 }
 
@@ -177,9 +177,9 @@ blargg_err_t GbsEmu::mStartTrack(int track) {
   std::fill(m_ram.begin() + 0x5F00, m_ram.end(), 0x00);
   m_ram[HI_PAGE] = 0;  // joypad reads back as 0
 
-  m_apu.reset();
+  mApu.reset();
   for (int i = 0; i < (int) sizeof sound_data; i++)
-    m_apu.writeRegister(0, i + GbApu::START_ADDR, sound_data[i]);
+    mApu.writeRegister(0, i + GbApu::START_ADDR, sound_data[i]);
 
   unsigned load_addr = get_le16(m_header.load_addr);
   m_rom.setAddr(load_addr);
@@ -242,7 +242,7 @@ blargg_err_t GbsEmu::mRunClocks(blip_time_t &duration, int) {
   m_nextPlay -= m_cpuTime;
   if (m_nextPlay < 0)  // could go negative if routine is taking too long to return
     m_nextPlay = 0;
-  m_apu.endFrame(m_cpuTime);
+  mApu.endFrame(m_cpuTime);
 
   return 0;
 }

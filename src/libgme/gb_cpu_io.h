@@ -10,7 +10,7 @@ namespace gb {
 int GbsEmu::cpu_read(gb_addr_t addr) {
   int result = *cpu::get_code(addr);
   if (unsigned(addr - GbApu::START_ADDR) < GbApu::REGS_NUM)
-    result = m_apu.readRegister(clock(), addr);
+    result = mApu.readRegister(clock(), addr);
 #ifndef NDEBUG
   else if (unsigned(addr - 0x8000) < 0x2000 || unsigned(addr - 0xE000) < 0x1F00)
     debug_printf("Read from unmapped memory $%.4x\n", (unsigned) addr);
@@ -27,7 +27,7 @@ void GbsEmu::cpu_write(gb_addr_t addr, int data) {
     if ((addr ^ 0xE000) <= 0x1F80 - 1) {
       if (unsigned(addr - GbApu::START_ADDR) < GbApu::REGS_NUM) {
         GME_APU_HOOK(this, addr - GbApu::START_ADDR, data);
-        m_apu.writeRegister(clock(), addr, data);
+        mApu.writeRegister(clock(), addr, data);
       } else if ((addr ^ 0xFF06) < 2)
         m_updateTimer();
       else if (addr == JOYPAD_ADDR)
@@ -54,7 +54,7 @@ void GbsEmu::cpu_write(gb_addr_t addr, int data) {
   { \
     out = READ_PROG(addr); \
     if (unsigned(addr - GbApu::START_ADDR) < GbApu::REGS_NUM) \
-      out = emu->m_apu.readRegister(emu->m_cpuTime - time * CLOCKS_PER_INSTRUCTION, addr); \
+      out = emu->mApu.readRegister(emu->m_cpuTime - time * CLOCKS_PER_INSTRUCTION, addr); \
     else \
       check(out == emu->cpu_read(addr)); \
   }

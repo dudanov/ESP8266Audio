@@ -79,7 +79,7 @@ class GbsEmu : private GbCpu, public ClassicEmu {
   enum { RAM_ADDR = 0xA000 };
   enum { HI_PAGE = 0xFF00 - RAM_ADDR };
   std::array<uint8_t, 0x4000 + 0x2000 + GbCpu::CPU_PADDING> m_ram;
-  GbApu m_apu;
+  GbApu mApu;
 
   int cpu_read(gb_addr_t);
   void cpu_write(gb_addr_t, int);

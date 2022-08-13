@@ -47,7 +47,7 @@ class SpcEmu : public MusicEmu {
   };
 
   // Prevents channels and global volumes from being phase-negated
-  void disableSurround(bool b = true) { m_apu.disableSurround(b); }
+  void disableSurround(bool b = true) { mApu.disableSurround(b); }
 
  protected:
   blargg_err_t mLoad(uint8_t const *, long) override;
@@ -68,7 +68,7 @@ class SpcEmu : public MusicEmu {
  private:
   FirResampler<24> m_resampler;
   SpcFilter m_filter;
-  SnesSpc m_apu;
+  SnesSpc mApu;
 
   blargg_err_t m_playAndFilter(long count, sample_t out[]);
   // Header for currently loaded file
