@@ -69,11 +69,6 @@ static void get_gym_info(const GymEmu::header_t &h, long length, track_info_t *o
     GME_COPY_FIELD(h, out, comment);
 }
 
-blargg_err_t GymEmu::mGetTrackInfo(track_info_t *out, int) const {
-  get_gym_info(header_, track_length(), out);
-  return 0;
-}
-
 static long gym_track_length(uint8_t const *p, uint8_t const *end) {
   long time = 0;
   while (p < end) {
@@ -93,7 +88,10 @@ static long gym_track_length(uint8_t const *p, uint8_t const *end) {
   return time;
 }
 
-long GymEmu::track_length() const { return gym_track_length(data, data_end); }
+blargg_err_t GymEmu::mGetTrackInfo(track_info_t *out, int) const {
+  get_gym_info(header_, gym_track_length(data, data_end), out);
+  return 0;
+}
 
 static blargg_err_t check_header(const uint8_t *in, long size, int *data_offset = nullptr) {
   if (size < 4)
@@ -311,7 +309,7 @@ void GymEmu::parse_frame() {
   prev_dac_count = dac_count;
 }
 
-int GymEmu::m_playFrame(blip_time_t blip_time, int sample_count, sample_t *buf) {
+int GymEmu::mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *buf) {
   if (!IsTrackEnded())
     parse_frame();
 

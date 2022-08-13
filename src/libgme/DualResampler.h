@@ -25,7 +25,7 @@ class DualResampler {
   void dualPlay(long count, dsample_t *out, BlipBuffer &);
 
  protected:
-  virtual int m_playFrame(blip_time_t, int pcm_count, dsample_t *pcm_out) = 0;
+  virtual int mPlayFrame(blip_time_t, int pcm_count, dsample_t *pcm_out) = 0;
 
  private:
   blargg_vector<dsample_t> m_sampleBuf;
@@ -36,5 +36,5 @@ class DualResampler {
 
   FirResampler<12> m_resampler;
   void m_mixSamples(BlipBuffer &, dsample_t *);
-  void m_playFrame(BlipBuffer &, dsample_t *);
+  void mPlayFrame(BlipBuffer &, dsample_t *);
 };

@@ -12,6 +12,8 @@
 
 class GymEmu : public MusicEmu, private DualResampler {
  public:
+  GymEmu();
+  ~GymEmu();
   // GYM file header
   enum { header_size = 428 };
   struct header_t {
@@ -31,21 +33,6 @@ class GymEmu : public MusicEmu, private DualResampler {
 
   static gme_type_t static_type() { return gme_gym_type; }
 
- public:
-  // deprecated
-  using MusicEmu::load;
-  blargg_err_t load(header_t const &h,
-                    DataReader &in)  // use RemainingReader
-  {
-    return m_loadRemaining(&h, sizeof h, in);
-  }
-  enum { gym_rate = 60 };
-  long track_length() const;  // use GetTrackInfo()
-
- public:
-  GymEmu();
-  ~GymEmu();
-
  protected:
   blargg_err_t mLoad(uint8_t const *, long) override;
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
@@ -54,7 +41,7 @@ class GymEmu : public MusicEmu, private DualResampler {
   blargg_err_t mPlay(long count, sample_t *) override;
   void mMuteChannel(int) override;
   void mSetTempo(double) override;
-  int m_playFrame(blip_time_t blip_time, int sample_count, sample_t *buf) override;
+  int mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *buf) override;
 
  private:
   // sequence data begin, loop begin, current position, end

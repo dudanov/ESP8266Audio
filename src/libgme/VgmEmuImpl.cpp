@@ -255,7 +255,7 @@ blip_time_t VgmEmuImpl::run_commands(vgm_time_t end_time) {
   return to_blip_time(end_time);
 }
 
-int VgmEmuImpl::m_playFrame(blip_time_t blip_time, int sample_count, sample_t *buf) {
+int VgmEmuImpl::mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *buf) {
   // to do: timing is working mostly by luck
 
   int min_pairs = sample_count >> 1;
