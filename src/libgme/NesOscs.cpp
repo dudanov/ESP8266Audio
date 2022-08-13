@@ -297,7 +297,7 @@ inline void NesDmc::reload_sample() {
   this->lengthCounter = 16 * this->regs[3] + 1;
 }
 
-inline uint16_t NesDmc::mGetPeriod(int data) const {
+inline uint16_t NesDmc::mGetPeriod(uint8_t data) const {
   static const uint16_t PERIOD_TABLE[][16] PROGMEM = {
       {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54},  // NTSC
       {398, 354, 316, 298, 276, 236, 210, 198, 176, 148, 132, 118, 98, 78, 66, 50},   // PAL
@@ -305,14 +305,14 @@ inline uint16_t NesDmc::mGetPeriod(int data) const {
   return pgm_read_word(&PERIOD_TABLE[this->m_apu->IsPAL()][data & 15]);
 }
 
-inline void NesDmc::mWriteR0(int data) {
+inline void NesDmc::mWriteR0(uint8_t data) {
   this->period = this->mGetPeriod(data);
   this->irq_enabled = (data & 0xC0) == 0x80;  // enabled only if loop disabled
   this->m_irqFlag &= this->irq_enabled;
   this->recalc_irq();
 }
 
-static int sGetDelta(size_t dacNew, size_t dacOld) {
+static uint8_t sGetDelta(uint8_t dacNew, uint8_t dacOld) {
   static const uint8_t DAC_TABLE[] PROGMEM = {
       0,  1,  2,  3,  4,  5,  6,  7,  7,  8,  9,  10, 11, 12, 13, 14, 15, 15, 16, 17, 18, 19, 20, 20, 21, 22,
       23, 24, 24, 25, 26, 27, 27, 28, 29, 30, 31, 31, 32, 33, 33, 34, 35, 36, 36, 37, 38, 38, 39, 40, 41, 41,
@@ -323,9 +323,9 @@ static int sGetDelta(size_t dacNew, size_t dacOld) {
   return pgm_read_byte(&DAC_TABLE[dacNew]) - pgm_read_byte(&DAC_TABLE[dacOld]);
 }
 
-inline void NesDmc::mWriteR1(int data) {
+inline void NesDmc::mWriteR1(uint8_t data) {
   data &= 0x7F;
-  int old = this->dac;
+  uint8_t old = this->dac;
   this->dac = data;
   // adjust lastAmp so that "pop" amplitude will be properly non-linear with respect to change in dac
   if (!this->nonlinear)

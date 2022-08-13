@@ -138,7 +138,7 @@ struct NesDmc : NesOsc {
 
   enum { LOOP_FLAG = 0x40 };
 
-  int dac;
+  uint8_t dac;
 
   nes_time_t m_nextIrq;
   bool irq_enabled;
@@ -161,9 +161,9 @@ struct NesDmc : NesOsc {
   nes_time_t next_read_time() const;
 
  private:
-  uint16_t mGetPeriod(int data) const;
-  void mWriteR0(int data);
-  void mWriteR1(int data);
+  uint16_t mGetPeriod(uint8_t data) const;
+  void mWriteR0(uint8_t data);
+  void mWriteR1(uint8_t data);
 };
 
 }  // namespace nes
