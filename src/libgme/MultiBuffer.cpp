@@ -21,17 +21,17 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 // MonoBuffer
 
-blargg_err_t MonoBuffer::setSampleRate(long rate, int msec) {
+blargg_err_t MonoBuffer::SetSampleRate(long rate, int msec) {
   RETURN_ERR(m_buf.SetSampleRate(rate, msec));
-  return MultiBuffer::setSampleRate(m_buf.GetSampleRate(), m_buf.GetLength());
+  return MultiBuffer::SetSampleRate(m_buf.GetSampleRate(), m_buf.GetLength());
 }
 
 // StereoBuffer
 
-blargg_err_t StereoBuffer::setSampleRate(long rate, int msec) {
+blargg_err_t StereoBuffer::SetSampleRate(long rate, int msec) {
   for (auto &buf : this->m_bufs)
     RETURN_ERR(buf.SetSampleRate(rate, msec));
-  return MultiBuffer::setSampleRate(m_bufs[0].GetSampleRate(), m_bufs[0].GetLength());
+  return MultiBuffer::SetSampleRate(m_bufs[0].GetSampleRate(), m_bufs[0].GetLength());
 }
 
 void StereoBuffer::setClockRate(long rate) {

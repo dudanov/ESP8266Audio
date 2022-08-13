@@ -39,10 +39,10 @@ AyEmu::AyEmu() {
   beeper_output = 0;
   m_setType(gme_ay_type);
 
-  m_setChannelsNames(CHANNELS_NAMES);
+  mSetChannelsNames(CHANNELS_NAMES);
 
   mSetChannelsTypes(CHANNELS_TYPES);
-  m_setSilenceLookahead(6);
+  mSetSilenceLookahead(6);
 }
 
 AyEmu::~AyEmu() {}
@@ -121,8 +121,8 @@ blargg_err_t AyEmu::mLoad(uint8_t const *in, long size) {
   if (file.header->vers > 2)
     m_setWarning("Unknown file version");
 
-  m_setChannelsNumber(OSCS_NUM);
-  apu.SetVolume(m_getGain());
+  mSetChannelsNumber(OSCS_NUM);
+  apu.SetVolume(mGetGain());
 
   return mSetupBuffer(CLK_SPECTRUM);
 }
@@ -245,7 +245,7 @@ blargg_err_t AyEmu::mStartTrack(int track) {
 
   // start at spectrum speed
   mChangeClockRate(CLK_SPECTRUM);
-  setTempo(m_getTempo());
+  SetTempo(mGetTempo());
 
   spectrum_mode = false;
   cpc_mode = false;
@@ -298,7 +298,7 @@ enable_cpc:
   if (!cpc_mode) {
     cpc_mode = true;
     mChangeClockRate(CLK_CPC);
-    setTempo(m_getTempo());
+    SetTempo(mGetTempo());
   }
 }
 

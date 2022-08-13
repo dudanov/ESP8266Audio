@@ -22,23 +22,23 @@ namespace gme {
 namespace emu {
 namespace gb {
 
-GbsEmu::equalizer_t const GbsEmu::handheld_eq = MusicEmu::make_equalizer(-47.0, 2000);
-GbsEmu::equalizer_t const GbsEmu::headphones_eq = MusicEmu::make_equalizer(0.0, 300);
+GbsEmu::equalizer_t const GbsEmu::handheld_eq = MusicEmu::MakeEqualizer(-47.0, 2000);
+GbsEmu::equalizer_t const GbsEmu::headphones_eq = MusicEmu::MakeEqualizer(0.0, 300);
 
 GbsEmu::GbsEmu() {
   m_setType(gme_gbs_type);
 
   static const char *const names[GbApu::OSC_NUM] = {"Square 1", "Square 2", "Wave", "Noise"};
-  m_setChannelsNames(names);
+  mSetChannelsNames(names);
 
   static int const types[GbApu::OSC_NUM] = {WAVE_TYPE | 1, WAVE_TYPE | 2, WAVE_TYPE | 0, MIXED_TYPE | 0};
   mSetChannelsTypes(types);
 
-  m_setSilenceLookahead(6);
-  m_setMaxInitSilence(21);
-  setGain(1.2);
+  mSetSilenceLookahead(6);
+  mSetMaxInitSilence(21);
+  SetGain(1.2);
 
-  SetEqualizer(make_equalizer(-1.0, 120));
+  SetEqualizer(MakeEqualizer(-1.0, 120));
 }
 
 GbsEmu::~GbsEmu() {}
@@ -107,9 +107,9 @@ blargg_err_t GbsEmu::mLoad(DataReader &in) {
   if ((m_header.load_addr[1] | m_header.init_addr[1] | m_header.play_addr[1]) > 0x7F || load_addr < 0x400)
     m_setWarning("Invalid load/init/play address");
 
-  m_setChannelsNumber(GbApu::OSC_NUM);
+  mSetChannelsNumber(GbApu::OSC_NUM);
 
-  m_apu.setVolume(m_getGain());
+  m_apu.setVolume(mGetGain());
 
   return mSetupBuffer(4194304);
 }
@@ -144,8 +144,8 @@ void GbsEmu::m_updateTimer() {
   } else {
     m_playPeriod = 70224;  // 59.73 Hz
   }
-  if (m_getTempo() != 1.0)
-    m_playPeriod = blip_time_t(m_playPeriod / m_getTempo());
+  if (mGetTempo() != 1.0)
+    m_playPeriod = blip_time_t(m_playPeriod / mGetTempo());
 }
 
 static uint8_t const sound_data[GbApu::REGS_NUM] = {0x80, 0xBF, 0x00, 0x00, 0xBF,  // square 1
@@ -165,7 +165,7 @@ void GbsEmu::m_cpuJsr(gb_addr_t addr) {
 }
 
 void GbsEmu::mSetTempo(double t) {
-  m_apu.setTempo(t);
+  m_apu.SetTempo(t);
   m_updateTimer();
 }
 

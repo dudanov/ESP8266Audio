@@ -311,7 +311,7 @@ void SnesSpc::save_extra() {
   assert(out <= &m.extra_buf[EXTRA_SIZE]);
 }
 
-blargg_err_t SnesSpc::play(int count, sample_t *out) {
+blargg_err_t SnesSpc::Play(int count, sample_t *out) {
   require((count & 1) == 0);  // must be even
   if (count) {
     set_output(out, count);
@@ -323,7 +323,7 @@ blargg_err_t SnesSpc::play(int count, sample_t *out) {
   return err;
 }
 
-blargg_err_t SnesSpc::skip(int count) {
+blargg_err_t SnesSpc::SkipSamples(int count) {
 #if SPC_LESS_ACCURATE
   if (count > 2 * SAMPLE_RATE * 2) {
     set_output(0, 0);
@@ -349,7 +349,7 @@ blargg_err_t SnesSpc::skip(int count) {
   }
 #endif
 
-  return play(count, 0);
+  return Play(count, 0);
 }
 
 }  // namespace snes

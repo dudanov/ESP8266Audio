@@ -23,7 +23,7 @@ struct SpcFilter {
   // Sets gain (volume), where GAIN_UNIT is normal. Gains greater than
   // GAIN_UNIT are fine, since output is clamped to 16-bit sample range.
   enum { GAIN_UNIT = 0x100 };
-  void SetGain(int gain) { this->m_gain = gain; }
+  void SetGain(int gain) { this->mGain = gain; }
 
   // Enables/disables filtering (when disabled, gain is still applied)
   void SetEnable(bool enable) { this->m_enabled = enable; }
@@ -38,7 +38,7 @@ struct SpcFilter {
   SpcFilter();
  private:
   enum { GAIN_BITS = 8 };
-  int m_gain;
+  int mGain;
   int m_bass;
   bool m_enabled;
   struct chan_t {

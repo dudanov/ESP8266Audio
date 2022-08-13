@@ -26,15 +26,15 @@ class MultiBuffer {
   virtual const Channel &getChannelBuffers(int index, int type) const = 0;
 
   // See Blip_Buffer.h
-  virtual blargg_err_t setSampleRate(long rate, int msec) {
-    m_sampleRate = rate;
+  virtual blargg_err_t SetSampleRate(long rate, int msec) {
+    mSampleRate = rate;
     m_length = msec;
     return 0;
   }
   virtual void setClockRate(long) = 0;
   virtual void setBassFreq(int) = 0;
   virtual void clear() = 0;
-  long getSampleRate() const { return m_sampleRate; }
+  long GetSampleRate() const { return mSampleRate; }
 
   // Length of buffer, in milliseconds
   int getLength() const { return m_length; }
@@ -63,7 +63,7 @@ class MultiBuffer {
 
   const int m_samplesPerFrame;
   unsigned m_changedChannelsNumber{1};
-  long m_sampleRate{0};
+  long mSampleRate{0};
   int m_length{0};
 };
 
@@ -83,7 +83,7 @@ class MonoBuffer : public MultiBuffer {
     m_chan.right = &m_buf;
   }
   ~MonoBuffer() {}
-  blargg_err_t setSampleRate(long rate, int msec = BLIP_DEFAULT_LENGTH) override;
+  blargg_err_t SetSampleRate(long rate, int msec = BLIP_DEFAULT_LENGTH) override;
   void setClockRate(long rate) override { this->m_buf.SetClockRate(rate); }
   void setBassFreq(int freq) override { this->m_buf.SetBassFrequency(freq); }
   void clear() override { this->m_buf.Clear(); }
@@ -108,7 +108,7 @@ class StereoBuffer : public MultiBuffer {
     m_chan.right = &m_bufs[2];
   }
   ~StereoBuffer() {}
-  blargg_err_t setSampleRate(long, int msec = BLIP_DEFAULT_LENGTH) override;
+  blargg_err_t SetSampleRate(long, int msec = BLIP_DEFAULT_LENGTH) override;
   void setClockRate(long) override;
   void setBassFreq(int) override;
   void clear() override;
@@ -143,8 +143,8 @@ class SilentBuffer : public MultiBuffer {
     m_chan.center = 0;
     m_chan.right = 0;
   }
-  blargg_err_t setSampleRate(long rate, int msec = BLIP_DEFAULT_LENGTH) {
-    return MultiBuffer::setSampleRate(rate, msec);
+  blargg_err_t SetSampleRate(long rate, int msec = BLIP_DEFAULT_LENGTH) {
+    return MultiBuffer::SetSampleRate(rate, msec);
   }
   void setClockRate(long) override {}
   void setBassFreq(int) override {}

@@ -39,7 +39,7 @@ GbApu::GbApu() {
     ptr += 5;
   }
 
-  this->setTempo(1.0);
+  this->SetTempo(1.0);
   this->setVolume(1.0);
   this->reset();
 }
@@ -69,7 +69,7 @@ void GbApu::m_updateVolume() {
   this->m_otherSynth.setVolume(vol);
 }
 
-void GbApu::setTempo(double t) {
+void GbApu::SetTempo(double t) {
   this->m_framePeriod = 4194304 / 256;  // 256 Hz
   if (t != 1.0)
     this->m_framePeriod = blip_time_t(this->m_framePeriod / t);

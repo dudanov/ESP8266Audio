@@ -25,7 +25,7 @@ class VgmEmu : public VgmEmuImpl {
   bool is_classic_emu() const { return !uses_fm; }
   static MusicEmu *createVgmEmu() { return BLARGG_NEW VgmEmu; }
 
-  blargg_err_t setMultiChannel(bool is_enabled) override;
+  blargg_err_t SetMultiChannel(bool is_enabled) override;
 
   // Disable running FM chips at higher than normal rate. Will result in
   // slightly more aliasing of high notes.
@@ -66,7 +66,7 @@ class VgmEmu : public VgmEmuImpl {
   {
     return m_loadRemaining(&h, sizeof h, in);
   }
-  uint8_t const *gd3_data(int *size_out = 0) const;  // use getTrackInfo()
+  uint8_t const *gd3_data(int *size_out = 0) const;  // use GetTrackInfo()
 
  public:
   VgmEmu();

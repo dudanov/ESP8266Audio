@@ -25,7 +25,7 @@ void SpcFilter::Clear() { memset(this->m_ch, 0, sizeof(this->m_ch)); }
 
 SpcFilter::SpcFilter() {
   this->m_enabled = true;
-  this->m_gain = GAIN_UNIT;
+  this->mGain = GAIN_UNIT;
   this->m_bass = BASS_NORM;
   this->Clear();
 }
@@ -51,7 +51,7 @@ void SpcFilter::Run(sample_t *io, int count) {
         int delta = f - pp1;
         pp1 = f;
         int s = sum >> (GAIN_BITS + 2);
-        sum += (delta * this->m_gain) - (sum >> bass);
+        sum += (delta * this->mGain) - (sum >> bass);
 
         // Clamp to 16 bits
         if ((short) s != s)
@@ -65,10 +65,10 @@ void SpcFilter::Run(sample_t *io, int count) {
       c->sum = sum;
       ++io;
     } while (c != m_ch);
-  } else if (this->m_gain != GAIN_UNIT) {
+  } else if (this->mGain != GAIN_UNIT) {
     short *const end = io + count;
     while (io < end) {
-      int s = (*io * this->m_gain) >> GAIN_BITS;
+      int s = (*io * this->mGain) >> GAIN_BITS;
       if ((short) s != s)
         s = (s >> 31) ^ 0x7FFF;
       *io++ = (short) s;

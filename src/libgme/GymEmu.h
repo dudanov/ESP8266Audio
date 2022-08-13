@@ -40,7 +40,7 @@ class GymEmu : public MusicEmu, private DualResampler {
     return m_loadRemaining(&h, sizeof h, in);
   }
   enum { gym_rate = 60 };
-  long track_length() const;  // use getTrackInfo()
+  long track_length() const;  // use GetTrackInfo()
 
  public:
   GymEmu();

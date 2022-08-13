@@ -37,13 +37,13 @@ HesEmu::HesEmu() {
   m_setType(gme_hes_type);
 
   static const char *const names[HesApu::OSCS_NUM] = {"Wave 1", "Wave 2", "Wave 3", "Wave 4", "Multi 1", "Multi 2"};
-  m_setChannelsNames(names);
+  mSetChannelsNames(names);
 
   static int const types[HesApu::OSCS_NUM] = {WAVE_TYPE | 0, WAVE_TYPE | 1,  WAVE_TYPE | 2,
                                               WAVE_TYPE | 3, MIXED_TYPE | 0, MIXED_TYPE | 1};
   mSetChannelsTypes(types);
-  m_setSilenceLookahead(6);
-  setGain(1.11);
+  mSetSilenceLookahead(6);
+  SetGain(1.11);
 }
 
 HesEmu::~HesEmu() {}
@@ -164,9 +164,9 @@ blargg_err_t HesEmu::mLoad(DataReader &in) {
 
   rom.setAddr(addr);
 
-  m_setChannelsNumber(apu.OSCS_NUM);
+  mSetChannelsNumber(apu.OSCS_NUM);
 
-  apu.volume(m_getGain());
+  apu.volume(mGetGain());
 
   return mSetupBuffer(7159091);
 }

@@ -10,11 +10,11 @@ class ClassicEmu : public MusicEmu {
  public:
   ClassicEmu();
   ~ClassicEmu();
-  void setBuffer(MultiBuffer *pbuf) {
+  void SetBuffer(MultiBuffer *pbuf) {
     assert(this->mBuf == nullptr && pbuf != nullptr);
     this->mBuf = pbuf;
   }
-  blargg_err_t setMultiChannel(bool is_enabled) override;
+  blargg_err_t SetMultiChannel(bool is_enabled) override;
 
  protected:
   // Services

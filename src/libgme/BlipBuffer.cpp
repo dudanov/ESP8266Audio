@@ -30,7 +30,7 @@ BlipBuffer::BlipBuffer() {
   this->m_offset = 0;
   this->m_buffer = 0;
   this->m_bufferSize = 0;
-  this->m_sampleRate = 0;
+  this->mSampleRate = 0;
   this->m_readerAccum = 0;
   this->m_bassShift = 0;
   this->m_clockRate = 0;
@@ -99,7 +99,7 @@ BlipBuffer::blargg_err_t BlipBuffer::SetSampleRate(long rate, int ms) {
   assert(this->m_bufferSize != SILENT_BUF_SIZE);
 
   // update things based on the sample rate
-  this->m_sampleRate = rate;
+  this->mSampleRate = rate;
   this->m_length = new_size * 1000 / rate - 1;
   if (ms)
     assert(this->m_length == ms);  // ensure length is same as that passed in
@@ -112,9 +112,9 @@ BlipBuffer::blargg_err_t BlipBuffer::SetSampleRate(long rate, int ms) {
 }
 
 blip_resampled_time_t BlipBuffer::clockRateFactor(long rate) const {
-  double ratio = (double) this->m_sampleRate / rate;
+  double ratio = (double) this->mSampleRate / rate;
   blip_long_t factor = (blip_long_t) floor(ratio * (1L << BLIP_BUFFER_ACCURACY) + 0.5);
-  assert(factor > 0 || !this->m_sampleRate);  // fails if clock/output ratio is too large
+  assert(factor > 0 || !this->mSampleRate);  // fails if clock/output ratio is too large
   return (blip_resampled_time_t) factor;
 }
 
@@ -123,7 +123,7 @@ void BlipBuffer::SetBassFrequency(int freq) {
   int shift = 31;
   if (freq > 0) {
     shift = 13;
-    long f = (freq << 16) / this->m_sampleRate;
+    long f = (freq << 16) / this->mSampleRate;
     while ((f >>= 1) && --shift) {
     }
   }
@@ -224,7 +224,7 @@ void BlipEq::m_generate(float *out, int count) const {
   // lower cutoff freq for narrow kernels with their wider transition band
   // (8 points->1.49, 16 points->1.15)
   double oversample = BLIP_RES * 2.25 / count + 0.85;
-  double half_rate = this->m_sampleRate * 0.5;
+  double half_rate = this->mSampleRate * 0.5;
   if (this->m_cutoffFreq)
     oversample = half_rate / this->m_cutoffFreq;
   double cutoff = this->m_rolloffFreq * oversample / half_rate;

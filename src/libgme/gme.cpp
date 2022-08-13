@@ -217,22 +217,22 @@ MusicEmu *m_gmeInternalNewEmu(gme_type_t type, int rate, bool multi_channel) {
     MusicEmu *me = type->new_emu();
     if (me) {
 #if !GME_DISABLE_STEREO_DEPTH
-      me->setMultiChannel(multi_channel);
+      me->SetMultiChannel(multi_channel);
 
       if (type->flags_ & 1) {
-        if (me->getMultiChannel()) {
-          me->m_effectsBuffer = BLARGG_NEW EffectsBuffer(8);
+        if (me->IsMultiChannel()) {
+          me->mEffectsBuffer = BLARGG_NEW EffectsBuffer(8);
         } else {
-          me->m_effectsBuffer = BLARGG_NEW EffectsBuffer(1);
+          me->mEffectsBuffer = BLARGG_NEW EffectsBuffer(1);
         }
-        if (me->m_effectsBuffer)
-          me->setBuffer(me->m_effectsBuffer);
+        if (me->mEffectsBuffer)
+          me->SetBuffer(me->mEffectsBuffer);
       }
 
-      if (!(type->flags_ & 1) || me->m_effectsBuffer)
+      if (!(type->flags_ & 1) || me->mEffectsBuffer)
 #endif
       {
-        if (!me->setSampleRate(rate)) {
+        if (!me->SetSampleRate(rate)) {
           check(me->type() == type);
           return me;
         }
@@ -283,7 +283,7 @@ gme_err_t gme_track_info(MusicEmu const *me, gme_info_t **out, int track) {
   gme_info_t_ *info = BLARGG_NEW gme_info_t_;
   CHECK_ALLOC(info);
 
-  gme_err_t err = me->getTrackInfo(&info->info, track);
+  gme_err_t err = me->GetTrackInfo(&info->info, track);
   if (err) {
     gme_free_info(info);
     return err;
@@ -344,8 +344,8 @@ void gme_free_info(gme_info_t *info) { delete STATIC_CAST(gme_info_t_ *, info); 
 
 void gme_set_stereo_depth(MusicEmu *me, double depth) {
 #if !GME_DISABLE_STEREO_DEPTH
-  if (me->m_effectsBuffer)
-    STATIC_CAST(EffectsBuffer *, me->m_effectsBuffer)->setDepth(depth);
+  if (me->mEffectsBuffer)
+    STATIC_CAST(EffectsBuffer *, me->mEffectsBuffer)->setDepth(depth);
 #endif
 }
 
@@ -353,23 +353,23 @@ void *gme_user_data(MusicEmu const *me) { return me->getUserData(); }
 void gme_set_user_data(MusicEmu *me, void *new_user_data) { me->setUserData(new_user_data); }
 void gme_set_user_cleanup(MusicEmu *me, gme_user_cleanup_t func) { me->setUserCleanupFn(func); }
 
-gme_err_t gme_start_track(MusicEmu *me, int index) { return me->startTrack(index); }
-gme_err_t gme_play(MusicEmu *me, int n, short *p) { return me->play(n, p); }
-void gme_set_fade(MusicEmu *me, int start_msec, int fade_msec) { me->setFade(start_msec, fade_msec); }
-int gme_track_ended(MusicEmu const *me) { return me->isTrackEnded(); }
-int gme_tell(MusicEmu const *me) { return me->tell(); }
-int gme_tell_samples(MusicEmu const *me) { return me->tellSamples(); }
-gme_err_t gme_seek(MusicEmu *me, int msec) { return me->seek(msec); }
-gme_err_t gme_seek_samples(MusicEmu *me, int n) { return me->seekSamples(n); }
-int gme_voice_count(MusicEmu const *me) { return me->getChannelsNum(); }
-void gme_ignore_silence(MusicEmu *me, int disable) { me->setIgnoreSilence(disable != 0); }
-void gme_set_tempo(MusicEmu *me, double t) { me->setTempo(t); }
-void gme_mute_voice(MusicEmu *me, int index, int mute) { me->muteChannel(index, mute != 0); }
-void gme_mute_voices(MusicEmu *me, int mask) { me->muteChannels(mask); }
-void gme_enable_accuracy(MusicEmu *me, int enabled) { me->setAccuracy(enabled); }
+gme_err_t gme_start_track(MusicEmu *me, int index) { return me->StartTrack(index); }
+gme_err_t gme_play(MusicEmu *me, int n, short *p) { return me->Play(n, p); }
+void gme_set_fade(MusicEmu *me, int start_msec, int fade_msec) { me->SetFadeMs(start_msec, fade_msec); }
+int gme_track_ended(MusicEmu const *me) { return me->IsTrackEnded(); }
+int gme_tell(MusicEmu const *me) { return me->TellMs(); }
+int gme_tell_samples(MusicEmu const *me) { return me->TellSamples(); }
+gme_err_t gme_seek(MusicEmu *me, int msec) { return me->SeekMs(msec); }
+gme_err_t gme_seek_samples(MusicEmu *me, int n) { return me->SeekSamples(n); }
+int gme_voice_count(MusicEmu const *me) { return me->GetChannelsNum(); }
+void gme_ignore_silence(MusicEmu *me, int disable) { me->SetIgnoreSilence(disable != 0); }
+void gme_set_tempo(MusicEmu *me, double t) { me->SetTempo(t); }
+void gme_mute_voice(MusicEmu *me, int index, int mute) { me->MuteChannel(index, mute != 0); }
+void gme_mute_voices(MusicEmu *me, int mask) { me->MuteChannels(mask); }
+void gme_enable_accuracy(MusicEmu *me, int enabled) { me->SetAccuracy(enabled); }
 void gme_clear_playlist(MusicEmu *me) { me->clearPlaylist(); }
 int gme_type_multitrack(gme_type_t t) { return t->track_count != 1; }
-int gme_multi_channel(MusicEmu const *me) { return me->getMultiChannel(); }
+int gme_multi_channel(MusicEmu const *me) { return me->IsMultiChannel(); }
 
 void gme_set_equalizer(MusicEmu *me, gme_equalizer_t const *eq) {
   MusicEmu::equalizer_t e = me->GetEqualizer();
@@ -386,8 +386,8 @@ void gme_equalizer(MusicEmu const *me, gme_equalizer_t *out) {
 }
 
 const char *gme_voice_name(MusicEmu const *me, int i) {
-  assert((unsigned) i < (unsigned) me->getChannelsNum());
-  return me->getChannelsNames()[i];
+  assert((unsigned) i < (unsigned) me->GetChannelsNum());
+  return me->GetChannelsNames()[i];
 }
 
 const char *gme_type_system(gme_type_t type) {

@@ -55,10 +55,10 @@ class SpcEmu : public MusicEmu {
   blargg_err_t mSetSampleRate(long) override;
   blargg_err_t mStartTrack(int) override;
   blargg_err_t mPlay(long, sample_t *) override;
-  blargg_err_t m_skip(long) override;
+  blargg_err_t mSkipSamples(long) override;
   void mMuteChannel(int) override;
   void mSetTempo(double) override;
-  void m_setAccuracy(bool) override;
+  void mSetAccuracy(bool) override;
 
   // Pointer to file data
   const uint8_t *m_fileData;

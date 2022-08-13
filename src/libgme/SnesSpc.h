@@ -89,11 +89,11 @@ struct SnesSpc {
 
   // Plays for count samples and write samples to out. Discards samples if out
   // is NULL. Count must be a multiple of 2 since output is stereo.
-  blargg_err_t play(int count, sample_t *out);
+  blargg_err_t Play(int count, sample_t *out);
 
-  // Skips count samples. Several times faster than play() when using fast
+  // Skips count samples. Several times faster than Play() when using fast
   // DSP.
-  blargg_err_t skip(int count);
+  blargg_err_t SkipSamples(int count);
 
   // State save/load (only available with accurate DSP)
 

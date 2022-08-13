@@ -40,7 +40,7 @@ class EffectsBuffer : public MultiBuffer {
 
  public:
   ~EffectsBuffer();
-  blargg_err_t setSampleRate(long samples_per_sec, int msec = BLIP_DEFAULT_LENGTH) override;
+  blargg_err_t SetSampleRate(long samples_per_sec, int msec = BLIP_DEFAULT_LENGTH) override;
   void setClockRate(long) override;
   void setBassFreq(int) override;
   void clear() override;

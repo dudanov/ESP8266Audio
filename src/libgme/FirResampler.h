@@ -83,10 +83,10 @@ class FirResamplerImpl {
 // give better quality and rolloff effectiveness, and take longer to calculate.
 template<int width> class FirResampler : public FirResamplerImpl {
   static_assert(width >= 4 && width % 2 == 0, "FIR width must be even and have 4 or more points");
-  sample_t m_samplesBuffer[MAX_RES][width];
+  sample_t mSamplesBuffer[MAX_RES][width];
 
  public:
-  FirResampler() : FirResamplerImpl(width, m_samplesBuffer[0]) {}
+  FirResampler() : FirResamplerImpl(width, mSamplesBuffer[0]) {}
 
   // Read at most 'num' samples. Returns number of samples actually read.
   int read(sample_t *dst, blargg_long num) {
@@ -94,7 +94,7 @@ template<int width> class FirResampler : public FirResamplerImpl {
     const sample_t *in = this->m_buf.begin();
     sample_t *end_pos = this->m_writePtr;
     blargg_ulong skip = this->m_skipBits >> this->m_impPhase;
-    sample_t const *imp = this->m_samplesBuffer[this->m_impPhase];
+    sample_t const *imp = this->mSamplesBuffer[this->m_impPhase];
     int remain = this->m_res - this->m_impPhase;
     int const step = this->m_step;
 
@@ -140,7 +140,7 @@ template<int width> class FirResampler : public FirResamplerImpl {
           skip >>= 1;
 
           if (!remain) {
-            imp = m_samplesBuffer[0];
+            imp = mSamplesBuffer[0];
             skip = m_skipBits;
             remain = m_res;
           }

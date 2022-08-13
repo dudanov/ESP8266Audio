@@ -72,7 +72,7 @@ EffectsBuffer::EffectsBuffer(int numChannels, bool centerOnly)
 
 EffectsBuffer::~EffectsBuffer() {}
 
-blargg_err_t EffectsBuffer::setSampleRate(long rate, int msec) {
+blargg_err_t EffectsBuffer::SetSampleRate(long rate, int msec) {
   for (int i = 0; i < m_maxChannels; i++) {
     if (!m_echoBuf[i].size()) {
       m_echoBuf[i].resize(ECHO_SIZE);
@@ -89,7 +89,7 @@ blargg_err_t EffectsBuffer::setSampleRate(long rate, int msec) {
   config(m_config);
   clear();
 
-  return MultiBuffer::setSampleRate(m_bufs[0].GetSampleRate(), m_bufs[0].GetLength());
+  return MultiBuffer::SetSampleRate(m_bufs[0].GetSampleRate(), m_bufs[0].GetLength());
 }
 
 void EffectsBuffer::setClockRate(long rate) {
@@ -131,7 +131,7 @@ void EffectsBuffer::config(const config_t &cfg) {
 
   // clear echo and reverb buffers
   // ensure the echo/reverb buffers have already been allocated, so this
-  // method can be called before setSampleRate is called
+  // method can be called before SetSampleRate is called
   if (!m_config.effects_enabled && cfg.effects_enabled && m_echoBuf[0].size()) {
     for (int i = 0; i < m_maxChannels; i++) {
       memset(&m_echoBuf[i][0], 0, ECHO_SIZE * sizeof m_echoBuf[i][0]);
@@ -153,13 +153,13 @@ void EffectsBuffer::config(const config_t &cfg) {
     chans.reverb_level = TO_FIXED(m_config.reverb_level);
     chans.echo_level = TO_FIXED(m_config.echo_level);
 
-    int delay_offset = int(1.0 / 2000 * m_config.delay_variance * getSampleRate());
+    int delay_offset = int(1.0 / 2000 * m_config.delay_variance * GetSampleRate());
 
-    int reverb_sample_delay = int(1.0 / 1000 * m_config.reverb_delay * getSampleRate());
+    int reverb_sample_delay = int(1.0 / 1000 * m_config.reverb_delay * GetSampleRate());
     chans.reverb_delay_l = pin_range(REVERB_SIZE - (reverb_sample_delay - delay_offset) * 2, REVERB_SIZE - 2, 0);
     chans.reverb_delay_r = pin_range(REVERB_SIZE + 1 - (reverb_sample_delay + delay_offset) * 2, REVERB_SIZE - 1, 1);
 
-    int echo_sample_delay = int(1.0 / 1000 * m_config.echo_delay * getSampleRate());
+    int echo_sample_delay = int(1.0 / 1000 * m_config.echo_delay * GetSampleRate());
     chans.echo_delay_l = pin_range(ECHO_SIZE - 1 - (echo_sample_delay - delay_offset), ECHO_SIZE - 1);
     chans.echo_delay_r = pin_range(ECHO_SIZE - 1 - (echo_sample_delay + delay_offset), ECHO_SIZE - 1);
 

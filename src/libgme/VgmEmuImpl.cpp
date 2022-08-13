@@ -114,7 +114,7 @@ blip_time_t VgmEmuImpl::run_commands(vgm_time_t end_time) {
   vgm_time_t vgm_time = this->vgm_time;
   uint8_t const *pos = this->pos;
   if (pos >= data_end) {
-    m_setTrackEnded();
+    mSetTrackEnded();
     if (pos > data_end)
       m_setWarning("Stream lacked end event");
   }

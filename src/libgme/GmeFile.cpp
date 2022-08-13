@@ -57,16 +57,16 @@ blargg_err_t GmeFile::mLoad(DataReader &in) {
 }
 
 // public load functions call this at beginning
-void GmeFile::m_preLoad() { this->mUnload(); }
+void GmeFile::mPreLoad() { this->mUnload(); }
 
-void GmeFile::m_postLoad() {}
+void GmeFile::mPostLoad() {}
 
 // public load functions call this at end
-blargg_err_t GmeFile::m_postLoad(blargg_err_t err) {
+blargg_err_t GmeFile::mPostLoad(blargg_err_t err) {
   if (!this->getTrackCount())
     this->m_setTrackNum(this->type()->track_count);
   if (!err)
-    this->m_postLoad();
+    this->mPostLoad();
   else
     this->mUnload();
 
@@ -76,20 +76,20 @@ blargg_err_t GmeFile::m_postLoad(blargg_err_t err) {
 // Public load functions
 
 blargg_err_t GmeFile::loadMem(void const *in, long size) {
-  this->m_preLoad();
-  return this->m_postLoad(this->mLoad((uint8_t const *) in, size));
+  this->mPreLoad();
+  return this->mPostLoad(this->mLoad((uint8_t const *) in, size));
 }
 
 blargg_err_t GmeFile::load(DataReader &in) {
-  this->m_preLoad();
-  return this->m_postLoad(this->mLoad(in));
+  this->mPreLoad();
+  return this->mPostLoad(this->mLoad(in));
 }
 
 blargg_err_t GmeFile::loadFile(const char *path) {
-  this->m_preLoad();
+  this->mPreLoad();
   GME_FILE_READER in;
   RETURN_ERR(in.open(path));
-  return this->m_postLoad(this->mLoad(in));
+  return this->mPostLoad(this->mLoad(in));
 }
 
 blargg_err_t GmeFile::m_loadRemaining(void const *h, long s, DataReader &in) {
@@ -153,7 +153,7 @@ blargg_err_t GmeFile::remapTrack(int *track_io) const {
   return 0;
 }
 
-blargg_err_t GmeFile::getTrackInfo(track_info_t *out, int track) const {
+blargg_err_t GmeFile::GetTrackInfo(track_info_t *out, int track) const {
   out->track_count = getTrackCount();
   out->length = -1;
   out->loop_length = -1;

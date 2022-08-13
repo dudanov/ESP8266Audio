@@ -32,10 +32,10 @@ using std::min;
 KssEmu::KssEmu() {
   sn = 0;
   m_setType(gme_kss_type);
-  m_setSilenceLookahead(6);
+  mSetSilenceLookahead(6);
   static const char *const names[OSCS_NUM] = {"Square 1", "Square 2", "Square 3", "Wave 1",
                                               "Wave 2",   "Wave 3",   "Wave 4",   "Wave 5"};
-  m_setChannelsNames(names);
+  mSetChannelsNames(names);
 
   static int const types[OSCS_NUM] = {WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2, WAVE_TYPE | 3,
                                       WAVE_TYPE | 4, WAVE_TYPE | 5, WAVE_TYPE | 6, WAVE_TYPE | 7};
@@ -97,7 +97,7 @@ struct KssFile : GmeInfo {
 // Setup
 
 void KssEmu::update_gain() {
-  double g = m_getGain() * 1.4;
+  double g = mGetGain() * 1.4;
   if (scc_accessed)
     g *= 1.5;
   ay.SetVolume(g);
@@ -140,7 +140,7 @@ blargg_err_t KssEmu::mLoad(DataReader &in) {
   if (header_.device_flags & 0x02 && !sn)
     CHECK_ALLOC(sn = BLARGG_NEW(sms::SmsApu));
 
-  m_setChannelsNumber(OSCS_NUM);
+  mSetChannelsNumber(OSCS_NUM);
 
   return mSetupBuffer(CLOCK_RATE);
 }

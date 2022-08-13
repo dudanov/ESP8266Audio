@@ -35,8 +35,8 @@ static const int NAMCO_FLAG = 0x10;
 static const int FME7_FLAG = 0x20;
 static const long CLK_DIV = 12;
 
-NsfEmu::equalizer_t const NsfEmu::nes_eq = MusicEmu::make_equalizer(-1.0, 80);
-NsfEmu::equalizer_t const NsfEmu::famicom_eq = MusicEmu::make_equalizer(-15.0, 80);
+NsfEmu::equalizer_t const NsfEmu::nes_eq = MusicEmu::MakeEqualizer(-1.0, 80);
+NsfEmu::equalizer_t const NsfEmu::famicom_eq = MusicEmu::MakeEqualizer(-15.0, 80);
 
 int NsfEmu::pcmRead(void *emu, nes_addr_t addr) { return *((NsfEmu *) emu)->cpu::getCode(addr); }
 
@@ -46,10 +46,10 @@ NsfEmu::NsfEmu() {
   this->fme7 = nullptr;
 
   this->m_setType(gme_nsf_type);
-  this->m_setSilenceLookahead(6);
+  this->mSetSilenceLookahead(6);
   this->m_apu.SetDmcReader(pcmRead, this);
   MusicEmu::SetEqualizer(nes_eq);
-  setGain(1.4);
+  SetGain(1.4);
   std::fill(this->m_unMappedCode.begin(), this->m_unMappedCode.end(), NesCpu::BAD_OPCODE);
 }
 
@@ -149,8 +149,8 @@ blargg_err_t NsfEmu::mInitSound() {
 
     int const count = NesApu::OSCS_NUM;
     static const char *const apuNames[count] = {APU_NAMES};
-    this->m_setChannelsNumber(count);
-    this->m_setChannelsNames(apuNames);
+    this->mSetChannelsNumber(count);
+    this->mSetChannelsNames(apuNames);
   }
 
   static int const types[] = {WAVE_TYPE | 1,  WAVE_TYPE | 2,  WAVE_TYPE | 0,  NOISE_TYPE | 0,
@@ -159,14 +159,14 @@ blargg_err_t NsfEmu::mInitSound() {
                               WAVE_TYPE | 10, WAVE_TYPE | 11, WAVE_TYPE | 12, WAVE_TYPE | 13};
   this->mSetChannelsTypes(types);  // common to all sound chip configurations
 
-  double adjusted_gain = this->m_getGain();
+  double adjusted_gain = this->mGetGain();
 
 #if NSF_EMU_APU_ONLY
   if (this->m_header.chip_flags)
     this->m_setWarning("Uses unsupported audio expansion hardware");
 #else
   if (this->m_header.chip_flags & (NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
-    this->m_setChannelsNumber(NesApu::OSCS_NUM + 3);
+    this->mSetChannelsNumber(NesApu::OSCS_NUM + 3);
 
   if (this->m_header.chip_flags & NAMCO_FLAG) {
     namco = BLARGG_NEW NesNamcoApu;
@@ -176,8 +176,8 @@ blargg_err_t NsfEmu::mInitSound() {
     static const int count = NesApu::OSCS_NUM + NesNamcoApu::OSCS_NUM;
     static const char *const names[count] = {APU_NAMES, "Wave 1", "Wave 2", "Wave 3", "Wave 4",
                                              "Wave 5",  "Wave 6", "Wave 7", "Wave 8"};
-    this->m_setChannelsNumber(count);
-    this->m_setChannelsNames(names);
+    this->mSetChannelsNumber(count);
+    this->mSetChannelsNames(names);
   }
 
   if (this->m_header.chip_flags & VRC6_FLAG) {
@@ -187,15 +187,15 @@ blargg_err_t NsfEmu::mInitSound() {
 
     static const int count = NesApu::OSCS_NUM + NesVrc6Apu::OSCS_NUM;
     static const char *const names[count] = {APU_NAMES, "Saw Wave", "Square 3", "Square 4"};
-    this->m_setChannelsNumber(count);
-    this->m_setChannelsNames(names);
+    this->mSetChannelsNumber(count);
+    this->mSetChannelsNames(names);
 
     if (this->m_header.chip_flags & NAMCO_FLAG) {
       static const int count = NesApu::OSCS_NUM + NesVrc6Apu::OSCS_NUM + NesNamcoApu::OSCS_NUM;
       static const char *const names[count] = {APU_NAMES, "Saw Wave", "Square 3", "Square 4", "Wave 1", "Wave 2",
                                                "Wave 3",  "Wave 4",   "Wave 5",   "Wave 6",   "Wave 7", "Wave 8"};
-      this->m_setChannelsNumber(count);
-      this->m_setChannelsNames(names);
+      this->mSetChannelsNumber(count);
+      this->mSetChannelsNames(names);
     }
   }
 
@@ -206,8 +206,8 @@ blargg_err_t NsfEmu::mInitSound() {
 
     int const count = NesApu::OSCS_NUM + NesFme7Apu::OSCS_NUM;
     static const char *const names[count] = {APU_NAMES, "Square 3", "Square 4", "Square 5"};
-    this->m_setChannelsNumber(count);
-    this->m_setChannelsNames(names);
+    this->mSetChannelsNumber(count);
+    this->mSetChannelsNames(names);
   }
 
   if (namco)
@@ -279,7 +279,7 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
   this->m_header.speed_flags = 0;
 #endif
 
-  setTempo(this->m_getTempo());
+  SetTempo(this->mGetTempo());
 
   return this->mSetupBuffer((long) (this->m_clockRate + 0.5));
 }

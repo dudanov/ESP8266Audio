@@ -23,225 +23,225 @@ int const SILENCE_THRESHOLD = 0x10;
 long const FADE_BLOCK_SIZE = 512;
 int const FADE_SHIFT = 8;  // fade ends with gain at 1.0 / (1 << FADE_SHIFT)
 
-MusicEmu::equalizer_t const MusicEmu::tv_eq = MusicEmu::make_equalizer(-8.0, 180);
+MusicEmu::equalizer_t const MusicEmu::tv_eq = MusicEmu::MakeEqualizer(-8.0, 180);
 
-void MusicEmu::m_clearTrackVars() {
-  this->m_currentTrack = -1;
-  this->m_outTime = 0;
-  this->m_emuTime = 0;
-  this->m_emuTrackEnded = true;
-  this->m_trackEnded = true;
-  this->m_fadeStart = INT_MAX / 2 + 1;
-  this->m_fadeStep = 1;
-  this->m_silenceTime = 0;
-  this->m_silenceCount = 0;
-  this->m_bufRemain = 0;
+void MusicEmu::mClearTrackVars() {
+  this->mCurrentTrack = -1;
+  this->mOutTime = 0;
+  this->mEmuTime = 0;
+  this->mEmuTrackEnded = true;
+  this->mIsTrackEnded = true;
+  this->mFadeStart = INT_MAX / 2 + 1;
+  this->mFadeStep = 1;
+  this->mSilenceTime = 0;
+  this->mSilenceCount = 0;
+  this->mBufRemain = 0;
   this->warning();  // clear warning
 }
 
 void MusicEmu::mUnload() {
-  this->m_channelsNum = 0;
-  this->m_clearTrackVars();
+  this->mChannelsNum = 0;
+  this->mClearTrackVars();
   GmeFile::mUnload();
 }
 
 MusicEmu::MusicEmu() {
-  this->m_effectsBuffer = 0;
-  this->m_multiChannel = false;
-  this->m_sampleRate = 0;
-  this->m_muteMask = 0;
-  this->m_tempo = 1.0;
-  this->m_gain = 1.0;
+  this->mEffectsBuffer = 0;
+  this->mIsMultiChannel = false;
+  this->mSampleRate = 0;
+  this->mMuteMask = 0;
+  this->mTempo = 1.0;
+  this->mGain = 1.0;
 
   // defaults
-  this->m_maxInitSilence = 2;
-  this->m_silenceLookahead = 3;
-  this->m_ignoreSilence = false;
-  this->m_equalizer.treble = -1.0;
-  this->m_equalizer.bass = 60;
+  this->mMaxInitSilence = 2;
+  this->mSilenceLookahead = 3;
+  this->mIgnoreSilence = false;
+  this->mEqualizer.treble = -1.0;
+  this->mEqualizer.bass = 60;
 
-  this->m_emuAutoloadPlaybackLimit = true;
+  this->mEmuAutoloadPlaybackLimit = true;
 
   static const char *const CHANNELS_NAMES[] = {"Channel 1", "Channel 2", "Channel 3", "Channel 4",
                                                "Channel 5", "Channel 6", "Channel 7", "Channel 8"};
-  this->m_setChannelsNames(CHANNELS_NAMES);
+  this->mSetChannelsNames(CHANNELS_NAMES);
   MusicEmu::mUnload();  // non-virtual
 }
 
-MusicEmu::~MusicEmu() { delete m_effectsBuffer; }
+MusicEmu::~MusicEmu() { delete mEffectsBuffer; }
 
-blargg_err_t MusicEmu::setSampleRate(long rate) {
-  require(!this->getSampleRate());  // sample rate can't be changed once set
+blargg_err_t MusicEmu::SetSampleRate(long rate) {
+  require(!this->GetSampleRate());  // sample rate can't be changed once set
   RETURN_ERR(this->mSetSampleRate(rate));
-  RETURN_ERR(this->m_samplesBuffer.resize(BUF_SIZE));
-  this->m_sampleRate = rate;
+  RETURN_ERR(this->mSamplesBuffer.resize(BUF_SIZE));
+  this->mSampleRate = rate;
   return 0;
 }
 
-void MusicEmu::m_preLoad() {
-  require(this->getSampleRate());  // setSampleRate() must be called before loading a file
-  GmeFile::m_preLoad();
+void MusicEmu::mPreLoad() {
+  require(this->GetSampleRate());  // SetSampleRate() must be called before loading a file
+  GmeFile::mPreLoad();
 }
 
 void MusicEmu::SetEqualizer(equalizer_t const &eq) {
-  this->m_equalizer = eq;
+  this->mEqualizer = eq;
   this->mSetEqualizer(eq);
 }
 
-blargg_err_t MusicEmu::setMultiChannel(bool) {
+blargg_err_t MusicEmu::SetMultiChannel(bool) {
   // by default not supported, derived may override this
   return "unsupported for this emulator type";
 }
 
-blargg_err_t MusicEmu::m_setMultiChannel(bool isEnabled) {
+blargg_err_t MusicEmu::mSetMultiChannel(bool isEnabled) {
   // multi channel support must be set at the very beginning
-  require(!this->getSampleRate());
-  this->m_multiChannel = isEnabled;
+  require(!this->GetSampleRate());
+  this->mIsMultiChannel = isEnabled;
   return 0;
 }
 
-void MusicEmu::muteChannel(int idx, bool mute) {
-  require((unsigned) idx < (unsigned) getChannelsNum());
+void MusicEmu::MuteChannel(int idx, bool mute) {
+  require((unsigned) idx < (unsigned) GetChannelsNum());
   int bit = 1 << idx;
-  int mask = this->m_muteMask | bit;
+  int mask = this->mMuteMask | bit;
   if (!mute)
     mask ^= bit;
-  this->muteChannels(mask);
+  this->MuteChannels(mask);
 }
 
-void MusicEmu::muteChannels(int mask) {
-  require(this->getSampleRate());  // sample rate must be set first
-  this->m_muteMask = mask;
+void MusicEmu::MuteChannels(int mask) {
+  require(this->GetSampleRate());  // sample rate must be set first
+  this->mMuteMask = mask;
   this->mMuteChannel(mask);
 }
 
-void MusicEmu::setTempo(double t) {
-  require(this->getSampleRate());  // sample rate must be set first
+void MusicEmu::SetTempo(double t) {
+  require(this->GetSampleRate());  // sample rate must be set first
   const double min = 0.02;
   const double max = 4.00;
   if (t < min)
     t = min;
   if (t > max)
     t = max;
-  this->m_tempo = t;
+  this->mTempo = t;
   this->mSetTempo(t);
 }
 
-void MusicEmu::m_postLoad() {
-  this->setTempo(this->m_tempo);
-  this->m_remuteChannels();
+void MusicEmu::mPostLoad() {
+  this->SetTempo(this->mTempo);
+  this->mRemuteChannels();
 }
 
-blargg_err_t MusicEmu::startTrack(int track) {
-  this->m_clearTrackVars();
+blargg_err_t MusicEmu::StartTrack(int track) {
+  this->mClearTrackVars();
 
   int remapped = track;
   RETURN_ERR(remapTrack(&remapped));
-  this->m_currentTrack = track;
+  this->mCurrentTrack = track;
   RETURN_ERR(this->mStartTrack(remapped));
 
-  this->m_emuTrackEnded = false;
-  this->m_trackEnded = false;
+  this->mEmuTrackEnded = false;
+  this->mIsTrackEnded = false;
 
-  if (!this->m_ignoreSilence) {
+  if (!this->mIgnoreSilence) {
     // play until non-silence or end of track
-    for (long end = this->m_maxInitSilence * m_getOutputChannels() * this->getSampleRate(); this->m_emuTime < end;) {
-      this->m_fillBuf();
-      if (this->m_bufRemain | (int) this->m_emuTrackEnded)
+    for (long end = this->mMaxInitSilence * mGetOutputChannels() * this->GetSampleRate(); this->mEmuTime < end;) {
+      this->mFillBuf();
+      if (this->mBufRemain | (int) this->mEmuTrackEnded)
         break;
     }
 
-    this->m_emuTime = this->m_bufRemain;
-    this->m_outTime = 0;
-    this->m_silenceTime = 0;
-    this->m_silenceCount = 0;
+    this->mEmuTime = this->mBufRemain;
+    this->mOutTime = 0;
+    this->mSilenceTime = 0;
+    this->mSilenceCount = 0;
   }
-  return this->isTrackEnded() ? this->warning() : nullptr;
+  return this->IsTrackEnded() ? this->warning() : nullptr;
 }
 
-void MusicEmu::m_endTrackIfError(blargg_err_t err) {
+void MusicEmu::mEndTrackIfError(blargg_err_t err) {
   if (err != nullptr) {
-    this->m_emuTrackEnded = true;
+    this->mEmuTrackEnded = true;
     this->m_setWarning(err);
   }
 }
 
 // Tell/Seek
 
-uint32_t MusicEmu::m_msToSamples(blargg_long ms) const {
-  return ms * this->getSampleRate() / 1000 * this->m_getOutputChannels();
+uint32_t MusicEmu::mMsToSamples(blargg_long ms) const {
+  return ms * this->GetSampleRate() / 1000 * this->mGetOutputChannels();
 }
 
-long MusicEmu::tellSamples() const { return this->m_outTime; }
+long MusicEmu::TellSamples() const { return this->mOutTime; }
 
-long MusicEmu::tell() const {
-  blargg_long rate = this->getSampleRate() * this->m_getOutputChannels();
-  blargg_long sec = this->m_outTime / rate;
-  return sec * 1000 + (this->m_outTime - sec * rate) * 1000 / rate;
+long MusicEmu::TellMs() const {
+  blargg_long rate = this->GetSampleRate() * this->mGetOutputChannels();
+  blargg_long sec = this->mOutTime / rate;
+  return sec * 1000 + (this->mOutTime - sec * rate) * 1000 / rate;
 }
 
-blargg_err_t MusicEmu::seekSamples(long time) {
-  if (time < this->m_outTime)
-    RETURN_ERR(startTrack(this->m_currentTrack));
-  return skip(time - this->m_outTime);
+blargg_err_t MusicEmu::SeekSamples(long time) {
+  if (time < this->mOutTime)
+    RETURN_ERR(StartTrack(this->mCurrentTrack));
+  return SkipSamples(time - this->mOutTime);
 }
 
-blargg_err_t MusicEmu::skip(long count) {
-  require(this->getCurrentTrack() >= 0);  // start_track() must have been called already
-  this->m_outTime += count;
+blargg_err_t MusicEmu::SkipSamples(long count) {
+  require(this->GetCurrentTrack() >= 0);  // start_track() must have been called already
+  this->mOutTime += count;
   // remove from silence and buf first
   {
-    long n = std::min(count, this->m_silenceCount);
-    this->m_silenceCount -= n;
+    long n = std::min(count, this->mSilenceCount);
+    this->mSilenceCount -= n;
     count -= n;
 
-    n = std::min(count, this->m_bufRemain);
-    this->m_bufRemain -= n;
+    n = std::min(count, this->mBufRemain);
+    this->mBufRemain -= n;
     count -= n;
   }
 
-  if (count && !this->m_emuTrackEnded) {
-    this->m_emuTime += count;
-    this->m_endTrackIfError(this->m_skip(count));
+  if (count && !this->mEmuTrackEnded) {
+    this->mEmuTime += count;
+    this->mEndTrackIfError(this->mSkipSamples(count));
   }
 
-  if (!(this->m_silenceCount | this->m_bufRemain))  // caught up to emulator, so update track ended
-    this->m_trackEnded |= this->m_emuTrackEnded;
+  if (!(this->mSilenceCount | this->mBufRemain))  // caught up to emulator, so update track ended
+    this->mIsTrackEnded |= this->mEmuTrackEnded;
 
   return 0;
 }
 
-blargg_err_t MusicEmu::m_skip(long count) {
+blargg_err_t MusicEmu::mSkipSamples(long count) {
   // for long skip, mute sound
   static const long THRESHOLD = 30000;
   if (count > THRESHOLD) {
-    int saved_mute = this->m_muteMask;
+    int saved_mute = this->mMuteMask;
     this->mMuteChannel(~0);
 
-    while (count > THRESHOLD / 2 && !this->m_emuTrackEnded) {
-      RETURN_ERR(this->mPlay(BUF_SIZE, this->m_samplesBuffer.begin()));
+    while (count > THRESHOLD / 2 && !this->mEmuTrackEnded) {
+      RETURN_ERR(this->mPlay(BUF_SIZE, this->mSamplesBuffer.begin()));
       count -= BUF_SIZE;
     }
 
     this->mMuteChannel(saved_mute);
   }
 
-  while (count && !this->m_emuTrackEnded) {
+  while (count && !this->mEmuTrackEnded) {
     long n = BUF_SIZE;
     if (n > count)
       n = count;
     count -= n;
-    RETURN_ERR(this->mPlay(n, this->m_samplesBuffer.begin()));
+    RETURN_ERR(this->mPlay(n, this->mSamplesBuffer.begin()));
   }
   return 0;
 }
 
 // Fading
 
-void MusicEmu::setFade(long startMs, long lengthMs) {
-  this->m_fadeStep =
-      this->getSampleRate() * lengthMs / (FADE_BLOCK_SIZE * FADE_SHIFT * 1000 / this->m_getOutputChannels());
-  this->m_fadeStart = m_msToSamples(startMs);
+void MusicEmu::SetFadeMs(long startMs, long lengthMs) {
+  this->mFadeStep =
+      this->GetSampleRate() * lengthMs / (FADE_BLOCK_SIZE * FADE_SHIFT * 1000 / this->mGetOutputChannels());
+  this->mFadeStart = mMsToSamples(startMs);
 }
 
 // unit / pow( 2.0, (double) x / step )
@@ -251,13 +251,13 @@ static int int_log(blargg_long x, int step, int unit) {
   return ((unit - fraction) + (fraction >> 1)) >> shift;
 }
 
-void MusicEmu::m_handleFade(long out_count, sample_t *out) {
+void MusicEmu::mHandleFade(long out_count, sample_t *out) {
   for (int i = 0; i < out_count; i += FADE_BLOCK_SIZE) {
     static const int SHIFT = 14;
     int const UNIT = 1 << SHIFT;
-    int gain = int_log((this->m_outTime + i - this->m_fadeStart) / FADE_BLOCK_SIZE, this->m_fadeStep, UNIT);
+    int gain = int_log((this->mOutTime + i - this->mFadeStart) / FADE_BLOCK_SIZE, this->mFadeStep, UNIT);
     if (gain < (UNIT >> FADE_SHIFT))
-      this->m_trackEnded = this->m_emuTrackEnded = true;
+      this->mIsTrackEnded = this->mEmuTrackEnded = true;
 
     sample_t *io = &out[i];
     for (int count = std::min(FADE_BLOCK_SIZE, out_count - i); count; --count, ++io)
@@ -267,11 +267,11 @@ void MusicEmu::m_handleFade(long out_count, sample_t *out) {
 
 // Silence detection
 
-void MusicEmu::m_emuPlay(long count, sample_t *out) {
-  check(this->m_currentTrack >= 0);
-  this->m_emuTime += count;
-  if (this->m_currentTrack >= 0 && !this->m_emuTrackEnded)
-    this->m_endTrackIfError(this->mPlay(count, out));
+void MusicEmu::mEmuPlay(long count, sample_t *out) {
+  check(this->mCurrentTrack >= 0);
+  this->mEmuTime += count;
+  if (this->mCurrentTrack >= 0 && !this->mEmuTrackEnded)
+    this->mEndTrackIfError(this->mPlay(count, out));
   else
     memset(out, 0, count * sizeof(*out));
 }
@@ -288,81 +288,81 @@ static long count_silence(MusicEmu::sample_t *begin, long size) {
 }
 
 // fill internal buffer and check it for silence
-void MusicEmu::m_fillBuf() {
-  assert(!this->m_bufRemain);
-  if (!this->m_emuTrackEnded) {
-    this->m_emuPlay(BUF_SIZE, this->m_samplesBuffer.begin());
-    long silence = count_silence(this->m_samplesBuffer.begin(), BUF_SIZE);
+void MusicEmu::mFillBuf() {
+  assert(!this->mBufRemain);
+  if (!this->mEmuTrackEnded) {
+    this->mEmuPlay(BUF_SIZE, this->mSamplesBuffer.begin());
+    long silence = count_silence(this->mSamplesBuffer.begin(), BUF_SIZE);
     if (silence < BUF_SIZE) {
-      this->m_silenceTime = this->m_emuTime - silence;
-      this->m_bufRemain = BUF_SIZE;
+      this->mSilenceTime = this->mEmuTime - silence;
+      this->mBufRemain = BUF_SIZE;
       return;
     }
   }
-  this->m_silenceCount += BUF_SIZE;
+  this->mSilenceCount += BUF_SIZE;
 }
 
-blargg_err_t MusicEmu::play(long out_count, sample_t *out) {
-  if (this->m_trackEnded) {
+blargg_err_t MusicEmu::Play(long out_count, sample_t *out) {
+  if (this->mIsTrackEnded) {
     memset(out, 0, out_count * sizeof(*out));
   } else {
-    require(this->getCurrentTrack() >= 0);
-    require(out_count % m_getOutputChannels() == 0);
-    assert(this->m_emuTime >= this->m_outTime);
+    require(this->GetCurrentTrack() >= 0);
+    require(out_count % mGetOutputChannels() == 0);
+    assert(this->mEmuTime >= this->mOutTime);
 
     // prints nifty graph of how far ahead we are when searching for silence
     // debug_printf( "%*s \n", int ((emu_time - out_time) * 7 /
     // sample_rate()), "*" );
 
     long pos = 0;
-    if (this->m_silenceCount) {
+    if (this->mSilenceCount) {
       // during a run of silence, run emulator at >=2x speed so it gets ahead
       long ahead_time =
-          this->m_silenceLookahead * (this->m_outTime + out_count - this->m_silenceTime) + this->m_silenceTime;
-      while (this->m_emuTime < ahead_time && !(this->m_bufRemain | this->m_emuTrackEnded))
-        this->m_fillBuf();
+          this->mSilenceLookahead * (this->mOutTime + out_count - this->mSilenceTime) + this->mSilenceTime;
+      while (this->mEmuTime < ahead_time && !(this->mBufRemain | this->mEmuTrackEnded))
+        this->mFillBuf();
 
       // fill with silence
-      pos = std::min(this->m_silenceCount, out_count);
+      pos = std::min(this->mSilenceCount, out_count);
       memset(out, 0, pos * sizeof(*out));
-      this->m_silenceCount -= pos;
+      this->mSilenceCount -= pos;
 
-      if (this->m_emuTime - this->m_silenceTime > SILENCE_MAX * this->m_getOutputChannels() * this->getSampleRate()) {
-        this->m_trackEnded = this->m_emuTrackEnded = true;
-        this->m_silenceCount = 0;
-        this->m_bufRemain = 0;
+      if (this->mEmuTime - this->mSilenceTime > SILENCE_MAX * this->mGetOutputChannels() * this->GetSampleRate()) {
+        this->mIsTrackEnded = this->mEmuTrackEnded = true;
+        this->mSilenceCount = 0;
+        this->mBufRemain = 0;
       }
     }
 
-    if (this->m_bufRemain) {
+    if (this->mBufRemain) {
       // empty silence buf
-      long n = std::min(this->m_bufRemain, out_count - pos);
-      memcpy(&out[pos], m_samplesBuffer.begin() + (BUF_SIZE - this->m_bufRemain), n * sizeof(*out));
-      this->m_bufRemain -= n;
+      long n = std::min(this->mBufRemain, out_count - pos);
+      memcpy(&out[pos], mSamplesBuffer.begin() + (BUF_SIZE - this->mBufRemain), n * sizeof(*out));
+      this->mBufRemain -= n;
       pos += n;
     }
 
     // generate remaining samples normally
     long remain = out_count - pos;
     if (remain) {
-      this->m_emuPlay(remain, out + pos);
-      this->m_trackEnded |= this->m_emuTrackEnded;
+      this->mEmuPlay(remain, out + pos);
+      this->mIsTrackEnded |= this->mEmuTrackEnded;
 
-      if (!this->m_ignoreSilence || this->m_outTime > this->m_fadeStart) {
+      if (!this->mIgnoreSilence || this->mOutTime > this->mFadeStart) {
         // check end for a new run of silence
         long silence = count_silence(out + pos, remain);
         if (silence < remain)
-          this->m_silenceTime = this->m_emuTime - silence;
+          this->mSilenceTime = this->mEmuTime - silence;
 
-        if (this->m_emuTime - this->m_silenceTime >= BUF_SIZE)
-          this->m_fillBuf();  // cause silence detection on next play()
+        if (this->mEmuTime - this->mSilenceTime >= BUF_SIZE)
+          this->mFillBuf();  // cause silence detection on next Play()
       }
     }
 
-    if (this->m_fadeStart >= 0 && this->m_outTime > this->m_fadeStart)
-      this->m_handleFade(out_count, out);
+    if (this->mFadeStart >= 0 && this->mOutTime > this->mFadeStart)
+      this->mHandleFade(out_count, out);
   }
-  this->m_outTime += out_count;
+  this->mOutTime += out_count;
   return 0;
 }
 

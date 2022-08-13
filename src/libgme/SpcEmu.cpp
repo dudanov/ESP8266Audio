@@ -38,9 +38,9 @@ namespace snes {
 
 SpcEmu::SpcEmu(gme_type_t type) {
   static const char *const CHANNELS_NAMES[] = {"DSP 1", "DSP 2", "DSP 3", "DSP 4", "DSP 5", "DSP 6", "DSP 7", "DSP 8"};
-  this->m_setChannelsNames(CHANNELS_NAMES);
+  this->mSetChannelsNames(CHANNELS_NAMES);
   this->m_setType(type);
-  this->setGain(1.4);
+  this->SetGain(1.4);
 }
 
 // Track info
@@ -347,7 +347,7 @@ struct RsnFile : SpcFile {
 
 blargg_err_t SpcEmu::mSetSampleRate(long sample_rate) {
   RETURN_ERR(m_apu.init());
-  setAccuracy(false);
+  SetAccuracy(false);
   if (sample_rate != NATIVE_SAMPLE_RATE) {
     RETURN_ERR(m_resampler.setBufferSize(NATIVE_SAMPLE_RATE / 20 * 2));
     m_resampler.setTimeRatio((double) NATIVE_SAMPLE_RATE / sample_rate, 0.9965);
@@ -355,8 +355,8 @@ blargg_err_t SpcEmu::mSetSampleRate(long sample_rate) {
   return 0;
 }
 
-void SpcEmu::m_setAccuracy(bool b) {
-  MusicEmu::m_setAccuracy(b);
+void SpcEmu::mSetAccuracy(bool b) {
+  MusicEmu::mSetAccuracy(b);
   m_filter.SetEnable(b);
 }
 
@@ -369,7 +369,7 @@ blargg_err_t SpcEmu::mLoad(uint8_t const *in, long size) {
   assert(offsetof(header_t, unused2[46]) == HEADER_SIZE);
   m_fileData = in;
   m_fileSize = size;
-  m_setChannelsNumber(SnesSpc::CHANNELS_NUM);
+  mSetChannelsNumber(SnesSpc::CHANNELS_NUM);
   if (m_isArchive)
     return 0;
   if (size < SnesSpc::SPC_MIN_FILE_SIZE)
@@ -386,25 +386,25 @@ blargg_err_t SpcEmu::mStartTrack(int track) {
   m_resampler.clear();
   m_filter.Clear();
   RETURN_ERR(m_apu.load_spc(m_fileData, m_fileSize));
-  m_filter.SetGain((int) (m_getGain() * SpcFilter::GAIN_UNIT));
+  m_filter.SetGain((int) (mGetGain() * SpcFilter::GAIN_UNIT));
   m_apu.clear_echo();
   track_info_t spc_info;
   RETURN_ERR(mGetTrackInfo(&spc_info, track));
 
   // Set a default track length, need a non-zero fadeout
   if (autoloadPlaybackLimit() && (spc_info.length > 0))
-    setFade(spc_info.length, 50);
+    SetFadeMs(spc_info.length, 50);
   return 0;
 }
 
 blargg_err_t SpcEmu::m_playAndFilter(long count, sample_t out[]) {
-  RETURN_ERR(m_apu.play(count, out));
+  RETURN_ERR(m_apu.Play(count, out));
   m_filter.Run(out, count);
   return 0;
 }
 
-blargg_err_t SpcEmu::m_skip(long count) {
-  if (getSampleRate() != NATIVE_SAMPLE_RATE) {
+blargg_err_t SpcEmu::mSkipSamples(long count) {
+  if (GetSampleRate() != NATIVE_SAMPLE_RATE) {
     count = long(count * m_resampler.getRatio()) & ~1;
     count -= m_resampler.skipInput(count);
   }
@@ -412,7 +412,7 @@ blargg_err_t SpcEmu::m_skip(long count) {
   // TODO: shouldn't skip be adjusted for the 64 samples read afterwards?
 
   if (count > 0) {
-    RETURN_ERR(m_apu.skip(count));
+    RETURN_ERR(m_apu.SkipSamples(count));
     m_filter.Clear();
   }
 
@@ -423,7 +423,7 @@ blargg_err_t SpcEmu::m_skip(long count) {
 }
 
 blargg_err_t SpcEmu::mPlay(long count, sample_t *out) {
-  if (getSampleRate() == NATIVE_SAMPLE_RATE)
+  if (GetSampleRate() == NATIVE_SAMPLE_RATE)
     return m_playAndFilter(count, out);
 
   long remain = count;

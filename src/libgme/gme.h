@@ -157,7 +157,7 @@ voices, 0 unmutes them all, 0x01 mutes just the first voice, etc. */
 BLARGG_EXPORT void gme_mute_voices(MusicEmu *, int muting_mask);
 
 /* Frequency equalizer parameters (see gme.txt) */
-/* Implementers: If modified, also adjust Music_Emu::make_equalizer as needed */
+/* Implementers: If modified, also adjust Music_Emu::MakeEqualizer as needed */
 typedef struct BLARGG_EXPORT gme_equalizer_t {
   double treble; /* -50.0 = muffled, 0 = flat, +5.0 = extra-crisp */
   double bass;   /* 1 = full bass, 90 = average, 16000 = almost no bass */

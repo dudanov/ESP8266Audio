@@ -34,14 +34,14 @@ SapEmu::SapEmu() {
   static const char *const names[SapApu::OSCS_NUM * 2] = {
       "Wave 1", "Wave 2", "Wave 3", "Wave 4", "Wave 5", "Wave 6", "Wave 7", "Wave 8",
   };
-  m_setChannelsNames(names);
+  mSetChannelsNames(names);
 
   static int const types[SapApu::OSCS_NUM * 2] = {
       WAVE_TYPE | 1, WAVE_TYPE | 2, WAVE_TYPE | 3, WAVE_TYPE | 0,
       WAVE_TYPE | 5, WAVE_TYPE | 6, WAVE_TYPE | 7, WAVE_TYPE | 4,
   };
   mSetChannelsTypes(types);
-  m_setSilenceLookahead(6);
+  mSetSilenceLookahead(6);
 }
 
 SapEmu::~SapEmu() {}
@@ -218,8 +218,8 @@ blargg_err_t SapEmu::mLoad(uint8_t const *in, long size) {
 
   m_setWarning(info.warning);
   m_setTrackNum(info.track_count);
-  m_setChannelsNumber(SapApu::OSCS_NUM << info.stereo);
-  apu_impl.volume(m_getGain());
+  mSetChannelsNumber(SapApu::OSCS_NUM << info.stereo);
+  apu_impl.volume(mGetGain());
 
   return mSetupBuffer(1773447);
 }

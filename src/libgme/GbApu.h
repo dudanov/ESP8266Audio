@@ -54,7 +54,7 @@ class GbApu {
   // start a new frame at time 0.
   void endFrame(blip_time_t);
 
-  void setTempo(double);
+  void SetTempo(double);
 
   enum Register : uint16_t {
     NR10 = 0xFF10,

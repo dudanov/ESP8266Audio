@@ -30,8 +30,8 @@ GymEmu::GymEmu() {
   this->m_setType(gme_gym_type);
 
   static const char *const names[] = {"FM 1", "FM 2", "FM 3", "FM 4", "FM 5", "FM 6", "PCM", "PSG"};
-  this->m_setChannelsNames(names);
-  this->m_setSilenceLookahead(1);  // tracks should already be trimmed
+  this->mSetChannelsNames(names);
+  this->mSetSilenceLookahead(1);  // tracks should already be trimmed
 }
 
 GymEmu::~GymEmu() {}
@@ -147,9 +147,9 @@ blargg_err_t GymEmu::mSetSampleRate(long sample_rate) {
   BlipEq eq(-32, 8000, sample_rate);
   apu.setTrebleEq(eq);
   dac_synth.setTrebleEq(eq);
-  apu.setVolume(0.135 * FM_GAIN * m_getGain());
-  dac_synth.setVolume(0.125 / 256 * FM_GAIN * m_getGain());
-  double factor = DualResampler::setup(OVERSAMPLE_FACTOR, 0.990, FM_GAIN * m_getGain());
+  apu.setVolume(0.135 * FM_GAIN * mGetGain());
+  dac_synth.setVolume(0.125 / 256 * FM_GAIN * mGetGain());
+  double factor = DualResampler::setup(OVERSAMPLE_FACTOR, 0.990, FM_GAIN * mGetGain());
   fm_sample_rate = sample_rate * factor;
 
   RETURN_ERR(blip_buf.SetSampleRate(sample_rate, int(1000 / 60.0 / MIN_TEMPO)));
@@ -163,13 +163,13 @@ blargg_err_t GymEmu::mSetSampleRate(long sample_rate) {
 
 void GymEmu::mSetTempo(double t) {
   if (t < MIN_TEMPO) {
-    setTempo(MIN_TEMPO);
+    SetTempo(MIN_TEMPO);
     return;
   }
 
   if (blip_buf.GetSampleRate()) {
-    clocks_per_frame = long(CLOCK_RATE / 60 / m_getTempo());
-    DualResampler::resize(long(getSampleRate() / (60.0 * m_getTempo())));
+    clocks_per_frame = long(CLOCK_RATE / 60 / mGetTempo());
+    DualResampler::resize(long(GetSampleRate() / (60.0 * mGetTempo())));
   }
 }
 
@@ -184,7 +184,7 @@ blargg_err_t GymEmu::mLoad(uint8_t const *in, long size) {
   assert(offsetof(header_t, packed[4]) == header_size);
   int offset = 0;
   RETURN_ERR(check_header(in, size, &offset));
-  m_setChannelsNumber(8);
+  mSetChannelsNumber(8);
 
   data = in + offset;
   data_end = in + size;
@@ -301,7 +301,7 @@ void GymEmu::parse_frame() {
     if (loop_begin)
       pos = loop_begin;
     else
-      m_setTrackEnded();
+      mSetTrackEnded();
   }
   this->pos = pos;
 
@@ -312,7 +312,7 @@ void GymEmu::parse_frame() {
 }
 
 int GymEmu::m_playFrame(blip_time_t blip_time, int sample_count, sample_t *buf) {
-  if (!isTrackEnded())
+  if (!IsTrackEnded())
     parse_frame();
 
   apu.endFrame(blip_time);

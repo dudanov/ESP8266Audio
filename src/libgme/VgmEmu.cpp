@@ -39,9 +39,9 @@ VgmEmu::VgmEmu() {
   static int const types[8] = {WAVE_TYPE | 1, WAVE_TYPE | 0, WAVE_TYPE | 2, NOISE_TYPE | 0};
   mSetChannelsTypes(types);
 
-  m_setSilenceLookahead(1);  // tracks should already be trimmed
+  mSetSilenceLookahead(1);  // tracks should already be trimmed
 
-  SetEqualizer(make_equalizer(-14.0, 80));
+  SetEqualizer(MakeEqualizer(-14.0, 80));
 }
 
 VgmEmu::~VgmEmu() {}
@@ -212,14 +212,14 @@ blargg_err_t VgmEmu::mSetSampleRate(long sample_rate) {
   return ClassicEmu::mSetSampleRate(sample_rate);
 }
 
-blargg_err_t VgmEmu::setMultiChannel(bool is_enabled) {
+blargg_err_t VgmEmu::SetMultiChannel(bool is_enabled) {
   // we acutally should check here whether this is classic emu or not
-  // however setMultiChannel() is called before setup_fm() resulting in
+  // however SetMultiChannel() is called before setup_fm() resulting in
   // uninited is_classic_emu() hard code it to unsupported
 #if 0
 	if ( is_classic_emu() )
 	{
-		RETURN_ERR( Music_Emu::m_setMultiChannel( is_enabled ) );
+		RETURN_ERR( Music_Emu::mSetMultiChannel( is_enabled ) );
 		return 0;
 	}
 	else
@@ -267,7 +267,7 @@ void VgmEmu::mMuteChannel(int mask) {
     if (psg_dual)
       psg[1].setOutput((mask & 0x80) ? 0 : &blip_buf);
     if (ym2612[0].enabled()) {
-      dac_synth.setVolume((mask & 0x40) ? 0.0 : 0.1115 / 256 * FM_GAIN * m_getGain());
+      dac_synth.setVolume((mask & 0x40) ? 0.0 : 0.1115 / 256 * FM_GAIN * mGetGain());
       ym2612[0].mute_voices(mask);
       if (ym2612[1].enabled())
         ym2612[1].mute_voices(mask);
@@ -314,13 +314,13 @@ blargg_err_t VgmEmu::mLoad(uint8_t const *new_data, long new_size) {
   if (get_le32(h.loop_offset))
     loop_begin = &data[get_le32(h.loop_offset) + offsetof(header_t, loop_offset)];
 
-  m_setChannelsNumber(psg[0].OSCS_NUM);
+  mSetChannelsNumber(psg[0].OSCS_NUM);
 
   RETURN_ERR(setup_fm());
 
   static const char *const FM_NAMES[] = {"FM 1", "FM 2", "FM 3", "FM 4", "FM 5", "FM 6", "PCM", "PSG"};
   static const char *const PSG_NAMES[] = {"Square 1", "Square 2", "Square 3", "Noise"};
-  m_setChannelsNames(uses_fm ? FM_NAMES : PSG_NAMES);
+  mSetChannelsNames(uses_fm ? FM_NAMES : PSG_NAMES);
 
   // do after FM in case output buffer is changed
   return ClassicEmu::mSetupBuffer(m_psgRate);
@@ -343,14 +343,14 @@ blargg_err_t VgmEmu::setup_fm() {
     uses_fm = true;
     if (disable_oversampling_)
       m_fmRate = ym2612_rate / 144.0;
-    DualResampler::setup(m_fmRate / blip_buf.GetSampleRate(), rolloff, FM_GAIN * m_getGain());
+    DualResampler::setup(m_fmRate / blip_buf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
     RETURN_ERR(ym2612[0].set_rate(m_fmRate, ym2612_rate));
     ym2612[0].enable(true);
     if (ym2612_dual) {
       RETURN_ERR(ym2612[1].set_rate(m_fmRate, ym2612_rate));
       ym2612[1].enable(true);
     }
-    m_setChannelsNumber(8);
+    mSetChannelsNumber(8);
   }
 
   if (!uses_fm && ym2413_rate) {
@@ -358,7 +358,7 @@ blargg_err_t VgmEmu::setup_fm() {
     uses_fm = true;
     if (disable_oversampling_)
       m_fmRate = ym2413_rate / 72.0;
-    DualResampler::setup(m_fmRate / blip_buf.GetSampleRate(), rolloff, FM_GAIN * m_getGain());
+    DualResampler::setup(m_fmRate / blip_buf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
     int result = ym2413[0].set_rate(m_fmRate, ym2413_rate);
     if (result == 2)
       return "YM2413 FM sound isn't supported";
@@ -371,21 +371,21 @@ blargg_err_t VgmEmu::setup_fm() {
         return "YM2413 FM sound isn't supported";
       CHECK_ALLOC(!result);
     }
-    m_setChannelsNumber(8);
+    mSetChannelsNumber(8);
   }
 
   if (uses_fm) {
     RETURN_ERR(DualResampler::reset(blip_buf.GetLength() * blip_buf.GetSampleRate() / 1000));
-    psg[0].setVolume(0.135 * FM_GAIN * m_getGain());
+    psg[0].setVolume(0.135 * FM_GAIN * mGetGain());
     if (psg_dual)
-      psg[1].setVolume(0.135 * FM_GAIN * m_getGain());
+      psg[1].setVolume(0.135 * FM_GAIN * mGetGain());
   } else {
     ym2612[0].enable(false);
     ym2612[1].enable(false);
     ym2413[0].enable(false);
     ym2413[1].enable(false);
-    psg[0].setVolume(m_getGain());
-    psg[1].setVolume(m_getGain());
+    psg[0].setVolume(mGetGain());
+    psg[1].setVolume(mGetGain());
   }
 
   return 0;

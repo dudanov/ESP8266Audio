@@ -85,7 +85,7 @@ class BlipBuffer {
   // Additional optional features
 
   // Current output sample rate
-  long GetSampleRate() const { return this->m_sampleRate; }
+  long GetSampleRate() const { return this->mSampleRate; }
 
   // Length of buffer, in milliseconds
   int GetLength() const { return this->m_length; }
@@ -158,7 +158,7 @@ class BlipBuffer {
 
  private:
   // friend class BlipReader;
-  long m_sampleRate;
+  long mSampleRate;
   long m_clockRate;
   int m_bassFreq;
   int m_length;
@@ -259,17 +259,17 @@ class BlipEq {
  public:
   // Logarithmic rolloff to treble dB at half sampling rate. Negative values
   // reduce treble, small positive values (0 to 5.0) increase treble.
-  BlipEq(double treble_db = 0) : m_treble(treble_db), m_rolloffFreq(0), m_sampleRate(44100), m_cutoffFreq(0) {}
+  BlipEq(double treble_db = 0) : m_treble(treble_db), m_rolloffFreq(0), mSampleRate(44100), m_cutoffFreq(0) {}
   // See blip_buffer.txt
   BlipEq(double treble, long rolloff_freq, long sample_rate, long cutoff_freq = 0)
-      : m_treble(treble), m_rolloffFreq(rolloff_freq), m_sampleRate(sample_rate), m_cutoffFreq(cutoff_freq) {}
+      : m_treble(treble), m_rolloffFreq(rolloff_freq), mSampleRate(sample_rate), m_cutoffFreq(cutoff_freq) {}
 
  private:
   friend class BlipSynthImpl;
   void m_generate(float *out, int count) const;
   double m_treble;
   long m_rolloffFreq;
-  long m_sampleRate;
+  long mSampleRate;
   long m_cutoffFreq;
 };
 
@@ -355,7 +355,7 @@ class BlipReader {
 template<int quality, int range>
 void BlipSynth<quality, range>::offsetResampled(blip_resampled_time_t time, int delta, BlipBuffer *blip_buf) const {
   // Fails if time is beyond end of BlipBuffer, due to a bug in caller code
-  // or the need for a longer buffer as set by setSampleRate().
+  // or the need for a longer buffer as set by SetSampleRate().
   assert((blip_long_t)(time >> BLIP_BUFFER_ACCURACY) < blip_buf->m_bufferSize);
   delta *= this->m_impl.deltaFactor;
   blip_long_t *buf = blip_buf->m_buffer + (time >> BLIP_BUFFER_ACCURACY);

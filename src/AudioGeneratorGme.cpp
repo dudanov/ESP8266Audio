@@ -37,14 +37,14 @@ bool AudioGeneratorGme::loop() {
         break;
     if (this->m_pos != this->m_buffer.size())
       break;
-    if (this->m_emu->isTrackEnded()) {
+    if (this->m_emu->IsTrackEnded()) {
       this->m_isPlaying = false;
       this->cb.st(0, "Stop");
       break;
     }
     this->m_pos = 0;
     gme_err_t err =
-        this->m_emu->play(this->m_buffer.size(), this->m_buffer.data());
+        this->m_emu->Play(this->m_buffer.size(), this->m_buffer.data());
     if (err != nullptr) {
       this->cb.st(-1, err);
       this->m_isPlaying = false;
@@ -79,7 +79,7 @@ void AudioGeneratorGme::m_cbInfo(const char *name, long value) {
 
 void AudioGeneratorGme::m_cbTrackInfo() {
   track_info_t info;
-  gme_err_t err = this->m_emu->getTrackInfo(&info);
+  gme_err_t err = this->m_emu->GetTrackInfo(&info);
   if (err != nullptr) {
     this->cb.st(-1, err);
     return;
@@ -101,7 +101,7 @@ void AudioGeneratorGme::m_cbTrackInfo() {
 bool AudioGeneratorGme::startTrack(int num) {
   if (this->m_emu == nullptr && !this->m_load(this->output->GetRate()))
     return false;
-  blargg_err_t err = this->m_emu->startTrack(num);
+  blargg_err_t err = this->m_emu->StartTrack(num);
   if (err != nullptr) {
     this->cb.st(-1, err);
     return false;

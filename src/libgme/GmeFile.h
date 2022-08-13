@@ -90,7 +90,7 @@ struct GmeFile {
 
   // Get information for a track (length, name, author, etc.)
   // See gme.h for definition of struct track_info_t.
-  blargg_err_t getTrackInfo(track_info_t *out, int track) const;
+  blargg_err_t GetTrackInfo(track_info_t *out, int track) const;
 
   // User data/cleanup
 
@@ -120,8 +120,8 @@ struct GmeFile {
   virtual blargg_err_t mLoad(DataReader &);                       // default loads then calls mLoad()
   virtual blargg_err_t mLoad(uint8_t const *data, long size);  // use data in memory
   virtual blargg_err_t mGetTrackInfo(track_info_t *out, int track) const = 0;
-  virtual void m_preLoad();
-  virtual void m_postLoad();
+  virtual void mPreLoad();
+  virtual void mPostLoad();
   virtual void m_clearPlaylist() {}
 
  public:
@@ -142,7 +142,7 @@ struct GmeFile {
   blargg_vector<uint8_t> m_fileData;  // only if loaded into memory using default load
 
   blargg_err_t m_loadM3u(blargg_err_t);
-  blargg_err_t m_postLoad(blargg_err_t err);
+  blargg_err_t mPostLoad(blargg_err_t err);
 
  public:
   // track_info field copying
