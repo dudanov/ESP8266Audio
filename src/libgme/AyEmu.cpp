@@ -59,16 +59,16 @@ static uint8_t const *get_data(AyEmu::file_t const &file, uint8_t const *ptr, in
   return ptr + offset;
 }
 
-static blargg_err_t parse_header(uint8_t const *in, long size, AyEmu::file_t *out) {
+static blargg_err_t parse_header(const uint8_t *in, long size, AyEmu::file_t *out) {
   typedef AyEmu::header_t header_t;
   out->header = (header_t const *) in;
   out->end = in + size;
 
-  if (size < AyEmu::header_size)
+  if (size < AyEmu::HEADER_SIZE)
     return gme_wrong_file_type;
 
-  header_t const &h = *(header_t const *) in;
-  if (memcmp(h.tag, "ZXAYEMUL", 8))
+  const header_t &h = *(const header_t *) in;
+  if (memcmp_P(h.tag, PSTR("ZXAYEMUL"), 8))
     return gme_wrong_file_type;
 
   out->tracks = get_data(*out, h.track_info, (h.max_track + 1) * 4);
@@ -112,8 +112,8 @@ struct AyFile : GmeInfo {
 
 // Setup
 
-blargg_err_t AyEmu::mLoad(uint8_t const *in, long size) {
-  assert(offsetof(header_t, track_info[2]) == header_size);
+blargg_err_t AyEmu::mLoad(const uint8_t *in, long size) {
+  assert(offsetof(header_t, track_info[2]) == HEADER_SIZE);
 
   RETURN_ERR(parse_header(in, size, &file));
   m_setTrackNum(file.header->max_track + 1);
@@ -143,11 +143,11 @@ void AyEmu::mSetTempo(double t) { play_period = blip_time_t(mGetClockRate() / 50
 blargg_err_t AyEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
 
-  memset(mem.ram + 0x0000, 0xC9, 0x100);  // fill RST vectors with RET
-  memset(mem.ram + 0x0100, 0xFF, 0x4000 - 0x100);
-  memset(mem.ram + RAM_START, 0x00, sizeof mem.ram - RAM_START);
-  memset(mem.padding1, 0xFF, sizeof mem.padding1);
-  memset(mem.ram + 0x10000, 0xFF, sizeof mem.ram - 0x10000);
+  std::fill(mem.ram.begin(), &mem.ram[0x0100], 0xC9);  // fill RST vectors with RET
+  std::fill(&mem.ram[0x0100], &mem.ram[0x4000], 0xFF);
+  std::fill(&mem.ram[0x4000], &mem.ram[0x10000], 0x00);  // RAM area
+  std::fill(&mem.ram[0x10000], mem.ram.end(), 0xFF);
+  mem.padding1.fill(0xFF);
 
   // locate data blocks
   uint8_t const *const data = get_data(file, file.tracks + track * 4 + 2, 14);
@@ -163,7 +163,7 @@ blargg_err_t AyEmu::mStartTrack(int track) {
     return "File data missing";
 
   // initial addresses
-  cpu::Reset(mem.ram);
+  cpu::Reset(mem.ram.data());
   r.sp = get_be16(more_data);
   r.b.a = r.b.b = r.b.d = r.b.h = data[8];
   r.b.flags = r.b.c = r.b.e = r.b.l = data[9];
@@ -174,7 +174,7 @@ blargg_err_t AyEmu::mStartTrack(int track) {
   if (!addr)
     return "File data missing";
 
-  unsigned init = get_be16(more_data + 2);
+  uint16_t init = get_be16(more_data + 2);
   if (!init)
     init = addr;
 
@@ -197,7 +197,7 @@ blargg_err_t AyEmu::mStartTrack(int track) {
     // debug_printf( "addr: $%04X, len: $%04X\n", addr, len );
     if (addr < RAM_START && addr >= 0x400)  // several tracks use low data
       debug_printf("Block addr in ROM\n");
-    memcpy(mem.ram + addr, in, len);
+    memcpy(&mem.ram[addr], in, len);
 
     if (file.end - blocks < 8) {
       m_setWarning("Missing file data");
@@ -206,37 +206,34 @@ blargg_err_t AyEmu::mStartTrack(int track) {
   } while ((addr = get_be16(blocks)) != 0);
 
   // copy and configure driver
-  static uint8_t const passive[] = {
-      0xF3,           // DI
-      0xCD, 0,    0,  // CALL init
-      0xED, 0x5E,     // LOOP: IM 2
-      0xFB,           // EI
-      0x76,           // HALT
-      0x18, 0xFA      // JR LOOP
+  static const uint8_t PLAYER_PASSIVE[] PROGMEM = {
+      0xF3,              // DI
+      0xCD, 0x00, 0x00,  // CALL init
+      0xED, 0x5E,        // LOOP: IM 2
+      0xFB,              // EI
+      0x76,              // HALT
+      0x18, 0xFA         // JR LOOP
   };
-  static uint8_t const active[] = {
-      0xF3,           // DI
-      0xCD, 0,    0,  // CALL init
-      0xED, 0x56,     // LOOP: IM 1
-      0xFB,           // EI
-      0x76,           // HALT
-      0xCD, 0,    0,  // CALL play
-      0x18, 0xF7      // JR LOOP
+  static const uint8_t PLAYER_ACTIVE[] PROGMEM = {
+      0xF3,              // DI
+      0xCD, 0x00, 0x00,  // CALL init
+      0xED, 0x56,        // LOOP: IM 1
+      0xFB,              // EI
+      0x76,              // HALT
+      0xCD, 0x00, 0x00,  // CALL play
+      0x18, 0xF7         // JR LOOP
   };
-  memcpy(mem.ram, passive, sizeof passive);
-  unsigned play_addr = get_be16(more_data + 4);
-  // debug_printf( "Play: $%04X\n", play_addr );
+  memcpy_P(mem.ram.begin(), PLAYER_PASSIVE, sizeof(PLAYER_PASSIVE));
+  uint16_t play_addr = get_be16(more_data + 4);
   if (play_addr) {
-    memcpy(mem.ram, active, sizeof active);
-    mem.ram[9] = play_addr;
-    mem.ram[10] = play_addr >> 8;
+    memcpy_P(mem.ram.begin(), PLAYER_ACTIVE, sizeof(PLAYER_ACTIVE));
+    set_le16(&mem.ram[9], play_addr);
   }
-  mem.ram[2] = init;
-  mem.ram[3] = init >> 8;
+  set_le16(&mem.ram[2], init);
 
   mem.ram[0x38] = 0xFB;  // Put EI at interrupt vector (followed by RET)
 
-  memcpy(mem.ram + 0x10000, mem.ram, 0x80);  // some code wraps around (ugh)
+  std::copy(&mem.ram[0], &mem.ram[0x80], &mem.ram[0x10000]);  // some code wraps around (ugh)
 
   beeper_delta = int(apu.AMP_RANGE * 0.65);
   last_beeper = 0;
@@ -261,12 +258,12 @@ void AyEmu::cpu_out_misc(cpu_time_t time, unsigned addr, int data) {
     switch (addr & 0xFEFF) {
       case 0xFEFD:
         spectrum_mode = true;
-        apu_addr = data & 0x0F;
+        mApuReg = data & 0x0F;
         return;
 
       case 0xBEFD:
         spectrum_mode = true;
-        apu.Write(time, apu_addr, data);
+        apu.Write(time, mApuReg, data);
         return;
     }
   }
@@ -276,11 +273,11 @@ void AyEmu::cpu_out_misc(cpu_time_t time, unsigned addr, int data) {
       case 0xF6:
         switch (data & 0xC0) {
           case 0xC0:
-            apu_addr = cpc_latch & 0x0F;
+            mApuReg = cpc_latch & 0x0F;
             goto enable_cpc;
 
           case 0x80:
-            apu.Write(time, apu_addr, cpc_latch);
+            apu.Write(time, mApuReg, cpc_latch);
             goto enable_cpc;
         }
         break;

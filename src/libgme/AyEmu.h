@@ -17,7 +17,7 @@ class AyEmu : private AyCpu, public ClassicEmu {
   static MusicEmu *createAyEmu() { return BLARGG_NEW AyEmu; }
 
   // AY file header
-  enum { header_size = 0x14 };
+  enum { HEADER_SIZE = 0x14 };
   struct header_t {
     uint8_t tag[8];
     uint8_t vers;
@@ -58,15 +58,15 @@ class AyEmu : private AyCpu, public ClassicEmu {
   BlipBuffer *beeper_output;
   int beeper_delta;
   int last_beeper;
-  int apu_addr;
+  AyApu::Reg mApuReg;
   int cpc_latch;
   bool spectrum_mode;
   bool cpc_mode;
 
   // large items
   struct {
-    uint8_t padding1[0x100];
-    uint8_t ram[0x10000 + 0x100];
+    std::array<uint8_t, 0x100> padding1;
+    std::array<uint8_t, 0x10000 + 0x100> ram;
   } mem;
   AyApu apu;
   friend void ay_cpu_out(AyCpu *, cpu_time_t, unsigned addr, int data);
