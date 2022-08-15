@@ -292,9 +292,9 @@ int VgmEmuImpl::mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *bu
 
   fm_time_offset = (vgm_time * fm_time_factor + fm_time_offset) - ((long) pairs << fm_time_bits);
 
-  psg[0].endFrame(blip_time);
+  psg[0].EndFrame(blip_time);
   if (psg_dual)
-    psg[1].endFrame(blip_time);
+    psg[1].EndFrame(blip_time);
 
   return pairs * stereo;
 }

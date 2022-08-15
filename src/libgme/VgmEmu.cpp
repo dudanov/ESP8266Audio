@@ -434,9 +434,9 @@ blargg_err_t VgmEmu::mStartTrack(int track) {
 
 blargg_err_t VgmEmu::mRunClocks(blip_time_t &time_io, int msec) {
   time_io = run_commands(msec * m_vgmRate / 1000);
-  psg[0].endFrame(time_io);
+  psg[0].EndFrame(time_io);
   if (psg_dual)
-    psg[1].endFrame(time_io);
+    psg[1].EndFrame(time_io);
   return 0;
 }
 

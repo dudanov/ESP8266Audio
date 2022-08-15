@@ -365,10 +365,10 @@ blargg_err_t KssEmu::mRunClocks(blip_time_t &duration, int) {
   next_play -= duration;
   check(next_play >= 0);
   adjust_time(-duration);
-  ay.endFrame(duration);
+  ay.EndFrame(duration);
   scc.end_frame(duration);
   if (sn)
-    sn->endFrame(duration);
+    sn->EndFrame(duration);
 
   return 0;
 }

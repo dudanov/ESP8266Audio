@@ -52,7 +52,7 @@ class GbApu {
 
   // Run all oscillators up to specified time, end current time frame, then
   // start a new frame at time 0.
-  void endFrame(blip_time_t);
+  void EndFrame(blip_time_t);
 
   void SetTempo(double);
 

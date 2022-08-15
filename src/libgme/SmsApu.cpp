@@ -218,7 +218,7 @@ void SmsApu::run_until(blip_time_t end_time) {
   }
 }
 
-void SmsApu::endFrame(blip_time_t end_time) {
+void SmsApu::EndFrame(blip_time_t end_time) {
   if (end_time > m_lastTime)
     run_until(end_time);
 

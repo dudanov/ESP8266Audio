@@ -313,7 +313,7 @@ void ay_cpu_out(AyCpu *cpu, cpu_time_t time, unsigned addr, int data) {
       emu.beeper_delta = -delta;
       emu.spectrum_mode = true;
       if (emu.beeper_output)
-        emu.apu.m_synth.offset(time, delta, emu.beeper_output);
+        emu.apu.mSynth.offset(time, delta, emu.beeper_output);
     }
   } else {
     emu.cpu_out_misc(time, addr, data);
@@ -363,7 +363,7 @@ blargg_err_t AyEmu::mRunClocks(blip_time_t &duration, int) {
   check(next_play >= 0);
   AdjustTime(-duration);
 
-  apu.endFrame(duration);
+  apu.EndFrame(duration);
 
   return 0;
 }

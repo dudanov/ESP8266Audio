@@ -140,7 +140,7 @@ void GbApu::m_runUntil(blip_time_t end_time) {
   }
 }
 
-void GbApu::endFrame(blip_time_t end_time) {
+void GbApu::EndFrame(blip_time_t end_time) {
   if (end_time > this->m_lastTime)
     this->m_runUntil(end_time);
 

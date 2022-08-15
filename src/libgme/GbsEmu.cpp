@@ -242,7 +242,7 @@ blargg_err_t GbsEmu::mRunClocks(blip_time_t &duration, int) {
   m_nextPlay -= m_cpuTime;
   if (m_nextPlay < 0)  // could go negative if routine is taking too long to return
     m_nextPlay = 0;
-  mApu.endFrame(m_cpuTime);
+  mApu.EndFrame(m_cpuTime);
 
   return 0;
 }

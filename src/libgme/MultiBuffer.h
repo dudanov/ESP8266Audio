@@ -40,7 +40,7 @@ class MultiBuffer {
   int getLength() const { return m_length; }
 
   // See Blip_Buffer.h
-  virtual void endFrame(blip_time_t) = 0;
+  virtual void EndFrame(blip_time_t) = 0;
 
   // Number of samples per output frame (1 = mono, 2 = stereo)
   int getSamplesPerFrame() const { return m_samplesPerFrame; }
@@ -90,7 +90,7 @@ class MonoBuffer : public MultiBuffer {
   long samplesAvailable() const override { return this->m_buf.SamplesAvailable(); }
   long readSamples(blip_sample_t *p, long s) override { return this->m_buf.ReadSamples(p, s); }
   const Channel &getChannelBuffers(int, int) const override { return this->m_chan; }
-  void endFrame(blip_time_t t) override { this->m_buf.EndFrame(t); }
+  void EndFrame(blip_time_t t) override { this->m_buf.EndFrame(t); }
 };
 
 // Uses three buffers (one for center) and outputs stereo sample pairs.
@@ -113,7 +113,7 @@ class StereoBuffer : public MultiBuffer {
   void setBassFreq(int) override;
   void clear() override;
   const Channel &getChannelBuffers(int, int) const override { return this->m_chan; }
-  void endFrame(blip_time_t) override;
+  void EndFrame(blip_time_t) override;
   long samplesAvailable() const override { return this->m_bufs[0].SamplesAvailable() * 2; }
   long readSamples(blip_sample_t *, long) override;
 
@@ -150,7 +150,7 @@ class SilentBuffer : public MultiBuffer {
   void setBassFreq(int) override {}
   void clear() override {}
   const Channel &getChannelBuffers(int, int) const override { return m_chan; }
-  void endFrame(blip_time_t) override {}
+  void EndFrame(blip_time_t) override {}
   long samplesAvailable() const override { return 0; }
   long readSamples(blip_sample_t *, long) override { return 0; }
 };

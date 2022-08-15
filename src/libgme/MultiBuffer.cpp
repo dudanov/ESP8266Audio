@@ -51,7 +51,7 @@ void StereoBuffer::clear() {
     buf.Clear();
 }
 
-void StereoBuffer::endFrame(blip_time_t clock_count) {
+void StereoBuffer::EndFrame(blip_time_t clock_count) {
   this->m_stereoAdded = 0;
   unsigned mask = 1;
   for (auto &buf : this->m_bufs) {

@@ -96,7 +96,7 @@ blargg_err_t ClassicEmu::mPlay(long count, sample_t *out) {
       blip_time_t clocks_emulated = (blargg_long) msec * this->mClockRate / 1000;
       RETURN_ERR(mRunClocks(clocks_emulated, msec));
       assert(clocks_emulated);
-      this->mBuf->endFrame(clocks_emulated);
+      this->mBuf->EndFrame(clocks_emulated);
     }
   }
   return 0;

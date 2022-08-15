@@ -45,7 +45,7 @@ class EffectsBuffer : public MultiBuffer {
   void setBassFreq(int) override;
   void clear() override;
   const Channel &getChannelBuffers(int, int) const override;
-  void endFrame(blip_time_t) override;
+  void EndFrame(blip_time_t) override;
   long readSamples(blip_sample_t *, long) override;
   long samplesAvailable() const override;
 

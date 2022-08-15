@@ -213,7 +213,7 @@ const EffectsBuffer::Channel &EffectsBuffer::getChannelBuffers(int i, int type) 
   return m_chanTypes[(i % m_maxChannels) * CHAN_TYPES_NUM + out];
 }
 
-void EffectsBuffer::endFrame(blip_time_t clock_count) {
+void EffectsBuffer::EndFrame(blip_time_t clock_count) {
   int bufs_used = 0;
   int stereo_mask = (m_config.effects_enabled ? 0x78 : 0x06);
 

@@ -313,7 +313,7 @@ int GymEmu::mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *buf) {
   if (!IsTrackEnded())
     parse_frame();
 
-  apu.endFrame(blip_time);
+  apu.EndFrame(blip_time);
 
   memset(buf, 0, sample_count * sizeof *buf);
   fm.run(sample_count >> 1, buf);
