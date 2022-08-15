@@ -5,6 +5,7 @@
 #include <array>
 #include "BlipBuffer.h"
 #include "blargg_common.h"
+#include "blargg_endian.h"
 
 namespace gme {
 namespace emu {
@@ -13,6 +14,7 @@ namespace ay {
 class AyApu {
  public:
   AyApu();
+  static const unsigned CLK_PSC = 16;
   static const uint8_t OSCS_NUM = 3;
   static const uint8_t AMP_RANGE = 255;
   // Set buffer to generate all sound into, or disable sound if NULL
@@ -65,7 +67,6 @@ class AyApu {
   void mRunUntil(blip_time_t);
 
   struct Square {
-    static const uint8_t CLK_PSC = 16;
     BlipBuffer *mOutput;
     blip_time_t mPeriod;
     blip_time_t mDelay;
@@ -92,7 +93,7 @@ class AyApu {
     uint8_t mModes[8][48];  // values already passed through volume table
   };
 
-  uint16_t mGetPeriod(uint8_t idx) { return 256 * mRegs[idx * 2 + 1] + mRegs[idx * 2]; }
+  unsigned mGetPeriod(unsigned idx) { return get_le16(&mRegs[idx * 2]) % 4096 * CLK_PSC; }
   blip_time_t mLastTime;
   // EN: 3 square generators
   // RU: 3 генератора прямоугольных сигналов

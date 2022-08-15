@@ -29,7 +29,7 @@ namespace emu {
 namespace ay {
 
 static const unsigned INAUDIBLE_FREQ = 16384;
-static const int PERIOD_FACTOR = 16;
+// static const int PERIOD_FACTOR = 16;
 
 inline uint8_t AyApu::mGetAmp(size_t volume) {
 #define ENTRY(v) static_cast<uint8_t>(AyApu::AMP_RANGE * (v) + 0.5)
@@ -41,7 +41,7 @@ inline uint8_t AyApu::mGetAmp(size_t volume) {
       ENTRY(0.044194), ENTRY(0.062500), ENTRY(0.088388), ENTRY(0.125000), ENTRY(0.176777), ENTRY(0.250000),
       ENTRY(0.353553), ENTRY(0.500000), ENTRY(0.707107), ENTRY(1.000000),
   };
-  return pgm_read_byte(TABLE + volume);
+  return pgm_read_byte(&TABLE[volume]);
 #undef ENTRY
 }
 
@@ -81,7 +81,7 @@ void AyApu::Reset() {
   mNoise.mDelay = 0;
   mNoise.mLfsr = 0b1;
   for (auto &osc : mSquare) {
-    osc.mPeriod = Square::CLK_PSC;
+    osc.mPeriod = CLK_PSC;
     osc.mDelay = 0;
     osc.mLastAmp = 0;
     osc.mPhase = 0;
@@ -100,6 +100,8 @@ void AyApu::mWriteRegister(unsigned address, uint8_t data) {
 #endif
   }
 
+  mRegs[address] = data;
+
   // envelope mode
   if (address == R13) {
     if (!(data & Envelope::CONTINUE))  // convert modes 0-7 to proper equivalents
@@ -107,18 +109,18 @@ void AyApu::mWriteRegister(unsigned address, uint8_t data) {
     mEnvelope.mWave = mEnvelope.mModes[data - 7];
     mEnvelope.mPos = -48;
     mEnvelope.mDelay = 0;  // will get set to envelope period in mRunUntil()
+    return;
   }
-  mRegs[address] = data;
 
   // handle period changes accurately
-  int i = address >> 1;
-  if (i < OSCS_NUM) {
-    blip_time_t period = (mRegs[i * 2 + 1] & 0x0F) * (0x100L * PERIOD_FACTOR) + mRegs[i * 2] * PERIOD_FACTOR;
+  unsigned idx = address / 2;
+  if (idx < OSCS_NUM) {
+    blip_time_t period = mGetPeriod(idx);
     if (!period)
-      period = PERIOD_FACTOR;
+      period = CLK_PSC;
 
     // adjust time of next timer expiration based on change in period
-    Square &osc = mSquare[i];
+    Square &osc = mSquare[idx];
     if ((osc.mDelay += period - osc.mPeriod) < 0)
       osc.mDelay = 0;
     osc.mPeriod = period;
@@ -128,14 +130,14 @@ void AyApu::mWriteRegister(unsigned address, uint8_t data) {
   // after it
 }
 
-int const NOISE_OFF = 0x08;
-int const TONE_OFF = 0x01;
+const unsigned NOISE_OFF = 0b1000;
+const unsigned TONE_OFF = 0b0001;
 
 void AyApu::mRunUntil(blip_time_t final_end_time) {
   require(final_end_time >= mLastTime);
 
   // noise period and initial values
-  const blip_time_t noise_period_factor = PERIOD_FACTOR * 2;  // verified
+  const blip_time_t noise_period_factor = CLK_PSC * 2;  // verified
   blip_time_t noise_period = (mRegs[6] & 0x1F) * noise_period_factor;
   if (!noise_period)
     noise_period = noise_period_factor;
@@ -143,7 +145,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   blargg_ulong const old_noise_lfsr = mNoise.mLfsr;
 
   // envelope period
-  blip_time_t const env_period_factor = PERIOD_FACTOR * 2;  // verified
+  blip_time_t const env_period_factor = CLK_PSC * 2;  // verified
   blip_time_t env_period = (mRegs[12] * 0x100L + mRegs[11]) * env_period_factor;
   if (!env_period)
     env_period = env_period_factor;  // same as period 1 on my AY chip
@@ -153,7 +155,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   // run each osc separately
   for (int idx = 0; idx < OSCS_NUM; idx++) {
     Square &osc = mSquare[idx];
-    int osc_mode = mRegs[7] >> idx;
+    uint8_t mode = mRegs[7] >> idx;
 
     // output
     BlipBuffer *const osc_output = osc.mOutput;
@@ -163,10 +165,10 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
 
     // period
     int half_vol = 0;
-    blip_time_t inaudible_period = (blargg_ulong) (osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
-    if (osc.mPeriod <= inaudible_period && !(osc_mode & TONE_OFF)) {
+    blip_time_t inaudible_period = (blargg_ulong)(osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
+    if (osc.mPeriod <= inaudible_period && !(mode & TONE_OFF)) {
       half_vol = 1;  // Actually around 60%, but 50% is close enough
-      osc_mode |= TONE_OFF;
+      mode |= TONE_OFF;
     }
 
     // envelope
@@ -187,17 +189,17 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
         // if ( !(mRegs [12] | mRegs [11]) )
         //  debug_printf( "Used envelope period 0\n" );
       } else if (!volume) {
-        osc_mode = NOISE_OFF | TONE_OFF;
+        mode = NOISE_OFF | TONE_OFF;
       }
     } else if (!volume) {
-      osc_mode = NOISE_OFF | TONE_OFF;
+      mode = NOISE_OFF | TONE_OFF;
     }
 
     // tone time
     const blip_time_t period = osc.mPeriod;
     blip_time_t time = start_time + osc.mDelay;
     // maintain tone's phase when off
-    if (osc_mode & TONE_OFF) {
+    if (mode & TONE_OFF) {
       blargg_long count = (final_end_time - time + period - 1) / period;
       time += count * period;
       osc.mPhase ^= count & 1;
@@ -206,7 +208,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     // noise time
     blip_time_t ntime = final_end_time;
     blargg_ulong noise_lfsr = 1;
-    if (!(osc_mode & NOISE_OFF)) {
+    if (!(mode & NOISE_OFF)) {
       ntime = start_time + old_noise_delay;
       noise_lfsr = old_noise_lfsr;
       // if ( (mRegs [6] & 0x1F) == 0 )
@@ -229,7 +231,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     while (1) {
       // current amplitude
       int amp = 0;
-      if ((osc_mode | osc.mPhase) & 1 & (osc_mode >> 3 | noise_lfsr))
+      if ((mode | osc.mPhase) & 1 & (mode >> 3 | noise_lfsr))
         amp = volume;
       {
         int delta = amp - osc.mLastAmp;
@@ -248,7 +250,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
         // calculate the delta.
         int delta = amp * 2 - volume;
         int delta_non_zero = delta != 0;
-        int phase = osc.mPhase | (osc_mode & TONE_OFF);
+        int phase = osc.mPhase | (mode & TONE_OFF);
         assert(TONE_OFF == 0x01);
         do {
           // run noise
@@ -301,7 +303,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
         } while (time < end_time || ntime < end_time);
 
         osc.mLastAmp = (delta + volume) >> 1;
-        if (!(osc_mode & TONE_OFF))
+        if (!(mode & TONE_OFF))
           osc.mPhase = phase;
       }
 
@@ -320,7 +322,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     }
     osc.mDelay = time - final_end_time;
 
-    if (!(osc_mode & NOISE_OFF)) {
+    if (!(mode & NOISE_OFF)) {
       mNoise.mDelay = ntime - final_end_time;
       mNoise.mLfsr = noise_lfsr;
     }
