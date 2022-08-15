@@ -37,7 +37,7 @@ AyEmu::AyEmu() {
   static int const CHANNELS_TYPES[OSCS_NUM] = {WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2, MIXED_TYPE | 0};
 
   beeper_output = 0;
-  m_setType(gme_ay_type);
+  mSetType(gme_ay_type);
 
   mSetChannelsNames(CHANNELS_NAMES);
 
@@ -49,8 +49,8 @@ AyEmu::~AyEmu() {}
 
 // Track info
 
-static uint8_t const *get_data(AyEmu::file_t const &file, uint8_t const *ptr, int min_size) {
-  long pos = ptr - (uint8_t const *) file.header;
+static const uint8_t *get_data(const AyEmu::file_t &file, const uint8_t *ptr, int min_size) {
+  long pos = ptr - (const uint8_t *) file.header;
   long file_size = file.end - (uint8_t const *) file.header;
   assert((unsigned long) pos <= (unsigned long) file_size - 2);
   int offset = (int16_t) get_be16(ptr);
@@ -92,10 +92,11 @@ blargg_err_t AyEmu::mGetTrackInfo(track_info_t *out, int track) const {
   copy_ay_fields(file, out, track);
   return 0;
 }
+
 struct AyFile : GmeInfo {
   AyEmu::file_t file;
 
-  AyFile() { m_setType(gme_ay_type); }
+  AyFile() { mSetType(gme_ay_type); }
   static MusicEmu *createAyFile() { return BLARGG_NEW AyFile; }
 
   blargg_err_t mLoad(uint8_t const *begin, long size) override {

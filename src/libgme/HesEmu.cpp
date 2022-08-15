@@ -34,7 +34,7 @@ using std::min;
 
 HesEmu::HesEmu() {
   timer.raw_load = 0;
-  m_setType(gme_hes_type);
+  mSetType(gme_hes_type);
 
   static const char *const names[HesApu::OSCS_NUM] = {"Wave 1", "Wave 2", "Wave 3", "Wave 4", "Multi 1", "Multi 2"};
   mSetChannelsNames(names);
@@ -105,7 +105,7 @@ struct HesFile : GmeInfo {
     uint8_t fields[0x30 * 3];
   } h;
 
-  HesFile() { m_setType(gme_hes_type); }
+  HesFile() { mSetType(gme_hes_type); }
   static MusicEmu *createHesFile() { return BLARGG_NEW HesFile; }
 
   blargg_err_t mLoad(DataReader &in) override {

@@ -26,7 +26,7 @@ GbsEmu::equalizer_t const GbsEmu::handheld_eq = MusicEmu::MakeEqualizer(-47.0, 2
 GbsEmu::equalizer_t const GbsEmu::headphones_eq = MusicEmu::MakeEqualizer(0.0, 300);
 
 GbsEmu::GbsEmu() {
-  m_setType(gme_gbs_type);
+  mSetType(gme_gbs_type);
 
   static const char *const names[GbApu::OSC_NUM] = {"Square 1", "Square 2", "Wave", "Noise"};
   mSetChannelsNames(names);
@@ -70,7 +70,7 @@ static blargg_err_t check_gbs_header(void const *header) {
 struct GbsFile : GmeInfo {
   GbsEmu::Header h;
 
-  GbsFile() { m_setType(gme_gbs_type); }
+  GbsFile() { mSetType(gme_gbs_type); }
   static MusicEmu *createGbsFile() { return BLARGG_NEW GbsFile; }
 
   blargg_err_t mLoad(DataReader &in) override {

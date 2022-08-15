@@ -31,7 +31,7 @@ using std::min;
 
 KssEmu::KssEmu() {
   sn = 0;
-  m_setType(gme_kss_type);
+  mSetType(gme_kss_type);
   mSetSilenceLookahead(6);
   static const char *const names[OSCS_NUM] = {"Square 1", "Square 2", "Square 3", "Wave 1",
                                               "Wave 2",   "Wave 3",   "Wave 4",   "Wave 5"};
@@ -78,7 +78,7 @@ static blargg_err_t check_kss_header(void const *header) {
 struct KssFile : GmeInfo {
   KssEmu::header_t header_;
 
-  KssFile() { m_setType(gme_kss_type); }
+  KssFile() { mSetType(gme_kss_type); }
   static MusicEmu *createKssFile() { return BLARGG_NEW KssFile; }
 
   blargg_err_t mLoad(DataReader &in) override {

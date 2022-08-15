@@ -111,7 +111,7 @@ struct GmeFile {
   // Services
   void m_setTrackNum(int n) { m_trackNum = m_rawTrackCount = n; }
   void m_setWarning(const char *s) { m_warning = s; }
-  void m_setType(gme_type_t t) { m_type = t; }
+  void mSetType(gme_type_t t) { m_type = t; }
   blargg_err_t m_loadRemaining(void const *header, long header_size, DataReader &remaining);
 
   // Unload file. Called before loading file and if loading fails.

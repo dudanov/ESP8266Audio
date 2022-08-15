@@ -27,7 +27,7 @@ static const long CLOCK_RATE = BASE_CLOCK / 15;
 GymEmu::GymEmu() {
   data = 0;
   pos = 0;
-  this->m_setType(gme_gym_type);
+  this->mSetType(gme_gym_type);
 
   static const char *const names[] = {"FM 1", "FM 2", "FM 3", "FM 4", "FM 5", "FM 6", "PCM", "PSG"};
   this->mSetChannelsNames(names);
@@ -114,7 +114,7 @@ static blargg_err_t check_header(const uint8_t *in, long size, int *data_offset 
 }
 
 struct GymFile : GmeInfo {
-  GymFile() { m_setType(gme_gym_type); }
+  GymFile() { mSetType(gme_gym_type); }
   const uint8_t *file_begin;
   const uint8_t *file_end;
   int data_offset;

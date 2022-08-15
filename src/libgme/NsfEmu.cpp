@@ -45,7 +45,7 @@ NsfEmu::NsfEmu() {
   this->namco = nullptr;
   this->fme7 = nullptr;
 
-  this->m_setType(gme_nsf_type);
+  this->mSetType(gme_nsf_type);
   this->mSetSilenceLookahead(6);
   this->mApu.SetDmcReader(pcmRead, this);
   MusicEmu::SetEqualizer(nes_eq);
@@ -96,7 +96,7 @@ static blargg_err_t check_nsf_header(void const *header) {
 
 struct NsfFile : GmeInfo {
   NsfEmu::Header hdr;
-  NsfFile() { this->m_setType(gme_nsf_type); }
+  NsfFile() { this->mSetType(gme_nsf_type); }
   static MusicEmu *createNsfFile() { return BLARGG_NEW NsfFile; }
   blargg_err_t mLoad(DataReader &in) override {
     blargg_err_t err = in.read(&hdr, NsfEmu::HEADER_SIZE);

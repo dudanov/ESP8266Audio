@@ -29,7 +29,7 @@ using std::max;
 using std::min;
 
 SapEmu::SapEmu() {
-  m_setType(gme_sap_type);
+  mSetType(gme_sap_type);
 
   static const char *const names[SapApu::OSCS_NUM * 2] = {
       "Wave 1", "Wave 2", "Wave 3", "Wave 4", "Wave 5", "Wave 6", "Wave 7", "Wave 8",
@@ -187,7 +187,7 @@ blargg_err_t SapEmu::mGetTrackInfo(track_info_t *out, int) const {
 struct SapFile : GmeInfo {
   SapEmu::info_t info;
 
-  SapFile() { m_setType(gme_sap_type); }
+  SapFile() { mSetType(gme_sap_type); }
   static MusicEmu *createSapFile() { return BLARGG_NEW SapFile; }
 
   blargg_err_t mLoad(uint8_t const *begin, long size) {

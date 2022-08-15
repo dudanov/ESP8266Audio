@@ -34,7 +34,7 @@ using std::min;
 VgmEmu::VgmEmu() {
   disable_oversampling_ = false;
   m_psgRate = 0;
-  m_setType(gme_vgm_type);
+  mSetType(gme_vgm_type);
 
   static int const types[8] = {WAVE_TYPE | 1, WAVE_TYPE | 0, WAVE_TYPE | 2, NOISE_TYPE | 0};
   mSetChannelsTypes(types);
@@ -155,7 +155,7 @@ struct VgmFile : GmeInfo {
   VgmEmu::header_t h;
   blargg_vector<uint8_t> gd3;
 
-  VgmFile() { m_setType(gme_vgm_type); }
+  VgmFile() { mSetType(gme_vgm_type); }
   static MusicEmu *createVgmFile() { return BLARGG_NEW VgmFile; }
 
   blargg_err_t mLoad(DataReader &in) override {

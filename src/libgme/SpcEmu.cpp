@@ -39,7 +39,7 @@ namespace snes {
 SpcEmu::SpcEmu(gme_type_t type) {
   static const char *const CHANNELS_NAMES[] = {"DSP 1", "DSP 2", "DSP 3", "DSP 4", "DSP 5", "DSP 6", "DSP 7", "DSP 8"};
   this->mSetChannelsNames(CHANNELS_NAMES);
-  this->m_setType(type);
+  this->mSetType(type);
   this->SetGain(1.4);
 }
 
@@ -231,7 +231,7 @@ struct SpcFile : GmeInfo {
   SpcEmu::header_t header;
   blargg_vector<uint8_t> xid6;
 
-  SpcFile(gme_type_t type) { m_setType(type); }
+  SpcFile(gme_type_t type) { mSetType(type); }
   SpcFile() : SpcFile(gme_spc_type) {}
   static MusicEmu *createSpcFile() { return BLARGG_NEW SpcFile; }
 

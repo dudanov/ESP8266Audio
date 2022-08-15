@@ -256,7 +256,7 @@ blargg_err_t NsfeInfo::track_info_(track_info_t *out, int track) const {
 
 NsfeEmu::NsfeEmu() {
   loading = false;
-  m_setType(gme_nsfe_type);
+  mSetType(gme_nsfe_type);
 }
 
 NsfeEmu::~NsfeEmu() {}
@@ -272,7 +272,7 @@ blargg_err_t NsfeEmu::mGetTrackInfo(track_info_t *out, int track) const { return
 struct NsfeFile : GmeInfo {
   NsfeInfo info;
 
-  NsfeFile() { m_setType(gme_nsfe_type); }
+  NsfeFile() { mSetType(gme_nsfe_type); }
   static MusicEmu *createNsfeFile() { return BLARGG_NEW NsfeFile; }
 
   blargg_err_t mLoad(DataReader &in) override {
