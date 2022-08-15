@@ -24,10 +24,14 @@ class AyApu {
   // Reset sound chip
   void Reset();
 
+  // EN: 16 internal control registers
+  // RU: 16 внутренних регистров управления
+  enum Reg { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, RNUM };
+
   // Write to register at specified time
-  void Write(blip_time_t time, int addr, int data) {
+  void Write(blip_time_t time, Reg reg, uint8_t data) {
     mRunUntil(time);
-    mWriteData(addr, data);
+    mWriteRegister(reg, data);
   }
   // Run sound to specified time, end current time frame, then start a new
   // time frame at time 0. Time frames have no effect on emulation and each
@@ -54,11 +58,14 @@ class AyApu {
   void setTrebleEq(BlipEq const &eq) { mSynth.setTrebleEq(eq); }
 
  private:
+  std::array<uint8_t, RNUM> mRegs;
+  void mWriteRegister(Reg reg, uint8_t data);
+
   static uint8_t mGetAmp(size_t idx);
   void mRunUntil(blip_time_t);
-  void mWriteData(int addr, int data);
 
   struct Square {
+    static const uint8_t CLK_PSC = 16;
     BlipBuffer *mOutput;
     blip_time_t mPeriod;
     blip_time_t mDelay;
@@ -72,6 +79,12 @@ class AyApu {
   };
 
   struct Envelope {
+    enum {
+      HOLD = 0b0001,
+      ALTERNATE = 0b0010,
+      ATTACK = 0b0100,
+      CONTINUE = 0b1000,
+    };
     Envelope();
     blip_time_t mDelay;
     const uint8_t *mWave;
@@ -79,11 +92,7 @@ class AyApu {
     uint8_t mModes[8][48];  // values already passed through volume table
   };
 
-  static const uint8_t REG_COUNT = 16;
-
-  // EN: 16 internal control registers
-  // RU: 16 внутренних регистров управления
-  uint8_t mRegs[REG_COUNT];
+  uint16_t mGetPeriod(uint8_t idx) { return 256 * mRegs[idx * 2 + 1] + mRegs[idx * 2]; }
   blip_time_t mLastTime;
   // EN: 3 square generators
   // RU: 3 генератора прямоугольных сигналов

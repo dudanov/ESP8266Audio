@@ -9,6 +9,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#ifndef _BV
+#define _BV(n) (1UL << (n))
+#endif
+
 #undef BLARGG_COMMON_H
 // allow blargg_config.h to #include blargg_common.h
 #include "blargg_config.h"
@@ -24,7 +28,7 @@
 
 // STATIC_CAST(T,expr): Used in place of static_cast<T> (expr)
 #ifndef STATIC_CAST
-#define STATIC_CAST(T, expr) ((T)(expr))
+#define STATIC_CAST(T, expr) ((T) (expr))
 #endif
 
 // blargg_err_t (0 on success, otherwise error string)
