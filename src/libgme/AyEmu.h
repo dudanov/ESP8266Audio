@@ -58,7 +58,7 @@ class AyEmu : private AyCpu, public ClassicEmu {
   BlipBuffer *beeper_output;
   int beeper_delta;
   int last_beeper;
-  AyApu::Reg mApuReg;
+  unsigned mApuReg;
   int cpc_latch;
   bool spectrum_mode;
   bool cpc_mode;

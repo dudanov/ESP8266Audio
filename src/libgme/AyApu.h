@@ -29,9 +29,9 @@ class AyApu {
   enum Reg { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, RNUM };
 
   // Write to register at specified time
-  void Write(blip_time_t time, Reg reg, uint8_t data) {
+  void Write(blip_time_t time, unsigned address, uint8_t data) {
     mRunUntil(time);
-    mWriteRegister(reg, data);
+    mWriteRegister(address, data);
   }
   // Run sound to specified time, end current time frame, then start a new
   // time frame at time 0. Time frames have no effect on emulation and each
@@ -59,7 +59,7 @@ class AyApu {
 
  private:
   std::array<uint8_t, RNUM> mRegs;
-  void mWriteRegister(Reg reg, uint8_t data);
+  void mWriteRegister(unsigned address, uint8_t data);
 
   static uint8_t mGetAmp(size_t idx);
   void mRunUntil(blip_time_t);

@@ -53,7 +53,7 @@ static uint8_t const initial_regs[SpcDsp::REGISTERS_NUM] = {
   }
 
 // Access global DSP register
-#define REG(n) m.regs[R_##n]
+#define REG(n) m.mRegs[R_##n]
 
 // Access voice DSP register
 #define VREG(r, n) r[V_##n]

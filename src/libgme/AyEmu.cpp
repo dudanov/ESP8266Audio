@@ -4,6 +4,7 @@
 
 #include "blargg_endian.h"
 #include <string.h>
+#include <pgmspace.h>
 
 #include <algorithm>  // min, max
 

@@ -91,27 +91,27 @@ void AyApu::Reset() {
   mWriteRegister(R13, 0x00);
 }
 
-void AyApu::mWriteRegister(Reg reg, uint8_t data) {
-  assert((unsigned) reg < RNUM);
+void AyApu::mWriteRegister(unsigned address, uint8_t data) {
+  assert((unsigned) address < RNUM);
 
-  if ((unsigned) reg >= R14) {
+  if ((unsigned) address >= R14) {
 #ifdef debug_printf
-    debug_printf("Wrote to I/O port %02X\n", (int) reg);
+    debug_printf("Wrote to I/O port %02X\n", (int) address);
 #endif
   }
 
   // envelope mode
-  if (reg == R13) {
+  if (address == R13) {
     if (!(data & Envelope::CONTINUE))  // convert modes 0-7 to proper equivalents
       data = (data & Envelope::ATTACK) ? 15 : 9;
     mEnvelope.mWave = mEnvelope.mModes[data - 7];
     mEnvelope.mPos = -48;
     mEnvelope.mDelay = 0;  // will get set to envelope period in mRunUntil()
   }
-  mRegs[reg] = data;
+  mRegs[address] = data;
 
   // handle period changes accurately
-  int i = reg >> 1;
+  int i = address >> 1;
   if (i < OSCS_NUM) {
     blip_time_t period = (mRegs[i * 2 + 1] & 0x0F) * (0x100L * PERIOD_FACTOR) + mRegs[i * 2] * PERIOD_FACTOR;
     if (!period)

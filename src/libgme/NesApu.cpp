@@ -80,11 +80,11 @@ void NesApu::Reset(bool pal_mode, int initial_dmc_dac) {
   this->m_palMode = pal_mode;
   SetTempo(this->mTempo);
 
-  this->mSquare1.reset();
-  this->mSquare2.reset();
-  this->mTriangle.reset();
-  this->mNoise.reset();
-  this->mDmc.reset();
+  this->mSquare1.mReset();
+  this->mSquare2.mReset();
+  this->mTriangle.mReset();
+  this->mNoise.mReset();
+  this->mDmc.mReset();
 
   this->mLastTime = 0;
   this->m_lastDmcTime = 0;
