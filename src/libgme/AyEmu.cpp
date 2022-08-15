@@ -144,9 +144,9 @@ void AyEmu::mSetTempo(double t) { play_period = blip_time_t(mGetClockRate() / 50
 blargg_err_t AyEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
 
-  std::fill(mem.ram.begin(), &mem.ram[0x0100], 0xC9);  // fill RST vectors with RET
-  std::fill(&mem.ram[0x0100], &mem.ram[0x4000], 0xFF);
-  std::fill(&mem.ram[0x4000], &mem.ram[0x10000], 0x00);  // RAM area
+  std::fill(&mem.ram[0x00000], &mem.ram[0x00100], 0xC9);  // fill RST vectors with RET
+  std::fill(&mem.ram[0x00100], &mem.ram[0x04000], 0xFF);
+  std::fill(&mem.ram[0x04000], &mem.ram[0x10000], 0x00);  // RAM area
   std::fill(&mem.ram[0x10000], mem.ram.end(), 0xFF);
   mem.padding1.fill(0xFF);
 
