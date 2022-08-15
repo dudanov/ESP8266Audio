@@ -26,8 +26,8 @@ class GbApu {
 
   // Assign all oscillator outputs to specified buffer(s). If buffer
   // is NULL, silences all oscillators.
-  void setOutput(BlipBuffer *b) { setOutput(b, b, b); }
-  void setOutput(BlipBuffer *center, BlipBuffer *left, BlipBuffer *right);
+  void SetOutput(BlipBuffer *b) { SetOutput(b, b, b); }
+  void SetOutput(BlipBuffer *center, BlipBuffer *left, BlipBuffer *right);
 
   // Assign single oscillator output to buffer(s). Valid indicies are 0 to 3,
   // which refer to Square 1, Square 2, Wave, and Noise. If buffer is NULL,

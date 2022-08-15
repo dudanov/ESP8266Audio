@@ -25,7 +25,7 @@ class GbOsc {
     this->m_outputs[CHANNEL_RIGHT] = right;
     this->m_outputs[CHANNEL_LEFT] = left;
     this->m_outputs[CHANNEL_CENTER] = center;
-    this->m_output = center;
+    this->mOutput = center;
   }
 
   virtual void run(blip_time_t, blip_time_t) = 0;
@@ -41,7 +41,7 @@ class GbOsc {
  protected:
   friend class GbApu;
   std::array<BlipBuffer *, 4> m_outputs;  // NULL, right, left, center
-  BlipBuffer *m_output{nullptr};
+  BlipBuffer *mOutput{nullptr};
   uint8_t *m_regs;  // osc's 5 registers
   int m_delay;
   int m_lastAmp;
@@ -93,7 +93,7 @@ class GbNoise : public GbEnv {
   Synth const *synth;
   void run(blip_time_t, blip_time_t) override;
   void reset() {
-    this->m_reset();
+    this->mReset();
     GbEnv::reset();
   }
   bool writeRegister(int reg, int data) override {
@@ -104,7 +104,7 @@ class GbNoise : public GbEnv {
 
  protected:
   uint16_t m_lfsr;
-  void m_reset() { this->m_lfsr = 1; }
+  void mReset() { this->m_lfsr = 1; }
 };
 
 class GbWave : public GbOsc {
@@ -121,7 +121,7 @@ class GbWave : public GbOsc {
     this->m_waveTable[idx + 1] = data % 16 * 2;
   }
   void reset() {
-    this->m_reset();
+    this->mReset();
     GbOsc::reset();
   }
 
@@ -132,10 +132,10 @@ class GbWave : public GbOsc {
   uint8_t m_getSample() const { return *this->m_sampleIt; }
   uint8_t m_advNextSample() {
     if (++this->m_sampleIt == this->m_waveTable.end())
-      this->m_reset();
+      this->mReset();
     return this->m_getSample();
   }
-  void m_reset() { this->m_sampleIt = this->m_waveTable.begin(); }
+  void mReset() { this->m_sampleIt = this->m_waveTable.begin(); }
 };
 
 }  // namespace gb

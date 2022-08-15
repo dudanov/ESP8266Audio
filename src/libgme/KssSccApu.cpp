@@ -48,14 +48,14 @@ void SccApu::run_until(blip_time_t end_time) {
       wave -= wave_size;  // last two oscs share wave
     {
       int amp = wave[osc.phase] * volume;
-      int delta = amp - osc.lastAmp;
+      int delta = amp - osc.mLastAmp;
       if (delta) {
-        osc.lastAmp = amp;
+        osc.mLastAmp = amp;
         m_synth.offset(m_lastTime, delta, output);
       }
     }
 
-    blip_time_t time = m_lastTime + osc.delay;
+    blip_time_t time = m_lastTime + osc.mDelay;
     if (time < end_time) {
       if (!volume) {
         // maintain phase
@@ -79,10 +79,10 @@ void SccApu::run_until(blip_time_t end_time) {
         } while (time < end_time);
 
         osc.phase = phase = (phase - 1) & (wave_size - 1);  // undo pre-advance
-        osc.lastAmp = wave[phase] * volume;
+        osc.mLastAmp = wave[phase] * volume;
       }
     }
-    osc.delay = time - end_time;
+    osc.mDelay = time - end_time;
   }
   m_lastTime = end_time;
 }

@@ -35,7 +35,7 @@ void NesNamcoApu::reset() {
 
   for (i = 0; i < OSCS_NUM; i++) {
     NamcoOsc &osc = oscs[i];
-    osc.delay = 0;
+    osc.mDelay = 0;
     osc.last_amp = 0;
     osc.wave_pos = 0;
   }
@@ -60,7 +60,7 @@ void NesNamcoApu::reflect_state( Tagged_Data& data )
         for ( i = 0; i < OSCS_NUM; i++ )
         {
                 reflect_int32( data, BLARGG_4CHAR('D','L','Y','0') + i, &oscs
-[i].delay ); reflect_int16( data, BLARGG_4CHAR('P','O','S','0') + i, &oscs
+[i].mDelay ); reflect_int16( data, BLARGG_4CHAR('P','O','S','0') + i, &oscs
 [i].wave_pos );
         }
 }
@@ -83,9 +83,9 @@ void NesNamcoApu::run_until(blip_time_t nes_end_time) {
       continue;
     output->setModified();
 
-    blip_resampled_time_t time = output->resampledTime(last_time) + osc.delay;
+    blip_resampled_time_t time = output->resampledTime(last_time) + osc.mDelay;
     blip_resampled_time_t end_time = output->resampledTime(nes_end_time);
-    osc.delay = 0;
+    osc.mDelay = 0;
     if (time < end_time) {
       const uint8_t *osc_reg = &m_regs[i * 8 + 0x40];
       if (!(osc_reg[4] & 0xE0))
@@ -131,7 +131,7 @@ void NesNamcoApu::run_until(blip_time_t nes_end_time) {
       osc.wave_pos = wave_pos;
       osc.last_amp = last_amp;
     }
-    osc.delay = time - end_time;
+    osc.mDelay = time - end_time;
   }
 
   last_time = nes_end_time;

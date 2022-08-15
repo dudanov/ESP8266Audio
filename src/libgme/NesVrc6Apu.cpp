@@ -30,8 +30,8 @@ void NesVrc6Apu::reset() {
   for (int i = 0; i < OSCS_NUM; i++) {
     Vrc6Osc &osc = oscs[i];
     for (int j = 0; j < REGS_NUM; j++)
-      osc.regs[j] = 0;
-    osc.delay = 0;
+      osc.mRegs[j] = 0;
+    osc.mDelay = 0;
     osc.last_amp = 0;
     osc.phase = 1;
     osc.amp = 0;
@@ -56,7 +56,7 @@ void NesVrc6Apu::write_osc(blip_time_t time, int osc_index, int reg, int data) {
   require((unsigned) reg < REGS_NUM);
 
   run_until(time);
-  oscs[osc_index].regs[reg] = data;
+  oscs[osc_index].mRegs[reg] = data;
 }
 
 void NesVrc6Apu::end_frame(blip_time_t time) {
@@ -73,9 +73,9 @@ void NesVrc6Apu::save_state(vrc6_apu_state_t *out) const {
   for (int i = 0; i < OSCS_NUM; i++) {
     Vrc6Osc const &osc = oscs[i];
     for (int r = 0; r < REGS_NUM; r++)
-      out->regs[i][r] = osc.regs[r];
+      out->mRegs[i][r] = osc.mRegs[r];
 
-    out->delays[i] = osc.delay;
+    out->delays[i] = osc.mDelay;
     out->phases[i] = osc.phase;
   }
 }
@@ -86,9 +86,9 @@ void NesVrc6Apu::load_state(vrc6_apu_state_t const &in) {
   for (int i = 0; i < OSCS_NUM; i++) {
     Vrc6Osc &osc = oscs[i];
     for (int r = 0; r < REGS_NUM; r++)
-      osc.regs[r] = in.regs[i][r];
+      osc.mRegs[r] = in.mRegs[i][r];
 
-    osc.delay = in.delays[i];
+    osc.mDelay = in.delays[i];
     osc.phase = in.phases[i];
   }
   if (!oscs[2].phase)
@@ -101,12 +101,12 @@ void NesVrc6Apu::run_square(Vrc6Osc &osc, blip_time_t end_time) {
     return;
   output->setModified();
 
-  int volume = osc.regs[0] & 15;
-  if (!(osc.regs[2] & 0x80))
+  int volume = osc.mRegs[0] & 15;
+  if (!(osc.mRegs[2] & 0x80))
     volume = 0;
 
-  int gate = osc.regs[0] & 0x80;
-  int duty = ((osc.regs[0] >> 4) & 7) + 1;
+  int gate = osc.mRegs[0] & 0x80;
+  int duty = ((osc.mRegs[0] >> 4) & 7) + 1;
   int delta = ((gate || osc.phase < duty) ? volume : 0) - osc.last_amp;
   blip_time_t time = last_time;
   if (delta) {
@@ -114,8 +114,8 @@ void NesVrc6Apu::run_square(Vrc6Osc &osc, blip_time_t end_time) {
     square_synth.offset(time, delta, output);
   }
 
-  time += osc.delay;
-  osc.delay = 0;
+  time += osc.mDelay;
+  osc.mDelay = 0;
   int period = osc.period();
   if (volume && !gate && period > 4) {
     if (time < end_time) {
@@ -137,7 +137,7 @@ void NesVrc6Apu::run_square(Vrc6Osc &osc, blip_time_t end_time) {
 
       osc.phase = phase;
     }
-    osc.delay = time - end_time;
+    osc.mDelay = time - end_time;
   }
 }
 
@@ -149,16 +149,16 @@ void NesVrc6Apu::run_saw(blip_time_t end_time) {
   output->setModified();
 
   int amp = osc.amp;
-  int amp_step = osc.regs[0] & 0x3F;
+  int amp_step = osc.mRegs[0] & 0x3F;
   blip_time_t time = last_time;
   int last_amp = osc.last_amp;
-  if (!(osc.regs[2] & 0x80) || !(amp_step | amp)) {
-    osc.delay = 0;
+  if (!(osc.mRegs[2] & 0x80) || !(amp_step | amp)) {
+    osc.mDelay = 0;
     int delta = (amp >> 3) - last_amp;
     last_amp = amp >> 3;
     saw_synth.offset(time, delta, output);
   } else {
-    time += osc.delay;
+    time += osc.mDelay;
     if (time < end_time) {
       int period = osc.period() * 2;
       int phase = osc.phase;
@@ -183,7 +183,7 @@ void NesVrc6Apu::run_saw(blip_time_t end_time) {
       osc.amp = amp;
     }
 
-    osc.delay = time - end_time;
+    osc.mDelay = time - end_time;
   }
 
   osc.last_amp = last_amp;

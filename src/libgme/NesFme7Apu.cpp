@@ -43,8 +43,8 @@ void NesFme7Apu::run_until(blip_time_t end_time) {
   require(end_time >= last_time);
 
   for (int index = 0; index < OSCS_NUM; index++) {
-    int mode = regs[7] >> index;
-    int vol_mode = regs[010 + index];
+    int mode = mRegs[7] >> index;
+    int vol_mode = mRegs[010 + index];
     int volume = amp_table[vol_mode & 0x0F];
 
     BlipBuffer *const osc_output = oscs[index].output;
@@ -63,7 +63,7 @@ void NesFme7Apu::run_until(blip_time_t end_time) {
 
     // period
     int const period_factor = 16;
-    unsigned period = (regs[index * 2 + 1] & 0x0F) * 0x100 * period_factor + regs[index * 2] * period_factor;
+    unsigned period = (mRegs[index * 2 + 1] & 0x0F) * 0x100 * period_factor + mRegs[index * 2] * period_factor;
     if (period < 50)  // around 22 kHz
     {
       volume = 0;

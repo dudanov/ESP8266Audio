@@ -21,8 +21,8 @@ class SmsApu {
 
   // Assign all oscillator outputs to specified buffer(s). If buffer
   // is NULL, silences all oscillators.
-  void setOutput(BlipBuffer *mono) { this->setOutput(mono, mono, mono); }
-  void setOutput(BlipBuffer *center, BlipBuffer *left, BlipBuffer *right);
+  void SetOutput(BlipBuffer *mono) { this->SetOutput(mono, mono, mono); }
+  void SetOutput(BlipBuffer *center, BlipBuffer *left, BlipBuffer *right);
 
   // Assign single oscillator output to buffer(s). Valid indicies are 0 to 3,
   // which refer to Square 1, Square 2, Square 3, and Noise. If buffer is
@@ -66,7 +66,7 @@ class SmsApu {
 };
 
 // struct SmsApuState {
-// uint8_t regs[8][2];
+// uint8_t mRegs[8][2];
 // uint8_t latch;
 //};
 

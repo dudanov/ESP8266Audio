@@ -17,36 +17,36 @@ using DmcReaderFn = std::function<int(void *, nes_addr_t)>;
 class NesApu;
 
 struct NesOsc {
-  BlipBuffer *m_output;
-  int lengthCounter;  // length counter (0 if unused by oscillator)
-  int delay;          // delay until next (potential) transition
-  int lastAmp;        // last amplitude oscillator was outputting
-  std::array<uint8_t, 4> regs;
-  std::array<bool, 4> regWritten;
+  BlipBuffer *mOutput;
+  int mLengthCounter;  // length counter (0 if unused by oscillator)
+  int mDelay;          // delay until next (potential) transition
+  int mLastAmp;        // last amplitude oscillator was outputting
+  std::array<uint8_t, 4> mRegs;
+  std::array<bool, 4> mRegWritten;
 
-  void setOutput(BlipBuffer *output) { this->m_output = output; }
+  void SetOutput(BlipBuffer *output) { this->mOutput = output; }
   void doLengthClock(int halt_mask);
-  int getPeriod() const { return 256 * (this->regs[3] & 0b111) + this->regs[2]; }
+  int mGetPeriod() const { return 256 * (this->mRegs[3] & 0b111) + this->mRegs[2]; }
 
  protected:
   NesOsc() = delete;
   NesOsc(NesApu *apu) : mApu(apu) {}
   NesApu *mApu;
-  void m_reset() {
-    this->delay = 0;
-    this->lastAmp = 0;
+  void mReset() {
+    this->mDelay = 0;
+    this->mLastAmp = 0;
   }
-  int m_updateAmp(int amp) {
-    int delta = amp - this->lastAmp;
-    this->lastAmp = amp;
+  int mUpdateAmp(int amp) {
+    int delta = amp - this->mLastAmp;
+    this->mLastAmp = amp;
     return delta;
   }
 #if 0
     void zero_apu_osc(nes_time_t time) {
-        int last_amp = this->lastAmp;
-        this->lastAmp = 0;
-        if (this->m_output != nullptr && last_amp)
-            this->synth.offset(time, -last_amp, this->m_output);
+        int last_amp = this->mLastAmp;
+        this->mLastAmp = 0;
+        if (this->mOutput != nullptr && last_amp)
+            this->synth.offset(time, -last_amp, this->mOutput);
     }
 #endif
 };
@@ -59,10 +59,10 @@ struct NesEnvelope : NesOsc {
 
   void doEnvelopeClock();
   int volume() const;
-  void reset() {
+  void mReset() {
     this->envelope = 0;
     this->env_delay = 0;
-    NesOsc::m_reset();
+    NesOsc::mReset();
   }
 };
 
@@ -81,9 +81,9 @@ struct NesSquare : NesEnvelope {
 
   void doSweepClock(int adjust);
   void run(nes_time_t, nes_time_t);
-  void reset() {
+  void mReset() {
     this->sweep_delay = 0;
-    NesEnvelope::reset();
+    NesEnvelope::mReset();
   }
   nes_time_t maintain_phase(nes_time_t time, nes_time_t end_time, nes_time_t timer_period);
 };
@@ -99,10 +99,10 @@ struct NesTriangle : NesOsc {
   int calc_amp() const;
   void run(nes_time_t, nes_time_t);
   void doLinearCounterClock();
-  void reset() {
+  void mReset() {
     this->linear_counter = 0;
     this->phase = 1;
-    NesOsc::m_reset();
+    NesOsc::mReset();
   }
   nes_time_t maintain_phase(nes_time_t time, nes_time_t end_time, nes_time_t timer_period);
 };
@@ -114,9 +114,9 @@ struct NesNoise : NesEnvelope {
   BlipSynth<BLIP_MED_QUALITY, 1> synth;
 
   void run(nes_time_t, nes_time_t);
-  void reset() {
+  void mReset() {
     noise = 1 << 14;
-    NesEnvelope::reset();
+    NesEnvelope::mReset();
   }
 
  private:
@@ -128,8 +128,6 @@ struct NesDmc : NesOsc {
   NesDmc(NesApu *apu) : NesOsc(apu) {}
   int address;  // address of next byte to read
   int period;
-  // int lengthCounter; // bytes remaining to play (already defined in
-  // NesOsc)
   int buf;
   int bits_remain;
   int bits;
@@ -156,11 +154,12 @@ struct NesDmc : NesOsc {
   void recalc_irq();
   void fill_buffer();
   void reload_sample();
-  void reset();
+  void mReset();
   int count_reads(nes_time_t, nes_time_t *) const;
   nes_time_t next_read_time() const;
 
  private:
+  static uint8_t sGetDelta(uint8_t dacNew, uint8_t dacOld);
   uint16_t mGetPeriod(uint8_t data) const;
   void mWriteR0(uint8_t data);
   void mWriteR1(uint8_t data);

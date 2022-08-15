@@ -85,7 +85,7 @@ void HesOsc::run_until(synth_t &synth_, blip_time_t end_time) {
       osc_outputs_1->setModified();
     }
 
-    blip_time_t time = last_time + delay;
+    blip_time_t time = last_time + mDelay;
     if (time < end_time) {
       if (noise & 0x80) {
         if (volume_0 | volume_1) {
@@ -150,7 +150,7 @@ void HesOsc::run_until(synth_t &synth_, blip_time_t end_time) {
     time -= end_time;
     if (time < 0)
       time = 0;
-    delay = time;
+    mDelay = time;
 
     this->dac = dac;
     last_amp[0] = dac * volume_0;

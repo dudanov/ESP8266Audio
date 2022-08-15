@@ -201,7 +201,7 @@ void SpcDsp::run(int clock_count) {
     int echo_out_l = 0;
     int echo_out_r = 0;
     voice_t *v = m.voices;
-    uint8_t *v_regs = m.regs;
+    uint8_t *v_regs = m.mRegs;
     int vbit = 1;
     do {
 #define SAMPLE_PTR(i) GET_LE16A(&dir[VREG(v_regs, SRCN) * 4 + i * 2])
@@ -623,9 +623,9 @@ void SpcDsp::soft_reset() {
   soft_reset_common();
 }
 
-void SpcDsp::load(uint8_t const regs[REGISTERS_NUM]) {
-  memcpy(m.regs, regs, sizeof m.regs);
-  memset(&m.regs[REGISTERS_NUM], 0, offsetof(state_t, ram) - REGISTERS_NUM);
+void SpcDsp::load(uint8_t const mRegs[REGISTERS_NUM]) {
+  memcpy(m.mRegs, mRegs, sizeof m.mRegs);
+  memset(&m.mRegs[REGISTERS_NUM], 0, offsetof(state_t, ram) - REGISTERS_NUM);
 
   // Internal state
   int i;

@@ -171,7 +171,7 @@ class BlipSynthFastImpl {
   void setTrebleEq(const BlipEq &) {}
 
   BlipBuffer *pBuf{nullptr};
-  int lastAmp{0};
+  int mLastAmp{0};
   int deltaFactor{0};
 };
 
@@ -182,7 +182,7 @@ class BlipSynthImpl {
   void setTrebleEq(const BlipEq &);
 
   BlipBuffer *pBuf{nullptr};
-  int lastAmp{0};
+  int mLastAmp{0};
   int deltaFactor{0};
 
  private:
@@ -213,16 +213,16 @@ template<int quality, int range> class BlipSynth {
 
   // Get/set BlipBuffer used for output
   BlipBuffer *getOutput() const { return this->m_impl.pBuf; }
-  void setOutput(BlipBuffer *buf) {
+  void SetOutput(BlipBuffer *buf) {
     this->m_impl.pBuf = buf;
-    this->m_impl.lastAmp = 0;
+    this->m_impl.mLastAmp = 0;
   }
 
   // Update amplitude of waveform at given time. Using this requires a separate BlipSynth for each
   // waveform.
   void update(blip_time_t tm, int amp) {
-    int delta = amp - this->m_impl.lastAmp;
-    this->m_impl.lastAmp = amp;
+    int delta = amp - this->m_impl.mLastAmp;
+    this->m_impl.mLastAmp = amp;
     this->offset(tm, delta);
   }
 

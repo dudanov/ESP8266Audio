@@ -92,17 +92,17 @@ inline void SapApu::calc_periods() {
   for (int i = 0; i < OSCS_NUM; i++) {
     osc_t *const osc = &oscs[i];
 
-    int const osc_reload = osc->regs[0];  // cache
+    int const osc_reload = osc->mRegs[0];  // cache
     blargg_long period = (osc_reload + 1) * divider;
     static uint8_t const fast_bits[OSCS_NUM] = {1 << 6, 1 << 4, 1 << 5, 1 << 3};
     if (this->control & fast_bits[i]) {
       period = osc_reload + 4;
       if (i & 1) {
-        period = osc_reload * 0x100L + osc[-1].regs[0] + 7;
+        period = osc_reload * 0x100L + osc[-1].mRegs[0] + 7;
         if (!(this->control & fast_bits[i - 1]))
           period = (period - 6) * divider;
 
-        if ((osc[-1].regs[1] & 0x1F) > 0x10)
+        if ((osc[-1].mRegs[1] & 0x1F) > 0x10)
           debug_printf("Use of slave channel in 16-bit mode not supported\n");
       }
     }
@@ -125,7 +125,7 @@ void SapApu::run_until(blip_time_t end_time) {
 
   for (int i = 0; i < OSCS_NUM; i++) {
     osc_t *const osc = &oscs[i];
-    blip_time_t time = last_time + osc->delay;
+    blip_time_t time = last_time + osc->mDelay;
     blip_time_t const period = osc->period;
 
     // output
@@ -133,7 +133,7 @@ void SapApu::run_until(blip_time_t end_time) {
     if (output) {
       output->setModified();
 
-      int const osc_control = osc->regs[1];  // cache
+      int const osc_control = osc->mRegs[1];  // cache
       int volume = (osc_control & 0x0F) * 2;
       if (!volume || osc_control & 0x10 ||  // silent, DAC mode, or inaudible frequency
           ((osc_control & 0xA0) == 0xA0 && period < 1789773 / 2 / max_frequency)) {
@@ -154,7 +154,7 @@ void SapApu::run_until(blip_time_t end_time) {
         blip_time_t time2 = end_time;
         if (this->control & hipass_bits[i]) {
           period2 = osc[2].period;
-          time2 = last_time + osc[2].delay;
+          time2 = last_time + osc[2].mDelay;
           if (osc->invert) {
             // trick inner wave loop into inverting output
             osc->last_amp -= volume;
@@ -179,7 +179,7 @@ void SapApu::run_until(blip_time_t end_time) {
               poly_pos = poly4_pos;
             }
             poly_inc = period % poly_len;
-            poly_pos = (poly_pos + osc->delay) % poly_len;
+            poly_pos = (poly_pos + osc->mDelay) % poly_len;
           }
           poly_inc -= poly_len;  // allows more optimized inner loop below
 
@@ -188,7 +188,7 @@ void SapApu::run_until(blip_time_t end_time) {
           check(poly5 & 1);  // low bit is set for pure wave
           int poly5_inc = 0;
           if (!(osc_control & 0x80)) {
-            wave = run_poly5(wave, (osc->delay + poly5_pos) % poly5_len);
+            wave = run_poly5(wave, (osc->mDelay + poly5_pos) % poly5_len);
             poly5_inc = period % poly5_len;
           }
 
@@ -252,7 +252,7 @@ void SapApu::run_until(blip_time_t end_time) {
       osc->phase ^= count;
       time += count * period;
     }
-    osc->delay = time - end_time;
+    osc->mDelay = time - end_time;
   }
 
   // advance polies
@@ -267,14 +267,14 @@ void SapApu::write_data(blip_time_t time, unsigned addr, int data) {
   run_until(time);
   int i = (addr ^ 0xD200) >> 1;
   if (i < OSCS_NUM) {
-    oscs[i].regs[addr & 1] = data;
+    oscs[i].mRegs[addr & 1] = data;
   } else if (addr == 0xD208) {
     control = data;
   } else if (addr == 0xD209) {
-    oscs[0].delay = 0;
-    oscs[1].delay = 0;
-    oscs[2].delay = 0;
-    oscs[3].delay = 0;
+    oscs[0].mDelay = 0;
+    oscs[1].mDelay = 0;
+    oscs[2].mDelay = 0;
+    oscs[3].mDelay = 0;
   }
   /*
   // TODO: are polynomials reset in this case?

@@ -16,7 +16,7 @@ struct SmsOsc {
   BlipBuffer *outputs[4];  // NULL, right, left, center
   BlipBuffer *output;
   int output_select;
-  int delay;
+  int mDelay;
   int last_amp;
   int volume;
 };

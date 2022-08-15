@@ -55,7 +55,7 @@ void GbApu::setOscOutput(int idx, BlipBuffer *center, BlipBuffer *left, BlipBuff
   this->m_oscs[idx]->setOutputs(center, left, right);
 }
 
-void GbApu::setOutput(BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
+void GbApu::SetOutput(BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
   for (int i = 0; i < OSC_NUM; i++)
     this->setOscOutput(i, center, left, right);
 }
@@ -108,7 +108,7 @@ void GbApu::m_runUntil(blip_time_t end_time) {
     // run oscillators
     for (auto osc : this->m_oscs) {
       if (osc->m_enabled) {
-        osc->m_output->setModified();  // TODO: misses optimization opportunities?
+        osc->mOutput->setModified();  // TODO: misses optimization opportunities?
         osc->run(this->m_lastTime, time);
       }
     }
@@ -157,8 +157,8 @@ void GbApu::m_writeNR50(blip_time_t time) {
   for (auto osc : this->m_oscs) {
     int amp = osc->m_lastAmp;
     osc->m_lastAmp = 0;
-    if (amp && osc->m_enabled && osc->m_output != nullptr)
-      this->m_otherSynth.offset(time, -amp, osc->m_output);
+    if (amp && osc->m_enabled && osc->mOutput != nullptr)
+      this->m_otherSynth.offset(time, -amp, osc->mOutput);
   }
 
   if (this->m_wave.m_outputs[3])
@@ -181,11 +181,11 @@ void GbApu::m_writeNR5152(blip_time_t time) {
   }
   // left/right assignments
   for (auto osc : this->m_oscs) {
-    auto oldOutput = osc->m_output;
-    osc->m_output = osc->m_outputs[(channels >> 3 & 0b10) | (channels & 0b01)];
+    auto oldOutput = osc->mOutput;
+    osc->mOutput = osc->m_outputs[(channels >> 3 & 0b10) | (channels & 0b01)];
     channels >>= 1;
     osc->m_enabled &= mask;
-    if (osc->m_output == oldOutput)
+    if (osc->mOutput == oldOutput)
       continue;
     // current output has been changed. zero old output.
     int amp = osc->m_lastAmp;

@@ -61,19 +61,19 @@ class AyApu {
   struct Square {
     BlipBuffer *output;
     blip_time_t period;
-    blip_time_t delay;
-    short lastAmp;
+    blip_time_t mDelay;
+    short mLastAmp;
     short phase;
   };
 
   struct Noise {
-    blip_time_t delay;
+    blip_time_t mDelay;
     blargg_ulong lfsr;
   };
 
   struct Envelope {
     Envelope();
-    blip_time_t delay;
+    blip_time_t mDelay;
     const uint8_t *wave;
     int pos;
     uint8_t modes[8][48];  // values already passed through volume table

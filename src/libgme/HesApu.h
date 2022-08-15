@@ -13,7 +13,7 @@ struct HesOsc {
   unsigned char wave[32];
   short volume[2];
   int last_amp[2];
-  int delay;
+  int mDelay;
   int period;
   unsigned char noise;
   unsigned char phase;

@@ -78,12 +78,12 @@ AyApu::AyApu() {
 
 void AyApu::Reset() {
   this->m_lastTime = 0;
-  this->m_noise.delay = 0;
+  this->m_noise.mDelay = 0;
   this->m_noise.lfsr = 1;
   for (auto &osc : this->m_square) {
     osc.period = PERIOD_FACTOR;
-    osc.delay = 0;
-    osc.lastAmp = 0;
+    osc.mDelay = 0;
+    osc.mLastAmp = 0;
     osc.phase = 0;
   }
   for (int i = sizeof(this->m_regs); --i >= 0;)
@@ -107,7 +107,7 @@ void AyApu::mWriteData(int addr, int data) {
       data = (data & 4) ? 15 : 9;
     this->m_envelope.wave = this->m_envelope.modes[data - 7];
     this->m_envelope.pos = -48;
-    this->m_envelope.delay = 0;  // will get set to envelope period in mRunUntil()
+    this->m_envelope.mDelay = 0;  // will get set to envelope period in mRunUntil()
   }
   this->m_regs[addr] = data;
 
@@ -121,8 +121,8 @@ void AyApu::mWriteData(int addr, int data) {
 
     // adjust time of next timer expiration based on change in period
     Square &osc = this->m_square[i];
-    if ((osc.delay += period - osc.period) < 0)
-      osc.delay = 0;
+    if ((osc.mDelay += period - osc.period) < 0)
+      osc.mDelay = 0;
     osc.period = period;
   }
 
@@ -141,7 +141,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   blip_time_t noise_period = (this->m_regs[6] & 0x1F) * noise_period_factor;
   if (!noise_period)
     noise_period = noise_period_factor;
-  blip_time_t const old_noise_delay = this->m_noise.delay;
+  blip_time_t const old_noise_delay = this->m_noise.mDelay;
   blargg_ulong const old_noise_lfsr = this->m_noise.lfsr;
 
   // envelope period
@@ -149,8 +149,8 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   blip_time_t env_period = (this->m_regs[12] * 0x100L + this->m_regs[11]) * env_period_factor;
   if (!env_period)
     env_period = env_period_factor;  // same as period 1 on my AY chip
-  if (!m_envelope.delay)
-    this->m_envelope.delay = env_period;
+  if (!m_envelope.mDelay)
+    this->m_envelope.mDelay = env_period;
 
   // run each osc separately
   for (int idx = 0; idx < OSCS_NUM; idx++) {
@@ -182,7 +182,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
       // use envelope only if it's a repeating wave or a ramp that hasn't
       // finished
       if (!(this->m_regs[13] & 1) || osc_env_pos < -32) {
-        end_time = start_time + this->m_envelope.delay;
+        end_time = start_time + this->m_envelope.mDelay;
         if (end_time >= final_end_time)
           end_time = final_end_time;
 
@@ -197,7 +197,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
 
     // tone time
     const blip_time_t period = osc->period;
-    blip_time_t time = start_time + osc->delay;
+    blip_time_t time = start_time + osc->mDelay;
     // maintain tone's phase when off
     if (osc_mode & TONE_OFF) {
       blargg_long count = (final_end_time - time + period - 1) / period;
@@ -234,9 +234,9 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
       if ((osc_mode | osc->phase) & 1 & (osc_mode >> 3 | noise_lfsr))
         amp = volume;
       {
-        int delta = amp - osc->lastAmp;
+        int delta = amp - osc->mLastAmp;
         if (delta) {
-          osc->lastAmp = amp;
+          osc->mLastAmp = amp;
           this->m_synth.offset(start_time, delta, osc_output);
         }
       }
@@ -246,7 +246,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
       // end time, so there will be no significant performance hit.
       if (ntime < end_time || time < end_time) {
         // Since amplitude was updated above, delta will always be +/-
-        // volume, so we can avoid using lastAmp every time to
+        // volume, so we can avoid using mLastAmp every time to
         // calculate the delta.
         int delta = amp * 2 - volume;
         int delta_non_zero = delta != 0;
@@ -302,7 +302,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
           }
         } while (time < end_time || ntime < end_time);
 
-        osc->lastAmp = (delta + volume) >> 1;
+        osc->mLastAmp = (delta + volume) >> 1;
         if (!(osc_mode & TONE_OFF))
           osc->phase = phase;
       }
@@ -320,10 +320,10 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
       if (end_time > final_end_time)
         end_time = final_end_time;
     }
-    osc->delay = time - final_end_time;
+    osc->mDelay = time - final_end_time;
 
     if (!(osc_mode & NOISE_OFF)) {
-      this->m_noise.delay = ntime - final_end_time;
+      this->m_noise.mDelay = ntime - final_end_time;
       this->m_noise.lfsr = noise_lfsr;
     }
   }
@@ -331,7 +331,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   // TODO: optimized saw wave envelope?
 
   // maintain envelope phase
-  blip_time_t remain = final_end_time - this->m_lastTime - this->m_envelope.delay;
+  blip_time_t remain = final_end_time - this->m_lastTime - this->m_envelope.mDelay;
   if (remain >= 0) {
     blargg_long count = (remain + env_period) / env_period;
     this->m_envelope.pos += count;
@@ -340,8 +340,8 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     remain -= count * env_period;
     assert(-remain <= env_period);
   }
-  this->m_envelope.delay = -remain;
-  assert(this->m_envelope.delay > 0);
+  this->m_envelope.mDelay = -remain;
+  assert(this->m_envelope.mDelay > 0);
   assert(this->m_envelope.pos < 0);
 
   this->m_lastTime = final_end_time;

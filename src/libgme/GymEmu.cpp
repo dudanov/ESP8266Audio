@@ -175,7 +175,7 @@ void GymEmu::mMuteChannel(int mask) {
   MusicEmu::mMuteChannel(mask);
   fm.mute_voices(mask);
   dac_muted = (mask & 0x40) != 0;
-  apu.setOutput((mask & 0x80) ? 0 : &blip_buf);
+  apu.SetOutput((mask & 0x80) ? 0 : &blip_buf);
 }
 
 blargg_err_t GymEmu::mLoad(uint8_t const *in, long size) {

@@ -12,7 +12,7 @@ namespace nes {
 
 struct fme7_apu_state_t {
   static const size_t REGS_NUM = 14;
-  uint8_t regs[REGS_NUM];
+  uint8_t mRegs[REGS_NUM];
   uint8_t phases[3];  // 0 or 1
   uint8_t latch;
   uint16_t delays[3];  // a, b, c
@@ -96,7 +96,7 @@ inline void NesFme7Apu::write_data(blip_time_t time, int data) {
   }
 
   run_until(time);
-  regs[latch] = data;
+  mRegs[latch] = data;
 }
 
 inline void NesFme7Apu::end_frame(blip_time_t time) {

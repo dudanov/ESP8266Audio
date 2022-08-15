@@ -41,14 +41,14 @@ class NesVrc6Apu {
   NesVrc6Apu &operator=(const NesVrc6Apu &);
 
   struct Vrc6Osc {
-    uint8_t regs[3];
+    uint8_t mRegs[3];
     BlipBuffer *output;
-    int delay;
+    int mDelay;
     int last_amp;
     int phase;
     int amp;  // only used by saw
 
-    int period() const { return (regs[2] & 0x0F) * 0x100L + regs[1] + 1; }
+    int period() const { return (mRegs[2] & 0x0F) * 0x100L + mRegs[1] + 1; }
   };
 
   Vrc6Osc oscs[OSCS_NUM];
@@ -63,7 +63,7 @@ class NesVrc6Apu {
 };
 
 struct vrc6_apu_state_t {
-  uint8_t regs[3][3];
+  uint8_t mRegs[3][3];
   uint8_t saw_amp;
   uint16_t delays[3];
   uint8_t phases[3];

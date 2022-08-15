@@ -30,11 +30,11 @@ class SapApu {
 
  private:
   struct osc_t {
-    unsigned char regs[2];
+    unsigned char mRegs[2];
     unsigned char phase;
     unsigned char invert;
     int last_amp;
-    blip_time_t delay;
+    blip_time_t mDelay;
     blip_time_t period;  // always recalculated before use; here for convenience
     BlipBuffer *output;
   };

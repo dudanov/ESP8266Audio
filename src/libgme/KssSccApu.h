@@ -14,7 +14,7 @@ namespace kss {
 class SccApu {
  public:
   // Set buffer to generate all sound into, or disable sound if NULL
-  void setOutput(BlipBuffer *buf) {
+  void SetOutput(BlipBuffer *buf) {
     for (int i = 0; i < OSCS_NUM; i++)
       m_oscs[i].output = buf;
   }
@@ -62,14 +62,14 @@ class SccApu {
   void treble_eq(BlipEq const &eq) { m_synth.setTrebleEq(eq); }
 
  public:
-  SccApu() { setOutput(0); }
+  SccApu() { SetOutput(0); }
 
  private:
   enum { AMP_RANGE = 0x8000 };
   struct osc_t {
-    int delay;
+    int mDelay;
     int phase;
-    int lastAmp;
+    int mLastAmp;
     BlipBuffer *output;
   };
   osc_t m_oscs[OSCS_NUM];

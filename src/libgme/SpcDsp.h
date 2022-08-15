@@ -38,12 +38,12 @@ struct SpcDsp {
   // spc_run_dsp() to catch the DSP up to present.
   int read(int addr) const {
     assert((unsigned) addr < REGISTERS_NUM);
-    return m.regs[addr];
+    return m.mRegs[addr];
   }
   void write(int addr, int data) {
     assert((unsigned) addr < REGISTERS_NUM);
 
-    m.regs[addr] = (uint8_t) data;
+    m.mRegs[addr] = (uint8_t) data;
     int low = addr & 0x0F;
     if (low < 0x2)  // voice volumes
     {
@@ -53,7 +53,7 @@ struct SpcDsp {
         m.new_kon = (uint8_t) data;
 
       if (addr == R_ENDX)  // always cleared, regardless of data written
-        m.regs[R_ENDX] = 0;
+        m.mRegs[R_ENDX] = 0;
     }
   }
 
@@ -75,7 +75,7 @@ struct SpcDsp {
 
   // Resets DSP and uses supplied values to initialize registers
   enum { REGISTERS_NUM = 128 };
-  void load(const uint8_t regs[REGISTERS_NUM]);
+  void load(const uint8_t mRegs[REGISTERS_NUM]);
 
   // DSP register addresses
 
@@ -141,7 +141,7 @@ struct SpcDsp {
 
  private:
   struct state_t {
-    uint8_t regs[REGISTERS_NUM];
+    uint8_t mRegs[REGISTERS_NUM];
 
 #ifdef SPC_ISOLATED_ECHO_BUFFER
     // Echo buffer, for dodgy SPC rips that were only made to work in dodgy
@@ -185,8 +185,8 @@ struct SpcDsp {
   void soft_reset_common();
   void write_outline(int addr, int data);
   void update_voice_vol(int addr) {
-    int l = (int8_t) m.regs[addr + V_VOLL];
-    int r = (int8_t) m.regs[addr + V_VOLR];
+    int l = (int8_t) m.mRegs[addr + V_VOLL];
+    int r = (int8_t) m.mRegs[addr + V_VOLR];
 
     if (l * r < m.surround_threshold) {
       // signs differ, so negate those that are negative

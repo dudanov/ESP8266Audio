@@ -49,11 +49,11 @@ void NesApu::mEnableNonlinear(double v) {
   this->mNoise.synth.setVolume(2.0 * tnd);
   this->mDmc.synth.setVolume(tnd);
 
-  this->mSquare1.lastAmp = 0;
-  this->mSquare2.lastAmp = 0;
-  this->mTriangle.lastAmp = 0;
-  this->mNoise.lastAmp = 0;
-  this->mDmc.lastAmp = 0;
+  this->mSquare1.mLastAmp = 0;
+  this->mSquare2.mLastAmp = 0;
+  this->mTriangle.mLastAmp = 0;
+  this->mNoise.mLastAmp = 0;
+  this->mDmc.mLastAmp = 0;
 }
 
 void NesApu::SetVolume(double v) {
@@ -66,7 +66,7 @@ void NesApu::SetVolume(double v) {
 
 void NesApu::SetOutput(BlipBuffer *buffer) {
   for (auto osc : this->mOscs)
-    osc->setOutput(buffer);
+    osc->SetOutput(buffer);
 }
 
 void NesApu::SetTempo(double t) {
@@ -100,9 +100,9 @@ void NesApu::Reset(bool pal_mode, int initial_dmc_dac) {
 
   this->mDmc.dac = initial_dmc_dac;
   if (!this->mDmc.nonlinear)
-    this->mTriangle.lastAmp = 15;
+    this->mTriangle.mLastAmp = 15;
   if (!this->mDmc.nonlinear)               // TODO: remove?
-    this->mDmc.lastAmp = initial_dmc_dac;  // prevent output transition
+    this->mDmc.mLastAmp = initial_dmc_dac;  // prevent output transition
 }
 
 void NesApu::mIrqChanged() {
@@ -208,9 +208,9 @@ void NesApu::mRunUntil(nes_time_t end_time) {
 }
 
 template<class T> inline void zero_apu_osc(T *osc, nes_time_t time) {
-  BlipBuffer *output = osc->m_output;
-  int last_amp = osc->lastAmp;
-  osc->lastAmp = 0;
+  BlipBuffer *output = osc->mOutput;
+  int last_amp = osc->mLastAmp;
+  osc->mLastAmp = 0;
   if (output && last_amp)
     osc->synth.offset(time, -last_amp, output);
 }
@@ -270,8 +270,8 @@ void NesApu::WriteRegister(nes_time_t time, nes_addr_t addr, uint8_t data) {
     unsigned reg = addr % OSC_REGS;
 
     NesOsc *osc = this->mOscs[channel];
-    osc->regs[reg] = data;
-    osc->regWritten[reg] = true;
+    osc->mRegs[reg] = data;
+    osc->mRegWritten[reg] = true;
 
     if (channel == 4) {
       // handle DMC specially
@@ -282,7 +282,7 @@ void NesApu::WriteRegister(nes_time_t time, nes_addr_t addr, uint8_t data) {
     if (reg == 3) {
       // load length counter
       if (this->m_oscEnables & (1 << channel))
-        osc->lengthCounter = pgm_read_byte(LENGTH_TABLE + (data >> 3));
+        osc->mLengthCounter = pgm_read_byte(LENGTH_TABLE + (data >> 3));
       // reset square phase
       if (channel < 2)
         static_cast<NesSquare *>(osc)->phase = NesSquare::PHASE_RANGE - 1;
@@ -294,7 +294,7 @@ void NesApu::WriteRegister(nes_time_t time, nes_addr_t addr, uint8_t data) {
     // Channel enables
     for (int i = OSCS_NUM; i--;)
       if (!((data >> i) & 1))
-        this->mOscs[i]->lengthCounter = 0;
+        this->mOscs[i]->mLengthCounter = 0;
 
     bool recalc_irq = this->mDmc.m_irqFlag;
     this->mDmc.m_irqFlag = false;
@@ -344,7 +344,7 @@ uint8_t NesApu::ReadStatus(nes_time_t time) {
   uint8_t mask = 1;
 
   for (auto osc : this->mOscs) {
-    if (osc->lengthCounter)
+    if (osc->mLengthCounter)
       result |= mask;
     mask <<= 1;
   }

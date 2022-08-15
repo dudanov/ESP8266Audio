@@ -30,7 +30,7 @@ SmsOsc::SmsOsc() {
 }
 
 void SmsOsc::reset() {
-  this->delay = 0;
+  this->mDelay = 0;
   this->last_amp = 0;
   this->volume = 0;
   this->output_select = 3;
@@ -52,7 +52,7 @@ void SmsSquare::run(blip_time_t time, blip_time_t end_time) {
       this->synth->offset(time, -this->last_amp, this->output);
       this->last_amp = 0;
     }
-    time += this->delay;
+    time += this->mDelay;
     if (!this->period) {
       time = end_time;
     } else if (time < end_time) {
@@ -71,7 +71,7 @@ void SmsSquare::run(blip_time_t time, blip_time_t end_time) {
       }
     }
 
-    time += this->delay;
+    time += this->mDelay;
     if (time < end_time) {
       int delta = amp * 2;
       do {
@@ -83,7 +83,7 @@ void SmsSquare::run(blip_time_t time, blip_time_t end_time) {
       this->last_amp = this->phase ? this->volume : -this->volume;
     }
   }
-  this->delay = time - end_time;
+  this->mDelay = time - end_time;
 }
 
 // SmsNoise
@@ -109,7 +109,7 @@ void SmsNoise::run(blip_time_t time, blip_time_t end_time) {
     }
   }
 
-  time += this->delay;
+  time += this->mDelay;
   if (!this->volume)
     time = end_time;
 
@@ -132,7 +132,7 @@ void SmsNoise::run(blip_time_t time, blip_time_t end_time) {
 
     this->last_amp = delta >> 1;
   }
-  delay = time - end_time;
+  mDelay = time - end_time;
 }
 
 // SmsApu
@@ -171,7 +171,7 @@ void SmsApu::setOscOutput(int index, BlipBuffer *center, BlipBuffer *left, BlipB
   osc.output = osc.outputs[osc.output_select];
 }
 
-void SmsApu::setOutput(BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
+void SmsApu::SetOutput(BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
   for (int i = 0; i < OSCS_NUM; i++)
     setOscOutput(i, center, left, right);
 }

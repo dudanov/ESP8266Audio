@@ -83,7 +83,7 @@ class NesApu {
   enum { OSCS_NUM = 5 };
   void SetOscOutput(int osc, BlipBuffer *buf) {
     assert((unsigned) osc < OSCS_NUM);
-    mOscs[osc]->setOutput(buf);
+    mOscs[osc]->SetOutput(buf);
   }
 
   // Set IRQ time callback that is invoked when the time of earliest IRQ
@@ -149,10 +149,10 @@ class NesApu {
 };
 
 inline nes_time_t NesDmc::next_read_time() const {
-  if (lengthCounter == 0)
+  if (mLengthCounter == 0)
     return NesApu::NO_IRQ;  // not reading
 
-  return mApu->m_lastDmcTime + delay + long(bits_remain - 1) * period;
+  return mApu->m_lastDmcTime + mDelay + long(bits_remain - 1) * period;
 }
 
 }  // namespace nes

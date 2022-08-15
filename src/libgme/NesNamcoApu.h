@@ -49,7 +49,7 @@ class NesNamcoApu {
   NesNamcoApu &operator=(const NesNamcoApu &) = delete;
 
   struct NamcoOsc {
-    blargg_long delay;
+    blargg_long mDelay;
     BlipBuffer *output;
     short last_amp;
     short wave_pos;
@@ -75,7 +75,7 @@ class NesNamcoApu {
 /*
 struct namco_state_t
 {
-        uint8_t regs [0x80];
+        uint8_t mRegs [0x80];
         uint8_t addr;
         uint8_t unused;
         uint8_t positions [8];

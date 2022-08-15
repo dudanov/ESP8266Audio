@@ -261,11 +261,11 @@ void VgmEmu::mSetChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) {
 
 void VgmEmu::mMuteChannel(int mask) {
   ClassicEmu::mMuteChannel(mask);
-  dac_synth.setOutput(&blip_buf);
+  dac_synth.SetOutput(&blip_buf);
   if (uses_fm) {
-    psg[0].setOutput((mask & 0x80) ? 0 : &blip_buf);
+    psg[0].SetOutput((mask & 0x80) ? 0 : &blip_buf);
     if (psg_dual)
-      psg[1].setOutput((mask & 0x80) ? 0 : &blip_buf);
+      psg[1].SetOutput((mask & 0x80) ? 0 : &blip_buf);
     if (ym2612[0].enabled()) {
       dac_synth.setVolume((mask & 0x40) ? 0.0 : 0.1115 / 256 * FM_GAIN * mGetGain());
       ym2612[0].mute_voices(mask);
