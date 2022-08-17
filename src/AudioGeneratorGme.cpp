@@ -119,9 +119,11 @@ bool AudioGeneratorGme::m_load(int sample_rate) {
   gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
 
   if (file_type == nullptr) {
-    this->cb.st(-1, "asdqweq");//gme_wrong_file_type);
+    this->cb.st(-1, gme_wrong_file_type);
     return false;
   }
+
+  this->cb.st(0, file_type->system);
 
   this->m_emu = gme_new_emu(file_type, sample_rate);
   if (this->m_emu == nullptr) {
