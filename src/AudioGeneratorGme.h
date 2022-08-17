@@ -46,6 +46,7 @@ protected:
     blargg_err_t read(void *dst, long size) override {
       while (size > 0)
         size -= this->m_src->read(dst, size);
+      return nullptr;
     }
     long remain() const override {
       return this->m_src->getSize() - this->m_src->getPos();
