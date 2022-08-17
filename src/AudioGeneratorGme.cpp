@@ -114,8 +114,8 @@ bool AudioGeneratorGme::startTrack(int num) {
 bool AudioGeneratorGme::m_load(int sample_rate) {
   char header[4];
 
-  this->m_reader.reset();
-  this->m_reader.read_avail(header, sizeof(header));
+  //this->m_reader.reset();
+  this->m_reader.read(header, sizeof(header));
   gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
 
   if (file_type == nullptr) {
