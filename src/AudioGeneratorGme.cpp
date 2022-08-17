@@ -112,18 +112,18 @@ bool AudioGeneratorGme::startTrack(int num) {
 }
 
 bool AudioGeneratorGme::m_load(int sample_rate) {
-  char header[4];
+  //char header[4];
 
-  this->m_reader.reset();
-  this->m_reader.read_avail(header, sizeof(header));
-  gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
+  //this->m_reader.reset();
+  //this->m_reader.read_avail(header, sizeof(header));
+  //gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
 
-  if (file_type == nullptr) {
-    this->cb.st(-1, gme_wrong_file_type);
-    return false;
-  }
+  //if (file_type == nullptr) {
+  //  this->cb.st(-1, gme_wrong_file_type);
+  //  return false;
+  //}
 
-  this->m_emu = gme_new_emu(file_type, sample_rate);
+  this->m_emu = gme_new_emu(/*file_type*/gme_nsf_type, sample_rate);
   if (this->m_emu == nullptr) {
     this->cb.st(-1, "Failed to create emulator");
     return false;
