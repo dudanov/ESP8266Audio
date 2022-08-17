@@ -13,8 +13,7 @@
 struct gme_type_t_ {
   const char *system;      /* name of system this music file type is generally for */
   int track_count;         /* non-zero for formats with a fixed number of tracks */
-  MusicEmu *(*new_emu)();  /* Create new emulator for this type (useful in C++
-                               only) */
+  MusicEmu *(*new_emu)();  /* Create new emulator for this type (useful in C++ only) */
   MusicEmu *(*new_info)(); /* Create new info reader for this type */
 
   /* internal */
@@ -117,7 +116,7 @@ struct GmeFile {
   // Unload file. Called before loading file and if loading fails.
   virtual void mUnload();
   // Load GmeFile from DataReader
-  virtual blargg_err_t mLoad(DataReader &);                       // default loads then calls mLoad()
+  virtual blargg_err_t mLoad(DataReader &);                    // default loads then calls mLoad()
   virtual blargg_err_t mLoad(uint8_t const *data, long size);  // use data in memory
   virtual blargg_err_t mGetTrackInfo(track_info_t *out, int track) const = 0;
   virtual void mPreLoad();
