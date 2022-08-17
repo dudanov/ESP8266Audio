@@ -41,7 +41,10 @@ protected:
   public:
     void set_source(AudioFileSource *src) { this->m_src = src; }
     long read_avail(void *dst, long size) override {
-      return this->m_src->readNonBlock(dst, size);
+      if (size > this->remain())
+        size = this->remain();
+      this->read(dst, size);
+      return size;
     }
     blargg_err_t read(void *dst, long size) override {
       while (size > 0)
