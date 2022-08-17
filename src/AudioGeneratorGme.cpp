@@ -129,7 +129,7 @@ bool AudioGeneratorGme::m_load(int sample_rate) {
     return false;
   }
 
-  this->m_reader.reset();
+  //this->m_reader.reset();
   gme_err_t err = this->m_emu->load(this->m_reader);
 
   if (err != nullptr) {
