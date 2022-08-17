@@ -114,7 +114,7 @@ blargg_err_t RomDataImpl::m_loadRomData(DataReader &src, int header_size, void *
 
   this->m_fileSize = src.remain();
   if (this->m_fileSize <= header_size)  // <= because there must be data after header
-    return gme_wrong_file_type;
+    return "asdas";//gme_wrong_file_type;
   blargg_err_t err = this->rom.resize(file_offset + this->m_fileSize + pad_size);
   if (!err)
     err = src.read(this->rom.begin() + file_offset, this->m_fileSize);

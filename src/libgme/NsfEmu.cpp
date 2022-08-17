@@ -90,7 +90,7 @@ blargg_err_t NsfEmu::mGetTrackInfo(track_info_t *out, int) const {
 
 static blargg_err_t check_nsf_header(void const *header) {
   if (memcmp(header, "NESM\x1A", 5))
-    return "eqdfwqdq";//gme_wrong_file_type;
+    return gme_wrong_file_type;
   return 0;
 }
 
