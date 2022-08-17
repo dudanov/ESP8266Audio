@@ -103,7 +103,7 @@ enum mad_flow AudioGeneratorMP3::ErrorToFlow()
   char errLine[128];
 
   // Special case - eat "lost sync @ byte 0" as it always occurs and is not really correct....it never had sync!
-  if ((lastReadPos==0) && (stream->error==MAD_ERROR_LOSTSYNC)) return MAD_FLOW_CONTINUE;
+  if ((lastReadPos<10000) && (stream->error==MAD_ERROR_LOSTSYNC)) return MAD_FLOW_CONTINUE;
 
   strcpy_P(err, mad_stream_errorstr(stream));
   snprintf_P(errLine, sizeof(errLine), PSTR("Decoding error '%s' at byte offset %d"),
