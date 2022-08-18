@@ -43,12 +43,12 @@ class AudioGenerator
 
   protected:
     bool running{false};
-    AudioFileSource *file;
-    AudioOutput *output;
+    AudioFileSource *file{nullptr};
+    AudioOutput *output{nullptr};
     int16_t lastSample[2];
 
   protected:
-    AudioStatus cb;
+    AudioStatus cb{nullptr};
 };
 
 #endif
