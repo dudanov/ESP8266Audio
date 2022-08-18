@@ -50,7 +50,7 @@ long AudioGeneratorGme::AudioFileReader::read_avail(void *dst, long size) {
 AudioGeneratorGme::~AudioGeneratorGme() { this->stop(); }
 
 bool AudioGeneratorGme::begin(AudioFileSource *source, AudioOutput *output) {
-  if (source == nullptr || output == nullptr)
+  if (this->running || source == nullptr || output == nullptr)
     return false;
   this->file = source;
   this->output = output;
