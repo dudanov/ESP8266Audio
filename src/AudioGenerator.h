@@ -42,7 +42,7 @@ class AudioGenerator
     virtual bool RegisterStatusCB(AudioStatus::statusCBFn fn, void *data) { return cb.RegisterStatusCB(fn, data); }
 
   protected:
-    bool running;
+    bool running{false};
     AudioFileSource *file;
     AudioOutput *output;
     int16_t lastSample[2];
