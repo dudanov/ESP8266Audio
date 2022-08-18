@@ -65,9 +65,6 @@ AudioGeneratorGme::~AudioGeneratorGme() {
 bool AudioGeneratorGme::begin(AudioFileSource *src, AudioOutput *out) {
   if (src == nullptr || out == nullptr)
     return false;
-  // file is already loaded?
-  if (mEmu != nullptr && src == this->file)
-    return true;
   this->file = src;
   this->output = out;
   this->output->begin();
