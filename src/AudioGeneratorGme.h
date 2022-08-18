@@ -39,7 +39,7 @@ protected:
   // AudioFileSource to GME DataReader adapter
   class AudioFileReader : public DataReader {
   public:
-    void SetSource(AudioFileSource *src) { this->mSource = src; }
+    void set_source(AudioFileSource *src);
     long read_avail(void *dst, long size) override;
     blargg_err_t read(void *dst, long size) override;
     long remain() const override;

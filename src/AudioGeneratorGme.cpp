@@ -21,6 +21,12 @@
 #include "AudioGeneratorGme.h"
 #include "libgme/MusicEmu.h"
 
+inline void
+AudioGeneratorGme::AudioFileReader::set_source(AudioFileSource *src) {
+  mSource = src;
+  mSource->seek(0, SEEK_SET);
+}
+
 inline long AudioGeneratorGme::AudioFileReader::remain() const {
   return mSource->getSize() - mSource->getPos();
 }
@@ -47,16 +53,25 @@ long AudioGeneratorGme::AudioFileReader::read_avail(void *dst, long size) {
   return this->read(dst, size) ? 0 : size;
 }
 
-AudioGeneratorGme::~AudioGeneratorGme() { this->stop(); }
+AudioGeneratorGme::~AudioGeneratorGme() {
+  this->stop();
+  this->output->stop();
+  this->file->close();
+  gme_delete(mEmu);
+  mEmu = nullptr;
+  mType = nullptr;
+}
 
-bool AudioGeneratorGme::begin(AudioFileSource *source, AudioOutput *out) {
-  if (this->running || source == nullptr || out == nullptr ||
-      this->file != nullptr || this->output != nullptr)
+bool AudioGeneratorGme::begin(AudioFileSource *src, AudioOutput *out) {
+  if (src == nullptr || out == nullptr)
     return false;
-  this->file = source;
+  // file is already loaded?
+  if (mEmu != nullptr && src == this->file)
+    return true;
+  this->file = src;
   this->output = out;
   this->output->begin();
-  mReader.SetSource(source);
+  mReader.set_source(src);
   mLoad(this->output->GetRate());
   return true;
 }
@@ -88,14 +103,7 @@ bool AudioGeneratorGme::loop() {
 
 bool AudioGeneratorGme::stop() {
   this->running = false;
-  this->output->stop();
-  this->output = nullptr;
-  this->file->close();
-  this->file = nullptr;
   mPos = mBuf.size();
-  gme_delete(mEmu);
-  mEmu = nullptr;
-  mType = nullptr;
   return true;
 }
 
