@@ -49,11 +49,12 @@ long AudioGeneratorGme::AudioFileReader::read_avail(void *dst, long size) {
 
 AudioGeneratorGme::~AudioGeneratorGme() { this->stop(); }
 
-bool AudioGeneratorGme::begin(AudioFileSource *source, AudioOutput *output) {
-  if (this->running || source == nullptr || output == nullptr)
+bool AudioGeneratorGme::begin(AudioFileSource *source, AudioOutput *out) {
+  if (this->running || source == nullptr || out == nullptr ||
+      this->file != nullptr || this->output != nullptr)
     return false;
   this->file = source;
-  this->output = output;
+  this->output = out;
   this->output->begin();
   mReader.SetSource(source);
   mLoad(this->output->GetRate());
