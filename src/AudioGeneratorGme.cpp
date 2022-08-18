@@ -167,13 +167,16 @@ bool AudioGeneratorGme::mLoad(int sample_rate) {
 
   if (mType != nullptr && mType != file_type) {
     gme_delete(mEmu);
+    mEmu = nullptr;
     mType = nullptr;
   }
 
-  mEmu = gme_new_emu(file_type, sample_rate);
   if (mEmu == nullptr) {
-    this->cb.st(-1, "Failed to create emulator");
-    return false;
+    mEmu = gme_new_emu(file_type, sample_rate);
+    if (mEmu == nullptr) {
+      this->cb.st(-1, "Failed to create emulator");
+      return false;
+    }
   }
 
   RemainingReader reader(header, sizeof(header), &mReader);
