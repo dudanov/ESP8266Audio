@@ -30,10 +30,12 @@ blargg_err_t AudioGeneratorGme::AudioFileReader::skip(long count) {
 }
 
 blargg_err_t AudioGeneratorGme::AudioFileReader::read(void *dst, long size) {
+  uint8_t *p = static_cast<uint8_t *>(dst);
   while (size > 0) {
-    auto len = mSource->read(dst, size);
+    auto len = mSource->read(p, size);
     if (len == 0)
       return eof_error;
+    p += len;
     size -= len;
   }
   return nullptr;
