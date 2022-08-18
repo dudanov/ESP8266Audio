@@ -145,8 +145,6 @@ bool AudioGeneratorGme::PlayTrack(int num) {
 bool AudioGeneratorGme::mLoad(int sample_rate) {
   char header[4];
 
-  this->cb.st(0, "mLoad");
-
   mReader.read(header, sizeof(header));
   gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
 
