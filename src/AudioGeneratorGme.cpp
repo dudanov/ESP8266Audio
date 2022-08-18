@@ -88,8 +88,8 @@ bool AudioGeneratorGme::loop() {
 
 bool AudioGeneratorGme::stop() {
   this->running = false;
-  //this->output->stop();
-  //this->file->close();
+  this->output->stop();
+  this->file->close();
   mPos = mBuf.size();
   gme_delete(mEmu);
   mEmu = nullptr;
