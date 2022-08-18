@@ -48,7 +48,7 @@ class AudioGenerator
     int16_t lastSample[2];
 
   protected:
-    AudioStatus cb{nullptr};
+    AudioStatus cb;
 };
 
 #endif
