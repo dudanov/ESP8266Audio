@@ -21,101 +21,126 @@
 #include "AudioGeneratorGme.h"
 #include "libgme/MusicEmu.h"
 
+inline long AudioGeneratorGme::AudioSourceReader::remain() const {
+  return mSource->getSize() - mSource->getPos();
+}
+
+blargg_err_t AudioGeneratorGme::AudioSourceReader::skip(long count) {
+  return mSource->seek(count, SEEK_CUR) ? nullptr : eof_error;
+}
+
+blargg_err_t AudioGeneratorGme::AudioSourceReader::read(void *dst, long size) {
+  while (size > 0) {
+    auto len = mSource->read(dst, size);
+    if (len == 0)
+      return eof_error;
+    size -= len;
+  }
+  return nullptr;
+}
+
+long AudioGeneratorGme::AudioSourceReader::read_avail(void *dst, long size) {
+  if (size > this->remain())
+    size = this->remain();
+  return this->read(dst, size) ? 0 : size;
+}
+
 bool AudioGeneratorGme::begin(AudioFileSource *source, AudioOutput *output) {
   if (source == nullptr || output == nullptr)
     return false;
-  this->m_reader.set_source(source);
-  this->output = output;
   this->file = source;
+  this->output = output;
+  this->output->begin();
+  mReader.set_source(source);
+  mLoad(this->output->GetRate());
   return true;
 }
 
 bool AudioGeneratorGme::loop() {
-  while (this->m_isPlaying) {
-    for (; this->m_pos != this->m_buffer.size(); this->m_pos += 2)
-      if (!this->output->ConsumeSample(&this->m_buffer[this->m_pos]))
+  while (this->running) {
+    for (; mPos != mBuf.size(); mPos += 2)
+      if (!this->output->ConsumeSample(&mBuf[mPos]))
         break;
-    if (this->m_pos != this->m_buffer.size())
+    if (mPos != mBuf.size())
       break;
-    if (this->m_emu->IsTrackEnded()) {
-      this->m_isPlaying = false;
+    if (mEmu->IsTrackEnded()) {
+      this->running = false;
       this->cb.st(0, "Stop");
       break;
     }
-    this->m_pos = 0;
-    gme_err_t err =
-        this->m_emu->Play(this->m_buffer.size(), this->m_buffer.data());
+    mPos = 0;
+    gme_err_t err = mEmu->Play(mBuf.size(), mBuf.data());
     if (err != nullptr) {
       this->cb.st(-1, err);
-      this->m_isPlaying = false;
+      this->running = false;
       break;
     }
   }
   this->file->loop();
   this->output->loop();
-  return this->m_isPlaying;
+  return this->running;
 }
 
 bool AudioGeneratorGme::stop() {
-  this->m_isPlaying = false;
+  this->running = false;
   this->output->stop();
-  this->m_pos = this->m_buffer.size();
-  gme_delete(this->m_emu);
-  this->m_emu = nullptr;
+  this->file->close();
+  mPos = mBuf.size();
+  gme_delete(mEmu);
+  mEmu = nullptr;
+  mType = nullptr;
   return true;
 }
 
-void AudioGeneratorGme::m_cbInfo(const char *name, const char *value) {
+void AudioGeneratorGme::mCbInfo(const char *name, const char *value) {
   if (strlen(value))
     this->cb.md(name, false, value);
 }
 
-void AudioGeneratorGme::m_cbInfo(const char *name, long value) {
-  if (value < 0)
-    return;
+void AudioGeneratorGme::mCbInfo(const char *name, long value) {
   char buf[32];
-  this->cb.md(name, false, ltoa(value, buf, 10));
+  if (value >= 0)
+    this->cb.md(name, false, ltoa(value, buf, 10));
 }
 
-void AudioGeneratorGme::m_cbTrackInfo() {
+void AudioGeneratorGme::mCbTrackInfo() {
   track_info_t info;
-  gme_err_t err = this->m_emu->GetTrackInfo(&info);
+  gme_err_t err = mEmu->GetTrackInfo(&info);
   if (err != nullptr) {
     this->cb.st(-1, err);
     return;
   }
-  this->m_cbInfo("Tracks", info.track_count);
-  this->m_cbInfo("Length(ms)", info.length);
-  this->m_cbInfo("Intro(ms)", info.intro_length);
-  this->m_cbInfo("Loop(ms)", info.loop_length);
-  this->m_cbInfo("Fade(ms)", info.fade_length);
-  this->m_cbInfo("System", info.system);
-  this->m_cbInfo("Game", info.game);
-  this->m_cbInfo("Song", info.song);
-  this->m_cbInfo("Author", info.author);
-  this->m_cbInfo("Copyright", info.copyright);
-  this->m_cbInfo("Comment", info.comment);
-  this->m_cbInfo("Dumper", info.dumper);
+  mCbInfo("Tracks", info.track_count);
+  mCbInfo("Length(ms)", info.length);
+  mCbInfo("Intro(ms)", info.intro_length);
+  mCbInfo("Loop(ms)", info.loop_length);
+  mCbInfo("Fade(ms)", info.fade_length);
+  mCbInfo("System", info.system);
+  mCbInfo("Game", info.game);
+  mCbInfo("Song", info.song);
+  mCbInfo("Author", info.author);
+  mCbInfo("Copyright", info.copyright);
+  mCbInfo("Comment", info.comment);
+  mCbInfo("Dumper", info.dumper);
 }
 
-bool AudioGeneratorGme::startTrack(int num) {
-  if (this->m_emu == nullptr && !this->m_load(this->output->GetRate()))
+bool AudioGeneratorGme::PlayTrack(int num) {
+  if (mEmu == nullptr)
     return false;
-  blargg_err_t err = this->m_emu->StartTrack(num);
+  blargg_err_t err = mEmu->StartTrack(num);
   if (err != nullptr) {
     this->cb.st(-1, err);
     return false;
   }
-  this->m_isPlaying = true;
-  this->m_cbTrackInfo();
+  this->running = true;
+  mCbTrackInfo();
   return true;
 }
 
-bool AudioGeneratorGme::m_load(int sample_rate) {
+bool AudioGeneratorGme::mLoad(int sample_rate) {
   char header[4];
 
-  //this->m_reader.reset();
-  this->m_reader.read(header, sizeof(header));
+  mReader.read(header, sizeof(header));
   gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
 
   if (file_type == nullptr) {
@@ -125,21 +150,27 @@ bool AudioGeneratorGme::m_load(int sample_rate) {
 
   this->cb.st(0, file_type->system);
 
-  this->m_emu = gme_new_emu(file_type, sample_rate);
-  if (this->m_emu == nullptr) {
+  if (mType != nullptr && mType != file_type) {
+    gme_delete(mEmu);
+    mType = nullptr;
+  }
+
+  mEmu = gme_new_emu(file_type, sample_rate);
+  if (mEmu == nullptr) {
     this->cb.st(-1, "Failed to create emulator");
     return false;
   }
 
-  RemainingReader reader(header, sizeof(header), &this->m_reader);
-  gme_err_t err = this->m_emu->load(reader);
+  RemainingReader reader(header, sizeof(header), &mReader);
+  gme_err_t err = mEmu->load(reader);
 
   if (err != nullptr) {
+    gme_delete(mEmu);
+    mEmu = nullptr;
     this->cb.st(-1, err);
-    delete this->m_emu;
-    this->m_emu = nullptr;
     return false;
   }
 
+  mType = file_type;
   return true;
 }

@@ -20,54 +20,40 @@
 
 #pragma once
 
-#include "AudioGenerator.h"
-#include "libgme/DataReader.h"
-#include "libgme/gme.h"
 #include <array>
+#include "AudioGenerator.h"
+#include "libgme/gme.h"
+#include "libgme/DataReader.h"
 
 class AudioGeneratorGme : public AudioGenerator {
 public:
-  AudioGeneratorGme() : m_pos(this->m_buffer.size()) {}
+  AudioGeneratorGme() : mPos(this->mBuf.size()) {}
   ~AudioGeneratorGme() {}
   bool begin(AudioFileSource *source, AudioOutput *output) override;
-  bool isRunning() override { return this->m_isPlaying; }
+  bool isRunning() override { return this->running; }
   bool loop() override;
   bool stop() override;
-  bool startTrack(int num);
+  bool PlayTrack(int num);
 
 protected:
   // AudioFileSource to GME DataReader adapter
-  class AudioOutputReader : public DataReader {
+  class AudioSourceReader : public DataReader {
   public:
-    void set_source(AudioFileSource *src) { this->m_src = src; }
-    long read_avail(void *dst, long size) override {
-      if (size > this->remain())
-        size = this->remain();
-      this->read(dst, size);
-      return size;
-    }
-    blargg_err_t read(void *dst, long size) override {
-      while (size > 0)
-        size -= this->m_src->read(dst, size);
-      return nullptr;
-    }
-    long remain() const override {
-      return this->m_src->getSize() - this->m_src->getPos();
-    }
-    blargg_err_t skip(long count) override {
-      return this->m_src->seek(count, SEEK_CUR) ? nullptr : eof_error;
-    }
-    void reset() { this->m_src->seek(0, SEEK_SET); }
+    void set_source(AudioFileSource *src) { this->mSource = src; }
+    long read_avail(void *dst, long size) override;
+    blargg_err_t read(void *dst, long size) override;
+    long remain() const override;
+    blargg_err_t skip(long count) override;
 
   private:
-    AudioFileSource *m_src;
-  } m_reader;
-  MusicEmu *m_emu{nullptr};
-  std::array<int16_t, 1024> m_buffer;
-  unsigned m_pos;
-  bool m_isPlaying{false};
-  bool m_load(int sample_rate);
-  void m_cbInfo(const char *name, const char *value);
-  void m_cbInfo(const char *name, long value);
-  void m_cbTrackInfo();
+    AudioFileSource *mSource;
+  } mReader;
+  gme_type_t mType{nullptr};
+  MusicEmu *mEmu{nullptr};
+  std::array<int16_t, 1024> mBuf;
+  unsigned mPos;
+  bool mLoad(int sample_rate);
+  void mCbInfo(const char *name, const char *value);
+  void mCbInfo(const char *name, long value);
+  void mCbTrackInfo();
 };
