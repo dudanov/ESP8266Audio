@@ -20,15 +20,15 @@
 
 #pragma once
 
-#include <array>
 #include "AudioGenerator.h"
-#include "libgme/gme.h"
 #include "libgme/DataReader.h"
+#include "libgme/gme.h"
+#include <array>
 
 class AudioGeneratorGme : public AudioGenerator {
 public:
   AudioGeneratorGme() : mPos(this->mBuf.size()) {}
-  ~AudioGeneratorGme() {}
+  ~AudioGeneratorGme();
   bool begin(AudioFileSource *source, AudioOutput *output) override;
   bool isRunning() override { return this->running; }
   bool loop() override;
@@ -37,9 +37,9 @@ public:
 
 protected:
   // AudioFileSource to GME DataReader adapter
-  class AudioSourceReader : public DataReader {
+  class AudioFileReader : public DataReader {
   public:
-    void set_source(AudioFileSource *src) { this->mSource = src; }
+    void SetSource(AudioFileSource *src) { this->mSource = src; }
     long read_avail(void *dst, long size) override;
     blargg_err_t read(void *dst, long size) override;
     long remain() const override;

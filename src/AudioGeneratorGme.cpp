@@ -21,15 +21,15 @@
 #include "AudioGeneratorGme.h"
 #include "libgme/MusicEmu.h"
 
-inline long AudioGeneratorGme::AudioSourceReader::remain() const {
+inline long AudioGeneratorGme::AudioFileReader::remain() const {
   return mSource->getSize() - mSource->getPos();
 }
 
-blargg_err_t AudioGeneratorGme::AudioSourceReader::skip(long count) {
+blargg_err_t AudioGeneratorGme::AudioFileReader::skip(long count) {
   return mSource->seek(count, SEEK_CUR) ? nullptr : eof_error;
 }
 
-blargg_err_t AudioGeneratorGme::AudioSourceReader::read(void *dst, long size) {
+blargg_err_t AudioGeneratorGme::AudioFileReader::read(void *dst, long size) {
   while (size > 0) {
     auto len = mSource->read(dst, size);
     if (len == 0)
@@ -39,11 +39,13 @@ blargg_err_t AudioGeneratorGme::AudioSourceReader::read(void *dst, long size) {
   return nullptr;
 }
 
-long AudioGeneratorGme::AudioSourceReader::read_avail(void *dst, long size) {
+long AudioGeneratorGme::AudioFileReader::read_avail(void *dst, long size) {
   if (size > this->remain())
     size = this->remain();
   return this->read(dst, size) ? 0 : size;
 }
+
+AudioGeneratorGme::~AudioGeneratorGme() { this->stop(); }
 
 bool AudioGeneratorGme::begin(AudioFileSource *source, AudioOutput *output) {
   if (source == nullptr || output == nullptr)
@@ -51,7 +53,7 @@ bool AudioGeneratorGme::begin(AudioFileSource *source, AudioOutput *output) {
   this->file = source;
   this->output = output;
   this->output->begin();
-  mReader.set_source(source);
+  mReader.SetSource(source);
   mLoad(this->output->GetRate());
   return true;
 }
