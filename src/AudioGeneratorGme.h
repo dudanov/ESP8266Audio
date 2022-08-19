@@ -27,7 +27,7 @@
 
 class AudioGeneratorGme : public AudioGenerator {
 public:
-  AudioGeneratorGme() : mPos(this->mBuf.size()) {}
+  AudioGeneratorGme() : mPos(mBuf.size()) {}
   ~AudioGeneratorGme();
   bool begin(AudioFileSource *source, AudioOutput *output) override;
   bool isRunning() override { return this->running; }
