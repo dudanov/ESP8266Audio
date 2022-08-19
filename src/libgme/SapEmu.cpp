@@ -383,5 +383,5 @@ blargg_err_t SapEmu::mRunClocks(blip_time_t &duration, int) {
 }  // namespace gme
 
 static gme_type_t_ const gme_sap_type_ = {
-    "Atari XL", 0, &gme::emu::sap::SapEmu::createSapEmu, &gme::emu::sap::SapFile::createSapFile, "SAP", 1};
+    "Atari XL", 0, 0, &gme::emu::sap::SapEmu::createSapEmu, &gme::emu::sap::SapFile::createSapFile, "SAP", 1};
 extern gme_type_t const gme_sap_type = &gme_sap_type_;

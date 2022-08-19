@@ -378,5 +378,5 @@ blargg_err_t KssEmu::mRunClocks(blip_time_t &duration, int) {
 }  // namespace gme
 
 static gme_type_t_ const gme_kss_type_ = {
-    "MSX", 256, &gme::emu::kss::KssEmu::createKssEmu, &gme::emu::kss::KssFile::createKssFile, "KSS", 0x03};
+    "MSX", 256, 0, &gme::emu::kss::KssEmu::createKssEmu, &gme::emu::kss::KssFile::createKssFile, "KSS", 0x03};
 extern gme_type_t const gme_kss_type = &gme_kss_type_;

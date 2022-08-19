@@ -372,5 +372,5 @@ blargg_err_t AyEmu::mRunClocks(blip_time_t &duration, int) {
 }  // namespace gme
 
 static gme_type_t_ const gme_ay_type_ = {
-    "ZX Spectrum", 0, &gme::emu::ay::AyEmu::createAyEmu, &gme::emu::ay::AyFile::createAyFile, "AY", 1};
+    "ZX Spectrum", 0, 0, &gme::emu::ay::AyEmu::createAyEmu, &gme::emu::ay::AyFile::createAyFile, "AY", 1};
 extern gme_type_t const gme_ay_type = &gme_ay_type_;

@@ -489,5 +489,5 @@ blargg_err_t HesEmu::mRunClocks(blip_time_t &duration_, int) {
 }  // namespace gme
 
 static gme_type_t_ const gme_hes_type_ = {
-    "PC Engine", 256, &gme::emu::hes::HesEmu::createHesEmu, &gme::emu::hes::HesFile::createHesFile, "HES", 1};
+    "PC Engine", 256, 0, &gme::emu::hes::HesEmu::createHesEmu, &gme::emu::hes::HesFile::createHesFile, "HES", 1};
 extern gme_type_t const gme_hes_type = &gme_hes_type_;

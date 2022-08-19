@@ -136,7 +136,7 @@ struct GymFile : GmeInfo {
 static MusicEmu *new_gym_emu() { return BLARGG_NEW GymEmu; }
 static MusicEmu *new_gym_file() { return BLARGG_NEW GymFile; }
 
-static gme_type_t_ const gme_gym_type_ = {"Sega Genesis", 1, &new_gym_emu, &new_gym_file, "GYM", 0};
+static gme_type_t_ const gme_gym_type_ = {"Sega Genesis", 1, 0, &new_gym_emu, &new_gym_file, "GYM", 0};
 extern gme_type_t const gme_gym_type = &gme_gym_type_;
 
 // Setup

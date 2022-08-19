@@ -504,5 +504,5 @@ blargg_err_t NsfEmu::mRunClocks(blip_time_t &duration, int) {
 }  // namespace gme
 
 static gme_type_t_ const gme_nsf_type_ = {
-    "Nintendo NES", 0, &gme::emu::nes::NsfEmu::createNsfEmu, &gme::emu::nes::NsfFile::createNsfFile, "NSF", 1};
+    "Nintendo NES", 0, 0, &gme::emu::nes::NsfEmu::createNsfEmu, &gme::emu::nes::NsfFile::createNsfFile, "NSF", 1};
 extern gme_type_t const gme_nsf_type = &gme_nsf_type_;

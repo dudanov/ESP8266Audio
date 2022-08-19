@@ -499,9 +499,9 @@ RsnEmu::~RsnEmu() {}
 }  // namespace gme
 
 static gme_type_t_ const gme_spc_type_ = {
-    "Super Nintendo", 1, &gme::emu::snes::SpcEmu::createSpcEmu, &gme::emu::snes::SpcFile::createSpcFile, "SPC", 0};
+    "Super Nintendo", 1, 32000, &gme::emu::snes::SpcEmu::createSpcEmu, &gme::emu::snes::SpcFile::createSpcFile, "SPC", 0};
 extern gme_type_t const gme_spc_type = &gme_spc_type_;
 
 static gme_type_t_ const gme_rsn_type_ = {
-    "Super Nintendo", 0, &gme::emu::snes::RsnEmu::createRsnEmu, &gme::emu::snes::RsnFile::createRsnFile, "RSN", 0};
+    "Super Nintendo", 0, 32000, &gme::emu::snes::RsnEmu::createRsnEmu, &gme::emu::snes::RsnFile::createRsnFile, "RSN", 0};
 extern gme_type_t const gme_rsn_type = &gme_rsn_type_;

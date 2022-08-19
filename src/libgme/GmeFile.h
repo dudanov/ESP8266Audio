@@ -13,6 +13,7 @@
 struct gme_type_t_ {
   const char *system;      /* name of system this music file type is generally for */
   int track_count;         /* non-zero for formats with a fixed number of tracks */
+  int sample_rate;         /* non-zero for formats with native sample rates */
   MusicEmu *(*new_emu)();  /* Create new emulator for this type (useful in C++ only) */
   MusicEmu *(*new_info)(); /* Create new info reader for this type */
 

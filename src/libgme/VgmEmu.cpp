@@ -453,9 +453,9 @@ blargg_err_t VgmEmu::mPlay(long count, sample_t *out) {
 }  // namespace gme
 
 static gme_type_t_ const gme_vgm_type_ = {
-    "Sega SMS/Genesis", 1, &gme::emu::vgm::VgmEmu::createVgmEmu, &gme::emu::vgm::VgmFile::createVgmFile, "VGM", 1};
+    "Sega SMS/Genesis", 1, 0, &gme::emu::vgm::VgmEmu::createVgmEmu, &gme::emu::vgm::VgmFile::createVgmFile, "VGM", 1};
 extern gme_type_t const gme_vgm_type = &gme_vgm_type_;
 
 static gme_type_t_ const gme_vgz_type_ = {
-    "Sega SMS/Genesis", 1, &gme::emu::vgm::VgmEmu::createVgmEmu, &gme::emu::vgm::VgmFile::createVgmFile, "VGZ", 1};
+    "Sega SMS/Genesis", 1, 0, &gme::emu::vgm::VgmEmu::createVgmEmu, &gme::emu::vgm::VgmFile::createVgmFile, "VGZ", 1};
 extern gme_type_t const gme_vgz_type = &gme_vgz_type_;

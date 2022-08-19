@@ -314,5 +314,5 @@ blargg_err_t NsfeEmu::mStartTrack(int track) { return NsfEmu::mStartTrack(info.r
 }  // namespace gme
 
 static gme_type_t_ const gme_nsfe_type_ = {
-    "Nintendo NES", 0, &gme::emu::nes::NsfeEmu::createNsfeEmu, &gme::emu::nes::NsfeFile::createNsfeFile, "NSFE", 1};
+    "Nintendo NES", 0, 0, &gme::emu::nes::NsfeEmu::createNsfeEmu, &gme::emu::nes::NsfeFile::createNsfeFile, "NSFE", 1};
 extern gme_type_t const gme_nsfe_type = &gme_nsfe_type_;

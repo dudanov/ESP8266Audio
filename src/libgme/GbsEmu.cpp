@@ -252,5 +252,5 @@ blargg_err_t GbsEmu::mRunClocks(blip_time_t &duration, int) {
 }  // namespace gme
 
 static gme_type_t_ const gme_gbs_type_ = {
-    "Game Boy", 0, &gme::emu::gb::GbsEmu::createGbsEmu, &gme::emu::gb::GbsFile::createGbsFile, "GBS", 1};
+    "Game Boy", 0, 0, &gme::emu::gb::GbsEmu::createGbsEmu, &gme::emu::gb::GbsFile::createGbsFile, "GBS", 1};
 extern gme_type_t const gme_gbs_type = &gme_gbs_type_;
