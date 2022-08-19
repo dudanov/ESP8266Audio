@@ -52,7 +52,7 @@ protected:
   MusicEmu *mEmu{nullptr};
   std::array<int16_t, 1024> mBuf;
   unsigned mPos;
-  bool mLoad(int sample_rate);
+  bool mLoad();
   void mCbInfo(const char *name, const char *value);
   void mCbInfo(const char *name, long value);
   void mCbTrackInfo();

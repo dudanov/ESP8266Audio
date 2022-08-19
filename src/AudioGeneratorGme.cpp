@@ -69,7 +69,7 @@ bool AudioGeneratorGme::begin(AudioFileSource *src, AudioOutput *out) {
   this->output = out;
   this->output->begin();
   mReader.set_source(src);
-  mLoad(this->output->GetRate());
+  mLoad();
   return true;
 }
 
@@ -149,7 +149,7 @@ bool AudioGeneratorGme::PlayTrack(int num) {
   return true;
 }
 
-bool AudioGeneratorGme::mLoad(int sample_rate) {
+bool AudioGeneratorGme::mLoad() {
   char header[4];
 
   mReader.read(header, sizeof(header));
@@ -169,6 +169,9 @@ bool AudioGeneratorGme::mLoad(int sample_rate) {
   }
 
   if (mEmu == nullptr) {
+    int sample_rate = file_type->sample_rate;
+    if (!sample_rate)
+      sample_rate = this->output->GetRate();
     mEmu = gme_new_emu(file_type, sample_rate);
     if (mEmu == nullptr) {
       this->cb.st(-1, "Failed to create emulator");
