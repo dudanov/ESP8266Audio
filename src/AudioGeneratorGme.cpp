@@ -114,7 +114,6 @@ bool AudioGeneratorGme::mLoad() {
     this->cb.st(-1, err);
     return false;
   }
-
   return true;
 }
 
