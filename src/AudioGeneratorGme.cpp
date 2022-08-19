@@ -96,54 +96,33 @@ bool AudioGeneratorGme::loop() {
   return this->running;
 }
 
-bool AudioGeneratorGme::stop() {
-  this->running = false;
-  mPos = mBuf.size();
-  return true;
-}
+bool AudioGeneratorGme::mLoad() {
+  char header[4];
 
-void AudioGeneratorGme::mCbInfo(const char *name, const char *value) {
-  if (strlen(value))
-    this->cb.md(name, false, value);
-}
+  mReader.read(header, sizeof(header));
+  gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
 
-void AudioGeneratorGme::mCbInfo(const char *name, long value) {
-  char buf[32];
-  if (value >= 0)
-    this->cb.md(name, false, ltoa(value, buf, 10));
-}
-
-void AudioGeneratorGme::mCbTrackInfo() {
-  track_info_t info;
-  gme_err_t err = mEmu->GetTrackInfo(&info);
-  if (err != nullptr) {
-    this->cb.st(-1, err);
-    return;
-  }
-  mCbInfo("Tracks", info.track_count);
-  mCbInfo("Length(ms)", info.length);
-  mCbInfo("Intro(ms)", info.intro_length);
-  mCbInfo("Loop(ms)", info.loop_length);
-  mCbInfo("Fade(ms)", info.fade_length);
-  mCbInfo("System", info.system);
-  mCbInfo("Game", info.game);
-  mCbInfo("Song", info.song);
-  mCbInfo("Author", info.author);
-  mCbInfo("Copyright", info.copyright);
-  mCbInfo("Comment", info.comment);
-  mCbInfo("Dumper", info.dumper);
-}
-
-bool AudioGeneratorGme::PlayTrack(int num) {
-  if (mEmu == nullptr)
+  if (file_type == nullptr) {
+    this->cb.st(-1, gme_wrong_file_type);
     return false;
-  blargg_err_t err = mEmu->StartTrack(num);
+  }
+
+  this->cb.st(0, file_type->system);
+
+  if (!mEmuCreate(file_type)) {
+    this->cb.st(-1, "Failed to create emulator");
+    return false;
+  }
+
+  RemainingReader reader(header, sizeof(header), &mReader);
+  gme_err_t err = mEmu->load(reader);
+
   if (err != nullptr) {
+    mEmuDestroy();
     this->cb.st(-1, err);
     return false;
   }
-  this->running = true;
-  mCbTrackInfo();
+
   return true;
 }
 
@@ -175,32 +154,54 @@ void AudioGeneratorGme::mEmuDestroy() {
   mType = nullptr;
 }
 
-bool AudioGeneratorGme::mLoad() {
-  char header[4];
-
-  mReader.read(header, sizeof(header));
-  gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
-
-  if (file_type == nullptr) {
-    this->cb.st(-1, gme_wrong_file_type);
+bool AudioGeneratorGme::playTrack(unsigned num) {
+  if (mEmu == nullptr || num >= mEmu->getTrackCount())
     return false;
-  }
-
-  this->cb.st(0, file_type->system);
-
-  if (!mEmuCreate(file_type)) {
-    this->cb.st(-1, "Failed to create emulator");
-    return false;
-  }
-
-  RemainingReader reader(header, sizeof(header), &mReader);
-  gme_err_t err = mEmu->load(reader);
-
+  blargg_err_t err = mEmu->StartTrack(num);
   if (err != nullptr) {
-    mEmuDestroy();
     this->cb.st(-1, err);
+    this->running = false;
     return false;
   }
-
+  mCbTrackInfo();
+  this->running = true;
   return true;
+}
+
+bool AudioGeneratorGme::stop() {
+  this->running = false;
+  mPos = mBuf.size();
+  return true;
+}
+
+void AudioGeneratorGme::mCbTrackInfo() {
+  track_info_t info;
+  gme_err_t err = mEmu->GetTrackInfo(&info);
+  if (err != nullptr) {
+    this->cb.st(-1, err);
+    return;
+  }
+  mCbInfo("Tracks", info.track_count);
+  mCbInfo("Length(ms)", info.length);
+  mCbInfo("Intro(ms)", info.intro_length);
+  mCbInfo("Loop(ms)", info.loop_length);
+  mCbInfo("Fade(ms)", info.fade_length);
+  mCbInfo("System", info.system);
+  mCbInfo("Game", info.game);
+  mCbInfo("Song", info.song);
+  mCbInfo("Author", info.author);
+  mCbInfo("Copyright", info.copyright);
+  mCbInfo("Comment", info.comment);
+  mCbInfo("Dumper", info.dumper);
+}
+
+void AudioGeneratorGme::mCbInfo(const char *name, const char *value) {
+  if (strlen(value))
+    this->cb.md(name, false, value);
+}
+
+void AudioGeneratorGme::mCbInfo(const char *name, long value) {
+  char buf[32];
+  if (value >= 0)
+    this->cb.md(name, false, ltoa(value, buf, 10));
 }

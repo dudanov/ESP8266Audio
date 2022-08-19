@@ -33,7 +33,7 @@ public:
   bool isRunning() override { return this->running; }
   bool loop() override;
   bool stop() override;
-  bool PlayTrack(int num);
+  bool playTrack(unsigned num);
 
 protected:
   // AudioFileSource to GME DataReader adapter
