@@ -170,7 +170,9 @@ bool AudioGeneratorGme::mLoad() {
 
   if (mEmu == nullptr) {
     int sample_rate = file_type->sample_rate;
-    if (!sample_rate)
+    if (sample_rate)
+      this->output->SetRate(sample_rate);
+    else
       sample_rate = this->output->GetRate();
     mEmu = gme_new_emu(file_type, sample_rate);
     if (mEmu == nullptr) {
