@@ -3,6 +3,8 @@
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #pragma once
 
+#include <array>
+#include <pgmspace.h>
 #include "blargg_common.h"
 
 namespace gme {
@@ -75,7 +77,8 @@ struct SpcDsp {
 
   // Resets DSP and uses supplied values to initialize registers
   enum { REGISTERS_NUM = 128 };
-  void load(const uint8_t mRegs[REGISTERS_NUM]);
+  void load(const uint8_t *regs);
+  void mLoad();
 
   // DSP register addresses
 
@@ -141,8 +144,10 @@ struct SpcDsp {
 
  private:
   struct state_t {
-    uint8_t mRegs[REGISTERS_NUM];
-
+    struct Regs : std::array<uint8_t, REGISTERS_NUM> {
+      void assign(const uint8_t *src) { memcpy(this->data(), src, this->size()); }
+      void assign_P(const uint8_t *src) { memcpy_P(this->data(), src, this->size()); }
+    } mRegs;
 #ifdef SPC_ISOLATED_ECHO_BUFFER
     // Echo buffer, for dodgy SPC rips that were only made to work in dodgy
     // emulators

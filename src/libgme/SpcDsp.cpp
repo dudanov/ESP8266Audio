@@ -4,6 +4,8 @@
 
 #include "blargg_endian.h"
 #include <string.h>
+#include <pgmspace.h>
+#include <algorithm>
 
 /* Copyright (C) 2007 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -35,7 +37,7 @@ namespace snes {
 #define GET_LE16A(addr) GET_LE16(addr)
 #define SET_LE16A(addr, data) SET_LE16(addr, data)
 
-static uint8_t const initial_regs[SpcDsp::REGISTERS_NUM] = {
+static const uint8_t INITIAL_REGS[SpcDsp::REGISTERS_NUM] = {
     0x45, 0x8B, 0x5A, 0x9A, 0xE4, 0x82, 0x1B, 0x78, 0x00, 0x00, 0xAA, 0x96, 0x89, 0x0E, 0xE0, 0x80, 0x2A, 0x49, 0x3D,
     0xBA, 0x14, 0xA0, 0xAC, 0xC5, 0x00, 0x00, 0x51, 0xBB, 0x9C, 0x4E, 0x7B, 0xFF, 0xF4, 0xFD, 0x57, 0x32, 0x37, 0xD9,
     0x42, 0x22, 0x00, 0x00, 0x5B, 0x3C, 0x9F, 0x1B, 0x87, 0x9A, 0x6F, 0x27, 0xAF, 0x7B, 0xE5, 0x68, 0x0A, 0xD9, 0x00,
@@ -86,8 +88,8 @@ void SpcDsp::set_output(sample_t *out, int size) {
 // Prefixes are to avoid accidental use of locals with same names.
 
 // Interleved gauss table (to improve cache coherency)
-// interleved_gauss [i] = gauss [(i & 1) * 256 + 255 - (i >> 1 & 0xFF)]
-static short const interleved_gauss[512] = {
+// INTERLEAVED_GAUSS [i] = gauss [(i & 1) * 256 + 255 - (i >> 1 & 0xFF)]
+static const int16_t INTERLEAVED_GAUSS[] PROGMEM = {
     370, 1305, 366, 1305, 362, 1304, 358, 1304, 354, 1304, 351, 1304, 347, 1304, 343, 1303, 339, 1303, 336, 1303,
     332, 1302, 328, 1302, 325, 1301, 321, 1300, 318, 1300, 314, 1299, 311, 1298, 307, 1297, 304, 1297, 300, 1296,
     297, 1295, 293, 1294, 290, 1293, 286, 1292, 283, 1291, 280, 1290, 276, 1288, 273, 1287, 270, 1286, 267, 1284,
@@ -120,7 +122,7 @@ static short const interleved_gauss[512] = {
 
 #define RATE(rate, div) (rate >= div ? rate / div * 8 - 1 : rate - 1)
 
-static unsigned const counter_mask[32] = {
+static const unsigned counter_mask[32] = {
     RATE(2, 2),   RATE(2048, 4), RATE(1536, 3), RATE(1280, 5), RATE(1024, 4), RATE(768, 3), RATE(640, 5), RATE(512, 4),
     RATE(384, 3), RATE(320, 5),  RATE(256, 4),  RATE(192, 3),  RATE(160, 5),  RATE(128, 4), RATE(96, 3),  RATE(80, 5),
     RATE(64, 4),  RATE(48, 3),   RATE(40, 5),   RATE(32, 4),   RATE(24, 3),   RATE(20, 5),  RATE(16, 4),  RATE(12, 3),
@@ -201,7 +203,7 @@ void SpcDsp::run(int clock_count) {
     int echo_out_l = 0;
     int echo_out_r = 0;
     voice_t *v = m.voices;
-    uint8_t *v_regs = m.mRegs;
+    uint8_t *v_regs = m.mRegs.data();
     int vbit = 1;
     do {
 #define SAMPLE_PTR(i) GET_LE16A(&dir[VREG(v_regs, SRCN) * 4 + i * 2])
@@ -242,15 +244,14 @@ void SpcDsp::run(int clock_count) {
       // Gaussian interpolation
       {
         int output = 0;
-        VREG(v_regs, ENVX) = (uint8_t)(env >> 4);
+        VREG(v_regs, ENVX) = (uint8_t) (env >> 4);
         if (env) {
-          // Make pointers into gaussian based on fractional position
-          // between samples
+          // Make pointers into gaussian based on fractional position between samples
           int offset = (unsigned) v->interp_pos >> 3 & 0x1FE;
-          short const *fwd = interleved_gauss + offset;
-          short const *rev = interleved_gauss + 510 - offset;  // mirror left half of gaussian
+          const int16_t *fwd = INTERLEAVED_GAUSS + offset;
+          const int16_t *rev = INTERLEAVED_GAUSS + 510 - offset;  // mirror left half of gaussian
 
-          int const *in = &v->buf_pos[(unsigned) v->interp_pos >> 12];
+          const int *in = &v->buf_pos[(unsigned) v->interp_pos >> 12];
 
           if (!(slow_gaussian & vbit))  // 99%
           {
@@ -259,7 +260,7 @@ void SpcDsp::run(int clock_count) {
             output = (fwd[0] * in[0] + fwd[1] * in[1] + rev[1] * in[2] + rev[0] * in[3]) >> 11;
             output = (output * env) >> 11;
           } else {
-            output = (int16_t)(m.noise * 2);
+            output = (int16_t) (m.noise * 2);
             if (!(REG(NON) & vbit)) {
               output = (fwd[0] * in[0]) >> 11;
               output += (fwd[1] * in[1]) >> 11;
@@ -287,7 +288,7 @@ void SpcDsp::run(int clock_count) {
         }
 
         pmon_input = output;
-        VREG(v_regs, OUTX) = (uint8_t)(output >> 8);
+        VREG(v_regs, OUTX) = (uint8_t) (output >> 8);
       }
 
       // Soft reset or end of sample
@@ -470,7 +471,7 @@ void SpcDsp::run(int clock_count) {
 
           // Adjust and write sample
           CLAMP16(s);
-          s = (int16_t)(s * 2);
+          s = (int16_t) (s * 2);
           pos[BRR_BUF_SIZE] = pos[0] = s;  // second copy simplifies wrap-around
         }
 
@@ -623,9 +624,13 @@ void SpcDsp::soft_reset() {
   soft_reset_common();
 }
 
-void SpcDsp::load(uint8_t const mRegs[REGISTERS_NUM]) {
-  memcpy(m.mRegs, mRegs, sizeof m.mRegs);
-  memset(&m.mRegs[REGISTERS_NUM], 0, offsetof(state_t, ram) - REGISTERS_NUM);
+void SpcDsp::load(const uint8_t *regs) {
+  m.mRegs.assign(regs);
+  mLoad();
+}
+
+void SpcDsp::mLoad() {
+  memset(m.mRegs.end(), 0, offsetof(state_t, ram) - REGISTERS_NUM);
 
   // Internal state
   int i;
@@ -640,7 +645,10 @@ void SpcDsp::load(uint8_t const mRegs[REGISTERS_NUM]) {
   soft_reset_common();
 }
 
-void SpcDsp::reset() { load(initial_regs); }
+void SpcDsp::reset() {
+  m.mRegs.assign_P(INITIAL_REGS);
+  mLoad();
+}
 
 }  // namespace snes
 }  // namespace emu
