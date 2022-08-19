@@ -4,6 +4,7 @@
 #pragma once
 
 #include <array>
+#include <cstring>
 #include <pgmspace.h>
 #include "blargg_common.h"
 
