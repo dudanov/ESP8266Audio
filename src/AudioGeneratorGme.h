@@ -36,7 +36,6 @@ public:
   bool playTrack(unsigned num);
 
 protected:
-  // AudioFileSource to GME DataReader adapter
   class AudioFileReader : public DataReader {
   public:
     void set_source(AudioFileSource *src);
@@ -47,15 +46,17 @@ protected:
 
   private:
     AudioFileSource *mSource;
-  } mReader;
+  };
+
+  AudioFileReader mReader;
   gme_type_t mType{nullptr};
   MusicEmu *mEmu{nullptr};
   std::array<int16_t, 1024> mBuf;
   unsigned mPos;
+  bool mEmuCreate(gme_type_t file_type);
+  void mEmuDestroy();
   bool mLoad();
   void mCbInfo(const char *name, const char *value);
   void mCbInfo(const char *name, long value);
   void mCbTrackInfo();
-  bool mEmuCreate(gme_type_t file_type);
-  void mEmuDestroy();
 };
