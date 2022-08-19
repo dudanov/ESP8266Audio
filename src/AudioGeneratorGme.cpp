@@ -54,10 +54,9 @@ long AudioGeneratorGme::AudioFileReader::read_avail(void *dst, long size) {
 }
 
 AudioGeneratorGme::~AudioGeneratorGme() {
-  this->stop();
+  mEmuDestroy();
   this->output->stop();
   this->file->close();
-  mEmuDestroy();
 }
 
 bool AudioGeneratorGme::begin(AudioFileSource *src, AudioOutput *out) {
