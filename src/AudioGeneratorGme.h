@@ -25,7 +25,7 @@
 #include "libgme/gme.h"
 #include <array>
 
-class AudioGeneratorGme : public AudioGenerator {
+class AudioGeneratorGme : public AudioGenerator, public DataReader {
 public:
   AudioGeneratorGme() : mPos(mBuf.size()) {}
   ~AudioGeneratorGme();
@@ -36,19 +36,6 @@ public:
   bool playTrack(unsigned num);
 
 protected:
-  class AudioFileReader : public DataReader {
-  public:
-    void set_source(AudioFileSource *src);
-    long read_avail(void *dst, long size) override;
-    blargg_err_t read(void *dst, long size) override;
-    long remain() const override;
-    blargg_err_t skip(long count) override;
-
-  private:
-    AudioFileSource *mSource;
-  };
-
-  AudioFileReader mReader;
   gme_type_t mType{nullptr};
   MusicEmu *mEmu{nullptr};
   std::array<int16_t, 1024> mBuf;
@@ -59,4 +46,11 @@ protected:
   void mCbInfo(const char *name, const char *value);
   void mCbInfo(const char *name, long value);
   void mCbTrackInfo();
+
+  /* DataReader interface implementation */
+
+  long read_avail(void *dst, long size) override;
+  blargg_err_t read(void *dst, long size) override;
+  long remain() const override;
+  blargg_err_t skip(long count) override;
 };
