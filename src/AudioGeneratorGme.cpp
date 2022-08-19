@@ -188,7 +188,7 @@ void AudioGeneratorGme::mCbTrackInfo() {
 }
 
 void AudioGeneratorGme::mCbInfo(const char *name, const char *value) {
-  if (strlen(value))
+  if (*value)
     this->cb.md(name, false, value);
 }
 
