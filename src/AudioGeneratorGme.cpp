@@ -57,9 +57,7 @@ AudioGeneratorGme::~AudioGeneratorGme() {
   this->stop();
   this->output->stop();
   this->file->close();
-  gme_delete(mEmu);
-  mEmu = nullptr;
-  mType = nullptr;
+  mEmuDestroy();
 }
 
 bool AudioGeneratorGme::begin(AudioFileSource *src, AudioOutput *out) {
@@ -149,6 +147,34 @@ bool AudioGeneratorGme::PlayTrack(int num) {
   return true;
 }
 
+bool AudioGeneratorGme::mEmuCreate(gme_type_t file_type) {
+  if (mEmu != nullptr) {
+    if (mType == file_type)
+      return true;
+    mEmuDestroy();
+  }
+  const int current = this->output->GetRate();
+  int rate = file_type->sample_rate;
+  if (rate > 0) {
+    if (rate != current)
+      this->output->SetRate(rate);
+  } else {
+    rate = current;
+  }
+  mEmu = gme_new_emu(file_type, rate);
+  if (mEmu != nullptr) {
+    mType = file_type;
+    return true;
+  }
+  return false;
+}
+
+void AudioGeneratorGme::mEmuDestroy() {
+  gme_delete(mEmu);
+  mEmu = nullptr;
+  mType = nullptr;
+}
+
 bool AudioGeneratorGme::mLoad() {
   char header[4];
 
@@ -162,35 +188,19 @@ bool AudioGeneratorGme::mLoad() {
 
   this->cb.st(0, file_type->system);
 
-  if (mType != nullptr && mType != file_type) {
-    gme_delete(mEmu);
-    mEmu = nullptr;
-    mType = nullptr;
-  }
-
-  if (mEmu == nullptr) {
-    int sample_rate = file_type->sample_rate;
-    if (sample_rate)
-      this->output->SetRate(sample_rate);
-    else
-      sample_rate = this->output->GetRate();
-    mEmu = gme_new_emu(file_type, sample_rate);
-    if (mEmu == nullptr) {
-      this->cb.st(-1, "Failed to create emulator");
-      return false;
-    }
+  if (!mEmuCreate(file_type)) {
+    this->cb.st(-1, "Failed to create emulator");
+    return false;
   }
 
   RemainingReader reader(header, sizeof(header), &mReader);
   gme_err_t err = mEmu->load(reader);
 
   if (err != nullptr) {
-    gme_delete(mEmu);
-    mEmu = nullptr;
+    mEmuDestroy();
     this->cb.st(-1, err);
     return false;
   }
 
-  mType = file_type;
   return true;
 }

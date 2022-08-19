@@ -56,4 +56,6 @@ protected:
   void mCbInfo(const char *name, const char *value);
   void mCbInfo(const char *name, long value);
   void mCbTrackInfo();
+  bool mEmuCreate(gme_type_t file_type);
+  void mEmuDestroy();
 };
