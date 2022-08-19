@@ -149,6 +149,7 @@ bool AudioGeneratorGme::mEmuCreate(gme_type_t file_type) {
 }
 
 void AudioGeneratorGme::mEmuDestroy() {
+  this->running = false;
   gme_delete(mEmu);
   mEmu = nullptr;
   mType = nullptr;
