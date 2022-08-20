@@ -1,6 +1,7 @@
 // Sms_Snd_Emu 0.1.4. http://www.slack.net/~ant/
 
 #include "SmsApu.h"
+#include <pgmspace.h>
 
 /* Copyright (C) 2003-2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -247,10 +248,9 @@ void SmsApu::writeGGStereo(blip_time_t time, int data) {
   }
 }
 
-// volumes [i] = 64 * pow( 1.26, 15 - i ) / pow( 1.26, 15 )
-static unsigned char const volumes[16] = {64, 50, 39, 31, 24, 19, 15, 12, 9, 7, 5, 4, 3, 2, 1, 0};
-
 void SmsApu::writeData(blip_time_t time, int data) {
+  // VOLUMES [i] = 64 * pow( 1.26, 15 - i ) / pow( 1.26, 15 )
+  static const uint8_t VOLUMES[] PROGMEM = {64, 50, 39, 31, 24, 19, 15, 12, 9, 7, 5, 4, 3, 2, 1, 0};
   require((unsigned) data <= 0xFF);
 
   run_until(time);
@@ -260,7 +260,7 @@ void SmsApu::writeData(blip_time_t time, int data) {
 
   int index = (m_latch >> 5) & 3;
   if (m_latch & 0x10) {
-    m_oscs[index]->volume = volumes[data & 15];
+    m_oscs[index]->volume = pgm_read_byte(&VOLUMES[data & 15]);
   } else if (index < 3) {
     SmsSquare &sq = m_squares[index];
     if (data & 0x80)

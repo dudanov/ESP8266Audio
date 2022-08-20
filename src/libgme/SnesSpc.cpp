@@ -5,6 +5,7 @@
 #include "SnesSpc.h"
 
 #include <string.h>
+#include <pgmspace.h>
 
 /* Copyright (C) 2004-2007 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -43,7 +44,7 @@ blargg_err_t SnesSpc::init() {
   m.rom[0x3E] = 0xFF;
   m.rom[0x3F] = 0xC0;
 
-  static unsigned char const cycle_table[128] = {
+  static const uint8_t CYCLE_TABLE[] PROGMEM = {
       //   01   23   45   67   89   AB   CD   EF
       0x28, 0x47, 0x34, 0x36, 0x26, 0x54, 0x54, 0x68,  // 0
       0x48, 0x47, 0x45, 0x56, 0x55, 0x65, 0x22, 0x46,  // 1
@@ -65,7 +66,7 @@ blargg_err_t SnesSpc::init() {
 
   // unpack cycle table
   for (int i = 0; i < 128; i++) {
-    int n = cycle_table[i];
+    int n = pgm_read_byte(&CYCLE_TABLE[i]);
     m.cycle_table[i * 2 + 0] = n >> 4;
     m.cycle_table[i * 2 + 1] = n & 0x0F;
   }
