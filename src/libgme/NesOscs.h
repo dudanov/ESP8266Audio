@@ -159,7 +159,7 @@ struct NesDmc : NesOsc {
   nes_time_t mGetNextReadTime() const;
 
  private:
-  static int sGetDelta(uint8_t dacNew, uint8_t dacOld);
+  int mGetDelta(uint8_t old);
   uint16_t mGetPeriod(uint8_t data) const;
   void mWriteR0(int data);
   void mWriteR1(int data);

@@ -318,7 +318,7 @@ inline void NesDmc::mWriteR0(int data) {
   this->mRecalcIRQ();
 }
 
-inline int NesDmc::sGetDelta(uint8_t dacNew, uint8_t dacOld) {
+inline int NesDmc::mGetDelta(uint8_t old) {
   static const uint8_t DAC_TABLE[] PROGMEM = {
       0,  1,  2,  3,  4,  5,  6,  7,  7,  8,  9,  10, 11, 12, 13, 14, 15, 15, 16, 17, 18, 19, 20, 20, 21, 22,
       23, 24, 24, 25, 26, 27, 27, 28, 29, 30, 31, 31, 32, 33, 33, 34, 35, 36, 36, 37, 38, 38, 39, 40, 41, 41,
@@ -326,7 +326,7 @@ inline int NesDmc::sGetDelta(uint8_t dacNew, uint8_t dacOld) {
       58, 59, 59, 60, 60, 61, 61, 62, 63, 63, 64, 64, 65, 65, 66, 66, 67, 67, 68, 68, 69, 70, 70, 71, 71, 72,
       72, 73, 73, 74, 74, 75, 75, 75, 76, 76, 77, 77, 78, 78, 79, 79, 80, 80, 81, 81, 82, 82, 82, 83,
   };
-  return pgm_read_byte(&DAC_TABLE[dacNew]) - pgm_read_byte(&DAC_TABLE[dacOld]);
+  return pgm_read_byte(&DAC_TABLE[this->mDac]) - pgm_read_byte(&DAC_TABLE[old]);
 }
 
 inline void NesDmc::mWriteR1(int data) {
@@ -335,7 +335,7 @@ inline void NesDmc::mWriteR1(int data) {
   this->mDac = data;
   // adjust mLastAmp so that "pop" amplitude will be properly non-linear with respect to change in dac
   if (!this->mNonlinear)
-    mLastAmp = data - sGetDelta(data, old);
+    mLastAmp = data - mGetDelta(old);
 }
 
 void NesDmc::mWriteRegister(int addr, int data) {
