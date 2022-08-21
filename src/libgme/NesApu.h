@@ -128,8 +128,8 @@ class NesApu {
   void mWriteR4017(nes_time_t time, uint8_t data);
 
   NesSquare::Synth mSquareSynth;  // shared by squares
-  NesSquare mSquare1{&mSquareSynth};
-  NesSquare mSquare2{&mSquareSynth};
+  NesSquare mSquare1{mSquareSynth};
+  NesSquare mSquare2{mSquareSynth};
   NesTriangle mTriangle;
   NesNoise mNoise;
   NesDmc mDmc;

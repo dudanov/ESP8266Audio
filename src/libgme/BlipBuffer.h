@@ -18,7 +18,6 @@ typedef int16_t blip_sample_t;
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#define BLIP_BUFFER_FAST 1
 
 // RU: Количество бит в доле передискретизации. Более высокие значения дают более точное
 // соотношение, но уменьшают максимальный размер буфера. EN: Number of bits in resample ratio
@@ -37,11 +36,7 @@ typedef int16_t blip_sample_t;
 //     высокочастотных прямоугольных волн. Влияет на размер объектов BlipSynth, поскольку они
 //     напрямую хранят форму сигнала.
 #ifndef BLIP_PHASE_BITS
-#if BLIP_BUFFER_FAST
 #define BLIP_PHASE_BITS 8
-#else
-#define BLIP_PHASE_BITS 6
-#endif
 #endif
 
 // Internal
@@ -68,7 +63,7 @@ class BlipBuffer {
   blargg_err_t SetSampleRate(long samples_per_sec, int msec_length = 1000 / 4);
 
   // Set number of source time units per second
-  void SetClockRate(long cps) { this->m_factor = this->clockRateFactor(this->m_clockRate = cps); }
+  void SetClockRate(long cps) { this->mFactor = this->clockRateFactor(this->mClockRate = cps); }
 
   // End current time frame of specified duration and make its samples
   // available (along with any still-unread samples) for reading with
@@ -88,10 +83,10 @@ class BlipBuffer {
   long GetSampleRate() const { return this->mSampleRate; }
 
   // Length of buffer, in milliseconds
-  int GetLength() const { return this->m_length; }
+  int GetLength() const { return this->mLength; }
 
   // Number of source time units per second
-  long GetClockRate() const { return this->m_clockRate; }
+  long GetClockRate() const { return this->mClockRate; }
 
   // Set frequency high-pass filter frequency, where higher values reduce bass
   // more
@@ -106,7 +101,7 @@ class BlipBuffer {
   void Clear(bool entire_buffer = true);
 
   // Number of samples available for reading with ReadSamples()
-  long SamplesAvailable() const { return (long) (this->m_offset >> BLIP_BUFFER_ACCURACY); }
+  long SamplesAvailable() const { return (long) (this->mOffset >> BLIP_BUFFER_ACCURACY); }
 
   // Remove 'count' samples from those waiting to be read
   void RemoveSamples(long count);
@@ -126,16 +121,16 @@ class BlipBuffer {
   void mixSamples(const blip_sample_t *buf, long count);
 
   // not documented yet
-  void setModified() { this->m_modified = true; }
+  void setModified() { this->mModified = true; }
   bool clearModified() {
-    bool b = this->m_modified;
-    this->m_modified = false;
+    bool b = this->mModified;
+    this->mModified = false;
     return b;
   }
   typedef blip_ulong_t blip_resampled_time_t;
   void removeSilence(long count);
-  blip_resampled_time_t resampledDuration(int t) const { return t * this->m_factor; }
-  blip_resampled_time_t resampledTime(blip_time_t t) const { return t * this->m_factor + this->m_offset; }
+  blip_resampled_time_t resampledDuration(int t) const { return t * this->mFactor; }
+  blip_resampled_time_t resampledTime(blip_time_t t) const { return t * this->mFactor + this->mOffset; }
   blip_resampled_time_t clockRateFactor(long clock_rate) const;
 
  public:
@@ -149,20 +144,20 @@ class BlipBuffer {
 
  public:
   typedef blip_time_t buf_t_;
-  blip_ulong_t m_factor;
-  blip_resampled_time_t m_offset;
-  buf_t_ *m_buffer;
-  blip_long_t m_bufferSize;
-  blip_long_t m_readerAccum;
-  int m_bassShift;
+  blip_ulong_t mFactor;
+  blip_resampled_time_t mOffset;
+  buf_t_ *mBuffer;
+  blip_long_t mBufferSize;
+  blip_long_t mReaderAccum;
+  int mBassShift;
 
  private:
   // friend class BlipReader;
   long mSampleRate;
-  long m_clockRate;
-  int m_bassFreq;
-  int m_length;
-  bool m_modified{false};
+  long mClockRate;
+  int mBassFreq;
+  int mLength;
+  bool mModified{false};
 };
 
 class BlipSynthFastImpl {
@@ -175,36 +170,12 @@ class BlipSynthFastImpl {
   int deltaFactor{0};
 };
 
-class BlipSynthImpl {
- public:
-  BlipSynthImpl(short *impulses, int width) : m_impulses(impulses), m_width(width) {}
-  void setVolumeUnit(double);
-  void setTrebleEq(const BlipEq &);
-
-  BlipBuffer *pBuf{nullptr};
-  int mLastAmp{0};
-  int deltaFactor{0};
-
- private:
-  double m_volumeUnit{0};
-  blip_long_t m_kernelUnit{0};
-  short *const m_impulses;
-  const int m_width;
-  int m_impulsesSize() const { return BLIP_RES / 2 * this->m_width + 1; }
-  void adjust_impulse();
-};
-
-// RU: range: максимальное ожидаемое изменение амплитуды. Разница между максимальной и минимальной
-// амплитудой. EN: Range specifies the greatest expected change in amplitude. Calculate it by
-// finding the difference
-//     between the maximum and minimum expected amplitudes (max - min).
+// RU: range: максимальное ожидаемое изменение амплитуды. Разница между максимальной и минимальной амплитудой.
+// EN: Range specifies the greatest expected change in amplitude. Calculate it by finding the difference between the
+// maximum and minimum expected amplitudes (max - min).
 template<int quality, int range> class BlipSynth {
  public:
-#if BLIP_BUFFER_FAST
   BlipSynth() {}
-#else
-  BlipSynth() : m_impl(this->m_impulses.data(), quality) {}
-#endif
   // Set overall volume of waveform
   void setVolume(double v) { this->m_impl.setVolumeUnit(v * (1.0 / (range < 0 ? -range : range))); }
 
@@ -232,7 +203,7 @@ template<int quality, int range> class BlipSynth {
   // buffer rather than the one set with output(). Delta can be positive or
   // negative. The actual change in amplitude is delta * (volume / range)
   void offset(blip_time_t t, int delta, BlipBuffer *buf) const {
-    offsetResampled(t * buf->m_factor + buf->m_offset, delta, buf);
+    offsetResampled(t * buf->mFactor + buf->mOffset, delta, buf);
   }
   void offset(blip_time_t t, int delta) const { this->offset(t, delta, this->m_impl.pBuf); }
 
@@ -245,13 +216,7 @@ template<int quality, int range> class BlipSynth {
   BlipSynth<quality, range>(const BlipSynth<quality, range> &) = delete;
   BlipSynth<quality, range>(BlipSynth<quality, range> &&) = delete;
   BlipSynth<quality, range> &operator=(const BlipSynth<quality, range> &) = delete;
-#if BLIP_BUFFER_FAST
   BlipSynthFastImpl m_impl;
-#else
-  BlipSynthImpl m_impl;
-  typedef int16_t imp_t;
-  std::array<imp_t, BLIP_RES *(quality / 2) + 1> m_impulses;
-#endif
 };
 
 // Low-pass equalization parameters
@@ -291,11 +256,11 @@ class SilentBlipBuffer : public BlipBuffer {
 
 // Begin reading from buffer. Name should be unique to the current block.
 #define BLIP_READER_BEGIN(name, blip_buffer) \
-  const BlipBuffer::buf_t_ *name##ReaderBuf = (blip_buffer).m_buffer; \
-  blip_long_t name##ReaderAccum = (blip_buffer).m_readerAccum
+  const BlipBuffer::buf_t_ *name##ReaderBuf = (blip_buffer).mBuffer; \
+  blip_long_t name##ReaderAccum = (blip_buffer).mReaderAccum
 
 // Get value to pass to BLIP_READER_NEXT()
-#define BLIP_READER_BASS(blip_buffer) ((blip_buffer).m_bassShift)
+#define BLIP_READER_BASS(blip_buffer) ((blip_buffer).mBassShift)
 
 // Constant value to use instead of BLIP_READER_BASS(), for slightly more
 // optimal code at the cost of having no bass control
@@ -312,7 +277,7 @@ const int BLIP_READER_DEFAULT_BASS = 9;
 
 // End reading samples from buffer. The number of samples read must now be
 // removed using BlipBuffer::RemoveSamples().
-#define BLIP_READER_END(name, blip_buffer) (void) ((blip_buffer).m_readerAccum = name##ReaderAccum)
+#define BLIP_READER_END(name, blip_buffer) (void) ((blip_buffer).mReaderAccum = name##ReaderAccum)
 
 // Compatibility with older version
 // const long BLIP_UNSCALED = 65535;
@@ -331,16 +296,16 @@ const int BLIP_READER_DEFAULT_BASS = 9;
 class BlipReader {
   public:
     int begin(BlipBuffer &buf) {
-        this->m_buf = buf.m_buffer;
-        this->m_accum = buf.m_readerAccum;
-        return buf.m_bassShift;
+        this->m_buf = buf.mBuffer;
+        this->m_accum = buf.mReaderAccum;
+        return buf.mBassShift;
     }
     blip_long_t read() const { return this->m_accum >> (BLIP_SAMPLE_BITS - 16); }
     blip_long_t read_raw() const { return this->m_accum; }
     void next(int bass_shift = 9) {
         this->m_accum += *this->m_buf++ - (this->m_accum >> bass_shift);
     }
-    void end(BlipBuffer &b) { b.m_readerAccum = this->m_accum; }
+    void end(BlipBuffer &b) { b.mReaderAccum = this->m_accum; }
 
   private:
     const BlipBuffer::buf_t_ *m_buf;
@@ -356,12 +321,11 @@ template<int quality, int range>
 void BlipSynth<quality, range>::offsetResampled(blip_resampled_time_t time, int delta, BlipBuffer *blip_buf) const {
   // Fails if time is beyond end of BlipBuffer, due to a bug in caller code
   // or the need for a longer buffer as set by SetSampleRate().
-  assert((blip_long_t)(time >> BLIP_BUFFER_ACCURACY) < blip_buf->m_bufferSize);
+  assert((blip_long_t)(time >> BLIP_BUFFER_ACCURACY) < blip_buf->mBufferSize);
   delta *= this->m_impl.deltaFactor;
-  blip_long_t *buf = blip_buf->m_buffer + (time >> BLIP_BUFFER_ACCURACY);
+  blip_long_t *buf = blip_buf->mBuffer + (time >> BLIP_BUFFER_ACCURACY);
   int phase = (int) (time >> (BLIP_BUFFER_ACCURACY - BLIP_PHASE_BITS) & (BLIP_RES - 1));
 
-#if BLIP_BUFFER_FAST
   blip_long_t left = buf[0] + delta;
 
   // Kind of crappy, but doing shift after multiply results in overflow.
@@ -373,101 +337,7 @@ void BlipSynth<quality, range>::offsetResampled(blip_resampled_time_t time, int 
 
   buf[0] = left;
   buf[1] = right;
-#else
-
-  static constexpr int FWD = (BLIP_WIDEST_IMPULSE - quality) / 2;
-  static constexpr int REV = FWD + quality - 2;
-  static constexpr int MID = quality / 2 - 1;
-
-  const imp_t *imp = this->m_impulses.data() + BLIP_RES - phase;
-
-#if defined(_M_IX86) || defined(_M_IA64) || defined(__i486__) || defined(__x86_64__) || defined(__ia64__) || \
-    defined(__i386__)
-
-  // straight forward implementation resulted in better code on GCC for x86
-
-#define ADD_IMP(out, in) buf[out] += (blip_long_t) imp[BLIP_RES * (in)] * delta
-
-#define BLIP_FWD(i) \
-  { \
-    ADD_IMP(FWD + i, i); \
-    ADD_IMP(FWD + 1 + i, i + 1); \
-  }
-#define BLIP_REV(r) \
-  { \
-    ADD_IMP(REV - r, r + 1); \
-    ADD_IMP(REV + 1 - r, r); \
-  }
-
-  BLIP_FWD(0)
-  if (quality > 8)
-    BLIP_FWD(2)
-  if (quality > 12)
-    BLIP_FWD(4) {
-      ADD_IMP(FWD + MID - 1, MID - 1);
-      ADD_IMP(FWD + MID, MID);
-      imp = this->m_impulses.data() + phase;
-    }
-  if (quality > 12)
-    BLIP_REV(6)
-  if (quality > 8)
-    BLIP_REV(4)
-  BLIP_REV(2)
-
-  ADD_IMP(REV, 1);
-  ADD_IMP(REV + 1, 0);
-
-#else
-
-  // for RISC processors, help compiler by reading ahead of writes
-
-#define BLIP_FWD(i) \
-  { \
-    blip_long_t t0 = i0 * delta + pBuf[FWD + i]; \
-    blip_long_t t1 = imp[BLIP_RES * (i + 1)] * delta + pBuf[FWD + 1 + i]; \
-    i0 = imp[BLIP_RES * (i + 2)]; \
-    pBuf[FWD + i] = t0; \
-    pBuf[FWD + 1 + i] = t1; \
-  }
-#define BLIP_REV(r) \
-  { \
-    blip_long_t t0 = i0 * delta + pBuf[REV - r]; \
-    blip_long_t t1 = imp[BLIP_RES * r] * delta + pBuf[REV + 1 - r]; \
-    i0 = imp[BLIP_RES * (r - 1)]; \
-    pBuf[REV - r] = t0; \
-    pBuf[REV + 1 - r] = t1; \
-  }
-
-  blip_long_t i0 = *imp;
-  BLIP_FWD(0)
-  if (quality > 8)
-    BLIP_FWD(2)
-  if (quality > 12)
-    BLIP_FWD(4) {
-      blip_long_t t0 = i0 * delta + pBuf[FWD + MID - 1];
-      blip_long_t t1 = imp[BLIP_RES * MID] * delta + pBuf[FWD + MID];
-      imp = this->m_impulses.data() + phase;
-      i0 = imp[BLIP_RES * MID];
-      pBuf[FWD + MID - 1] = t0;
-      pBuf[FWD + MID] = t1;
-    }
-  if (quality > 12)
-    BLIP_REV(6)
-  if (quality > 8)
-    BLIP_REV(4)
-  BLIP_REV(2)
-
-  blip_long_t t0 = i0 * delta + pBuf[REV];
-  blip_long_t t1 = *imp * delta + pBuf[REV + 1];
-  pBuf[REV] = t0;
-  pBuf[REV + 1] = t1;
-#endif
-
-#endif
 }
-
-#undef BLIP_FWD
-#undef BLIP_REV
 
 static const int BLIP_MAX_LENGTH = 0;
 static const int BLIP_DEFAULT_LENGTH = 250;

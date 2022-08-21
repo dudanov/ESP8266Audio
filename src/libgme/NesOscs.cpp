@@ -107,7 +107,7 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
   const int volume = this->volume();
   if (volume == 0 || period < 8 || (period + offset) >= 0x800) {
     if (mLastAmp) {
-      this->mSynth.offset(time, -mLastAmp, mOutput);
+      mSynth.offset(time, -mLastAmp, mOutput);
       mLastAmp = 0;
     }
 
@@ -128,13 +128,13 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
     {
       int delta = mUpdateAmp(amp);
       if (delta)
-        this->mSynth.offset(time, delta, mOutput);
+        mSynth.offset(time, delta, mOutput);
     }
 
     time += mDelay;
     if (time < end_time) {
       BlipBuffer *const output = mOutput;
-      const Synth &synth = this->mSynth;
+      const Synth &synth = mSynth;
       int delta = amp * 2 - volume;
       int phase = this->phase;
 
@@ -203,7 +203,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
 
   int delta = mUpdateAmp(this->calc_amp());
   if (delta)
-    this->mSynth.offset(time, delta, mOutput);
+    mSynth.offset(time, delta, mOutput);
 
   time += mDelay;
   if (mLengthCounter == 0 || this->linear_counter == 0 || timer_period < 3) {
@@ -223,7 +223,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
         phase = PHASE_RANGE;
         volume = -volume;
       } else {
-        this->mSynth.offset(time, volume, output);
+        mSynth.offset(time, volume, output);
       }
 
       time += timer_period;
@@ -241,7 +241,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
 
 void NesDmc::mReset() {
   this->address = 0;
-  this->mDac = 0;
+  mDac = 0;
   this->buf = 0;
   this->bits_remain = 1;
   this->bits = 0;
@@ -249,7 +249,7 @@ void NesDmc::mReset() {
   this->silence = true;
   mNextIRQ = NesApu::NO_IRQ;
   mIRQFlag = false;
-  this->mIsIRQEnabled = false;
+  mIsIRQEnabled = false;
 
   NesOsc::mReset();
   this->period = 0x1AC;
@@ -257,7 +257,7 @@ void NesDmc::mReset() {
 
 void NesDmc::mRecalcIRQ() {
   nes_time_t irq = NesApu::NO_IRQ;
-  if (this->mIsIRQEnabled && mLengthCounter)
+  if (mIsIRQEnabled && mLengthCounter)
     irq =
         mApu->mLastDmcTime + mDelay + ((mLengthCounter - 1) * 8 + this->bits_remain - 1) * nes_time_t(this->period) + 1;
   if (irq != mNextIRQ) {
@@ -279,7 +279,7 @@ int NesDmc::mGetCountReads(nes_time_t time, nes_time_t *last_read) const {
   if (mLengthCounter == 0)
     return 0;  // not reading
 
-  nes_time_t first_read = this->mGetNextReadTime();
+  nes_time_t first_read = mGetNextReadTime();
   nes_time_t avail = time - first_read;
   if (avail <= 0)
     return 0;
@@ -291,8 +291,8 @@ int NesDmc::mGetCountReads(nes_time_t time, nes_time_t *last_read) const {
   if (last_read) {
     *last_read = first_read + (count - 1) * (this->period * 8) + 1;
     check(*last_read <= time);
-    check(count == this->mGetCountReads(*last_read, nullptr));
-    check(count - 1 == this->mGetCountReads(*last_read - 1, nullptr));
+    check(count == mGetCountReads(*last_read, nullptr));
+    check(count - 1 == mGetCountReads(*last_read - 1, nullptr));
   }
 
   return count;
@@ -313,9 +313,9 @@ inline uint16_t NesDmc::mGetPeriod(uint8_t data) const {
 
 inline void NesDmc::mWriteR0(int data) {
   this->period = mGetPeriod(data);
-  this->mIsIRQEnabled = (data & 0xC0) == 0x80;  // enabled only if loop disabled
-  mIRQFlag &= this->mIsIRQEnabled;
-  this->mRecalcIRQ();
+  mIsIRQEnabled = (data & 0xC0) == 0x80;  // enabled only if loop disabled
+  mIRQFlag &= mIsIRQEnabled;
+  mRecalcIRQ();
 }
 
 inline int NesDmc::mGetDelta(uint8_t old) {
@@ -326,15 +326,15 @@ inline int NesDmc::mGetDelta(uint8_t old) {
       58, 59, 59, 60, 60, 61, 61, 62, 63, 63, 64, 64, 65, 65, 66, 66, 67, 67, 68, 68, 69, 70, 70, 71, 71, 72,
       72, 73, 73, 74, 74, 75, 75, 75, 76, 76, 77, 77, 78, 78, 79, 79, 80, 80, 81, 81, 82, 82, 82, 83,
   };
-  return pgm_read_byte(&DAC_TABLE[this->mDac]) - pgm_read_byte(&DAC_TABLE[old]);
+  return pgm_read_byte(&DAC_TABLE[mDac]) - pgm_read_byte(&DAC_TABLE[old]);
 }
 
 inline void NesDmc::mWriteR1(int data) {
   data &= 0x7F;
-  uint8_t old = this->mDac;
-  this->mDac = data;
+  uint8_t old = mDac;
+  mDac = data;
   // adjust mLastAmp so that "pop" amplitude will be properly non-linear with respect to change in dac
-  if (!this->mNonlinear)
+  if (!mNonlinear)
     mLastAmp = data - mGetDelta(old);
 }
 
@@ -346,23 +346,23 @@ void NesDmc::mWriteRegister(int addr, int data) {
 }
 
 void NesDmc::mStart() {
-  this->mReloadSample();
-  this->mFillBuffer();
-  this->mRecalcIRQ();
+  mReloadSample();
+  mFillBuffer();
+  mRecalcIRQ();
 }
 
 void NesDmc::mFillBuffer() {
   if (!this->buf_full && mLengthCounter) {
-    assert(this->mPrgReader != nullptr);  // mPrgReader must be set
-    this->buf = this->mPrgReader(this->mPrgReaderData, 0x8000u + this->address);
+    assert(mPrgReader != nullptr);  // mPrgReader must be set
+    this->buf = mPrgReader(mPrgReaderData, 0x8000u + this->address);
     this->address = (this->address + 1) & 0x7FFF;
     this->buf_full = true;
     if (--mLengthCounter == 0) {
       if (mRegs[0] & LOOP_FLAG) {
-        this->mReloadSample();
+        mReloadSample();
       } else {
         mApu->mOscEnables &= ~0x10;
-        mIRQFlag = this->mIsIRQEnabled;
+        mIRQFlag = mIsIRQEnabled;
         mNextIRQ = NesApu::NO_IRQ;
         mApu->mIRQChanged();
       }
@@ -371,13 +371,13 @@ void NesDmc::mFillBuffer() {
 }
 
 void NesDmc::mRun(nes_time_t time, nes_time_t end_time) {
-  int delta = mUpdateAmp(this->mDac);
+  int delta = mUpdateAmp(mDac);
   if (mOutput == nullptr) {
     this->silence = true;
   } else {
     mOutput->setModified();
     if (delta)
-      this->mSynth.offset(time, delta, mOutput);
+      mSynth.offset(time, delta, mOutput);
   }
 
   time += mDelay;
@@ -391,9 +391,9 @@ void NesDmc::mRun(nes_time_t time, nes_time_t end_time) {
         if (!this->silence) {
           int step = (this->bits & 1) * 4 - 2;
           this->bits >>= 1;
-          if (unsigned(this->mDac + step) <= 0x7F) {
-            this->mDac += step;
-            this->mSynth.offset(time, step, mOutput);
+          if (unsigned(mDac + step) <= 0x7F) {
+            mDac += step;
+            mSynth.offset(time, step, mOutput);
           }
         }
 
@@ -407,12 +407,12 @@ void NesDmc::mRun(nes_time_t time, nes_time_t end_time) {
             this->bits = this->buf;
             this->buf_full = false;
             this->silence = mOutput == nullptr;
-            this->mFillBuffer();
+            mFillBuffer();
           }
         }
       } while (time < end_time);
 
-      mLastAmp = this->mDac;
+      mLastAmp = mDac;
     }
   }
   mDelay = time - end_time;
@@ -444,7 +444,7 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
   {
     int delta = mUpdateAmp(amp);
     if (delta)
-      this->mSynth.offset(time, delta, mOutput);
+      mSynth.offset(time, delta, mOutput);
   }
 
   time += mDelay;
@@ -476,7 +476,7 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
         if ((this->noise + 1) & 2) {
           // bits 0 and 1 of noise differ
           delta = -delta;
-          this->mSynth.offsetResampled(rtime, delta, mOutput);
+          mSynth.offsetResampled(rtime, delta, mOutput);
         }
 
         rtime += rperiod;

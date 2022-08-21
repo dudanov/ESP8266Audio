@@ -75,9 +75,9 @@ struct NesSquare : NesEnvelope {
   int sweep_delay;
 
   typedef BlipSynth<BLIP_GOOD_QUALITY, 1> Synth;
-  Synth const &mSynth;  // shared between squares
+  const Synth &mSynth;  // shared between squares
 
-  NesSquare(const Synth *s) : NesEnvelope(nullptr), mSynth(*s) {}
+  NesSquare(const Synth &s) : NesEnvelope(nullptr), mSynth(s) {}
 
   void doSweepClock(int adjust);
   void run(nes_time_t, nes_time_t);
