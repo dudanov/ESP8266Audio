@@ -26,7 +26,7 @@ static const unsigned OSC_REGS = 4;
 NesApu::NesApu() : mTriangle(this), mNoise(this), mDmc(this) {
   mTempo = 1.0;
   mDmc.prg_reader = nullptr;
-  m_irqNotifier = nullptr;
+  mIRQNotifier = nullptr;
 
   SetOutput(NULL);
   SetVolume(1.0);
@@ -71,13 +71,13 @@ void NesApu::SetOutput(BlipBuffer *buffer) {
 
 void NesApu::SetTempo(double t) {
   mTempo = t;
-  m_framePeriod = (m_palMode ? 8314 : 7458);
+  mFramePeriod = (mPalMode ? 8314 : 7458);
   if (t != 1.0)
-    m_framePeriod = (int) (m_framePeriod / t) & ~1;  // must be even
+    mFramePeriod = (int) (mFramePeriod / t) & ~1;  // must be even
 }
 
 void NesApu::Reset(bool pal_mode, int initial_dmc_dac) {
-  m_palMode = pal_mode;
+  mPalMode = pal_mode;
   SetTempo(mTempo);
 
   mSquare1.mReset();
@@ -87,11 +87,11 @@ void NesApu::Reset(bool pal_mode, int initial_dmc_dac) {
   mDmc.mReset();
 
   mLastTime = 0;
-  m_lastDmcTime = 0;
+  mLastDmcTime = 0;
   mOscEnables = 0;
   mIRQFlag = false;
-  m_earliestIrq = NO_IRQ;
-  m_frameDelay = 1;
+  mEarliestIRQ = NO_IRQ;
+  mFrameDelay = 1;
   WriteRegister(0, 0x4017, 0x00);
   WriteRegister(0, 0x4015, 0x00);
 
@@ -113,20 +113,20 @@ void NesApu::mIRQChanged() {
     new_irq = mNextIRQ;
   }
 
-  if (new_irq != m_earliestIrq) {
-    m_earliestIrq = new_irq;
-    if (m_irqNotifier)
-      m_irqNotifier(m_irqData);
+  if (new_irq != mEarliestIRQ) {
+    mEarliestIRQ = new_irq;
+    if (mIRQNotifier)
+      mIRQNotifier(mIRQData);
   }
 }
 
 // frames
 
 void NesApu::RunUntil(nes_time_t end_time) {
-  require(end_time >= m_lastDmcTime);
+  require(end_time >= mLastDmcTime);
   if (end_time > NextDmcReadTime()) {
-    nes_time_t start = m_lastDmcTime;
-    m_lastDmcTime = end_time;
+    nes_time_t start = mLastDmcTime;
+    mLastDmcTime = end_time;
     mDmc.run(start, end_time);
   }
 }
@@ -137,18 +137,18 @@ void NesApu::mRunUntil(nes_time_t end_time) {
   if (end_time == mLastTime)
     return;
 
-  if (m_lastDmcTime < end_time) {
-    nes_time_t start = m_lastDmcTime;
-    m_lastDmcTime = end_time;
+  if (mLastDmcTime < end_time) {
+    nes_time_t start = mLastDmcTime;
+    mLastDmcTime = end_time;
     mDmc.run(start, end_time);
   }
 
   while (true) {
     // earlier of next frame time or end time
-    nes_time_t time = mLastTime + m_frameDelay;
+    nes_time_t time = mLastTime + mFrameDelay;
     if (time > end_time)
       time = end_time;
-    m_frameDelay -= time - mLastTime;
+    mFrameDelay -= time - mLastTime;
 
     // run oscs to present
     mSquare1.run(mLastTime, time);
@@ -161,11 +161,11 @@ void NesApu::mRunUntil(nes_time_t end_time) {
       break;  // no more frames to run
 
     // take frame-specific actions
-    m_frameDelay = m_framePeriod;
-    switch (m_frame++) {
+    mFrameDelay = mFramePeriod;
+    switch (mFrame++) {
       case 0:
-        if (!(m_frameMode & 0xC0)) {
-          mNextIRQ = time + m_framePeriod * 4 + 2;
+        if (!(mFrameMode & 0xC0)) {
+          mNextIRQ = time + mFramePeriod * 4 + 2;
           mIRQFlag = true;
         }
         // fall through
@@ -180,22 +180,22 @@ void NesApu::mRunUntil(nes_time_t end_time) {
         mSquare2.doSweepClock(0);
 
         // frame 2 is slightly shorter in mode 1
-        if (m_palMode && m_frame == 3)
-          m_frameDelay -= 2;
+        if (mPalMode && mFrame == 3)
+          mFrameDelay -= 2;
         break;
 
       case 1:
         // frame 1 is slightly shorter in mode 0
-        if (!m_palMode)
-          m_frameDelay -= 2;
+        if (!mPalMode)
+          mFrameDelay -= 2;
         break;
 
       case 3:
-        m_frame = 0;
+        mFrame = 0;
 
         // frame 3 is almost twice as long in mode 1
-        if (m_frameMode & 0x80)
-          m_frameDelay += m_framePeriod - (m_palMode ? 2 : 6);
+        if (mFrameMode & 0x80)
+          mFrameDelay += mFramePeriod - (mPalMode ? 2 : 6);
         break;
     }
 
@@ -231,8 +231,8 @@ void NesApu::EndFrame(nes_time_t end_time) {
   mLastTime -= end_time;
   require(mLastTime >= 0);
 
-  m_lastDmcTime -= end_time;
-  require(m_lastDmcTime >= 0);
+  mLastDmcTime -= end_time;
+  require(mLastDmcTime >= 0);
 
   if (mNextIRQ != NO_IRQ) {
     mNextIRQ -= end_time;
@@ -242,18 +242,16 @@ void NesApu::EndFrame(nes_time_t end_time) {
     mDmc.mNextIRQ -= end_time;
     check(mDmc.mNextIRQ >= 0);
   }
-  if (m_earliestIrq != NO_IRQ) {
-    m_earliestIrq -= end_time;
-    if (m_earliestIrq < 0)
-      m_earliestIrq = 0;
+  if (mEarliestIRQ != NO_IRQ) {
+    mEarliestIRQ -= end_time;
+    if (mEarliestIRQ < 0)
+      mEarliestIRQ = 0;
   }
 }
 
 // registers
 
 void NesApu::WriteRegister(nes_time_t time, nes_addr_t addr, uint8_t data) {
-  require(addr > 0x20);  // addr must be actual address (i.e. 0x40xx)
-
   // Ignore addresses outside range
   addr -= START_ADDR;
   if (addr > END_ADDR - START_ADDR)
@@ -320,22 +318,22 @@ void NesApu::mWriteR4015(uint8_t data) {
 
 void NesApu::mWriteR4017(nes_time_t time, uint8_t data) {
   // Frame mode
-  m_frameMode = data;
+  mFrameMode = data;
 
   bool irq_enabled = !(data & 0x40);
   mIRQFlag &= irq_enabled;
   mNextIRQ = NO_IRQ;
 
   // mode 1
-  m_frameDelay = (m_frameDelay & 1);
-  m_frame = 0;
+  mFrameDelay = (mFrameDelay & 1);
+  mFrame = 0;
 
   if (!(data & 0x80)) {
     // mode 0
-    m_frame = 1;
-    m_frameDelay += m_framePeriod;
+    mFrame = 1;
+    mFrameDelay += mFramePeriod;
     if (irq_enabled)
-      mNextIRQ = time + m_frameDelay + m_framePeriod * 3 + 1;
+      mNextIRQ = time + mFrameDelay + mFramePeriod * 3 + 1;
   }
   mIRQChanged();
 }
@@ -360,7 +358,7 @@ uint8_t NesApu::ReadStatus(nes_time_t time) {
     mIRQChanged();
   }
 
-  // debug_printf( "%6d/%d Read $4015->$%02X\n", m_frameDelay, m_frame, result );
+  // debug_printf( "%6d/%d Read $4015->$%02X\n", mFrameDelay, mFrame, result );
 
   return result;
 }

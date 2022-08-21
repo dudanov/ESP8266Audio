@@ -156,7 +156,11 @@ struct NesDmc : NesOsc {
   void reload_sample();
   void mReset();
   int count_reads(nes_time_t, nes_time_t *) const;
-  nes_time_t next_read_time() const;
+  nes_time_t next_read_time() const {
+    if (mLengthCounter == 0)
+      return NesApu::NO_IRQ;  // not reading
+    return mApu->mLastDmcTime + mDelay + long(bits_remain - 1) * period;
+  }
 
  private:
   static int sGetDelta(uint8_t dacNew, uint8_t dacOld);

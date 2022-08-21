@@ -15,8 +15,8 @@ namespace gme {
 namespace emu {
 namespace nes {
 
-using IrqNotifyFn = std::function<void(void *)>;
-struct apu_state_t;
+using IRQNotifyFn = std::function<void(void *)>;
+//struct apu_state_t;
 
 class NesApu {
  public:
@@ -74,7 +74,7 @@ class NesApu {
   void SetTrebleEq(const BlipEq &);
 
   // In PAL mode
-  bool IsPAL() const { return this->m_palMode; }
+  bool IsPAL() const { return this->mPalMode; }
 
   // Set sound output of specific oscillator to buffer. If buffer is NULL,
   // the specified oscillator is muted and emulation accuracy is reduced.
@@ -89,16 +89,16 @@ class NesApu {
   // Set IRQ time callback that is invoked when the time of earliest IRQ
   // may have changed, or NULL to disable. When callback is invoked,
   // 'user_data' is passed unchanged as the first parameter.
-  void SetIrqNotifier(IrqNotifyFn fn, void *data) {
-    m_irqNotifier = fn;
-    m_irqData = data;
+  void SetIrqNotifier(IRQNotifyFn fn, void *data) {
+    mIRQNotifier = fn;
+    mIRQData = data;
   }
   // Get time that APU-generated IRQ will occur if no further register reads
   // or writes occur. If IRQ is already pending, returns IRQ_WAITING. If no
   // IRQ will occur, returns NO_IRQ.
   enum { NO_IRQ = INT_MAX / 2 + 1 };
   enum { IRQ_WAITING = 0 };
-  nes_time_t EarliestIrq(nes_time_t) const { return m_earliestIrq; }
+  nes_time_t EarliestIrq(nes_time_t) const { return mEarliestIRQ; }
 
   // Count number of DMC reads that would occur if 'RunUntil( t )' were
   // executed. If last_read is not NULL, set *last_read to the earliest time
@@ -137,26 +137,19 @@ class NesApu {
 
   double mTempo;
   nes_time_t mLastTime;  // has been run until this time in current frame
-  nes_time_t m_lastDmcTime;
-  nes_time_t m_earliestIrq;
+  nes_time_t mLastDmcTime;
+  nes_time_t mEarliestIRQ;
   nes_time_t mNextIRQ;
-  int m_framePeriod;
-  int m_frameDelay;  // cycles until frame counter runs next
-  int m_frame;       // current frame (0-3)
+  int mFramePeriod;
+  int mFrameDelay;  // cycles until frame counter runs next
+  int mFrame;       // current frame (0-3)
   int mOscEnables;
-  int m_frameMode;
-  IrqNotifyFn m_irqNotifier;
-  void *m_irqData;
+  int mFrameMode;
+  IRQNotifyFn mIRQNotifier;
+  void *mIRQData;
   bool mIRQFlag;
-  bool m_palMode;
+  bool mPalMode;
 };
-
-inline nes_time_t NesDmc::next_read_time() const {
-  if (mLengthCounter == 0)
-    return NesApu::NO_IRQ;  // not reading
-
-  return mApu->m_lastDmcTime + mDelay + long(bits_remain - 1) * period;
-}
 
 }  // namespace nes
 }  // namespace emu

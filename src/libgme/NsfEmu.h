@@ -76,7 +76,7 @@ class NsfEmu : private NesCpu, public ClassicEmu {
   nes_addr_t m_initAddress;
   nes_addr_t m_playAddress;
   float m_clockRate;
-  bool m_palMode;
+  bool mPalMode;
 
   // timing
   NesCpu::registers_t m_savedState;

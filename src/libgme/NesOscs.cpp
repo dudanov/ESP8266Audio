@@ -258,7 +258,7 @@ void NesDmc::mReset() {
 void NesDmc::recalc_irq() {
   nes_time_t irq = NesApu::NO_IRQ;
   if (this->irq_enabled && mLengthCounter)
-    irq = mApu->m_lastDmcTime + mDelay +
+    irq = mApu->mLastDmcTime + mDelay +
           ((mLengthCounter - 1) * 8 + this->bits_remain - 1) * nes_time_t(this->period) + 1;
   if (irq != mNextIRQ) {
     mNextIRQ = irq;

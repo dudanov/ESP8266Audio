@@ -70,9 +70,9 @@ void GbApu::m_updateVolume() {
 }
 
 void GbApu::SetTempo(double t) {
-  this->m_framePeriod = 4194304 / 256;  // 256 Hz
+  this->mFramePeriod = 4194304 / 256;  // 256 Hz
   if (t != 1.0)
-    this->m_framePeriod = blip_time_t(this->m_framePeriod / t);
+    this->mFramePeriod = blip_time_t(this->mFramePeriod / t);
 }
 
 void GbApu::reset() {
@@ -117,7 +117,7 @@ void GbApu::m_runUntil(blip_time_t end_time) {
     if (time == end_time)
       break;
 
-    this->m_nextFrameTime += this->m_framePeriod;
+    this->m_nextFrameTime += this->mFramePeriod;
 
     // 256 Hz
     this->m_square1.doLengthClock();

@@ -124,7 +124,7 @@ void NsfEmu::mSetTempo(double t) {
   this->m_clockRate = 1789772.72727f;
   this->m_playPeriod = 262 * 341L * 4 - 2;  // two fewer PPU clocks every four frames
 
-  if (this->m_palMode) {
+  if (this->mPalMode) {
     this->m_playPeriod = 33247 * CLK_DIV;
     this->m_clockRate = 1662607.125;
     standard_rate = 0x4E20;
@@ -273,7 +273,7 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
     }
   }
 
-  this->m_palMode = (this->m_header.speed_flags & 3) == 1;
+  this->mPalMode = (this->m_header.speed_flags & 3) == 1;
 
 #if !NSF_EMU_EXTRA_FLAGS
   this->m_header.speed_flags = 0;
@@ -406,7 +406,7 @@ blargg_err_t NsfEmu::mStartTrack(int track) {
   for (size_t i = 0; i < BANKS_NUM; ++i)
     this->mCpuWrite(BANK_SELECT_ADDR + i, this->m_initBanks[i]);
 
-  this->mApu.Reset(this->m_palMode, (this->m_header.speed_flags & 0x20) ? 0x3F : 0);
+  this->mApu.Reset(this->mPalMode, (this->m_header.speed_flags & 0x20) ? 0x3F : 0);
   this->mApu.WriteRegister(0, 0x4015, 0x0F);
   this->mApu.WriteRegister(0, 0x4017, (this->m_header.speed_flags & 0x10) ? 0x80 : 0);
 #if !NSF_EMU_APU_ONLY
@@ -430,7 +430,7 @@ blargg_err_t NsfEmu::mStartTrack(int track) {
   this->m_regs.sp = 0xFD;
   this->m_regs.pc = this->m_initAddress;
   this->m_regs.a = track;
-  this->m_regs.x = this->m_palMode;
+  this->m_regs.x = this->mPalMode;
 
   return 0;
 }

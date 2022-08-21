@@ -88,7 +88,7 @@ class GbApu {
   std::array<GbOsc *, OSC_NUM> m_oscs;
   blip_time_t m_nextFrameTime;
   blip_time_t m_lastTime;
-  blip_time_t m_framePeriod;
+  blip_time_t mFramePeriod;
   double m_volumeUnit;
   int m_frameCounter;
 
