@@ -25,7 +25,7 @@ static const unsigned OSC_REGS = 4;
 
 NesApu::NesApu() : mTriangle(this), mNoise(this), mDmc(this) {
   mTempo = 1.0;
-  mDmc.prg_reader = nullptr;
+  mDmc.mPrgReader = nullptr;
   mIRQNotifier = nullptr;
 
   SetOutput(NULL);
@@ -37,17 +37,17 @@ void NesApu::SetTrebleEq(const BlipEq &eq) {
   mSquareSynth.setTrebleEq(eq);
   mTriangle.synth.setTrebleEq(eq);
   mNoise.synth.setTrebleEq(eq);
-  mDmc.synth.setTrebleEq(eq);
+  mDmc.mSynth.setTrebleEq(eq);
 }
 
 void NesApu::mEnableNonlinear(double v) {
-  mDmc.nonlinear = true;
+  mDmc.mNonlinear = true;
   mSquareSynth.setVolume(1.3 * 0.25751258 / 0.742467605 * 0.25 / AMP_RANGE * v);
 
   const double tnd = 0.48 / 202 * mNonlinearTndGain();
   mTriangle.synth.setVolume(3.0 * tnd);
   mNoise.synth.setVolume(2.0 * tnd);
-  mDmc.synth.setVolume(tnd);
+  mDmc.mSynth.setVolume(tnd);
 
   mSquare1.mLastAmp = 0;
   mSquare2.mLastAmp = 0;
@@ -57,11 +57,11 @@ void NesApu::mEnableNonlinear(double v) {
 }
 
 void NesApu::SetVolume(double v) {
-  mDmc.nonlinear = false;
+  mDmc.mNonlinear = false;
   mSquareSynth.setVolume(0.1128 / AMP_RANGE * v);
   mTriangle.synth.setVolume(0.12765 / AMP_RANGE * v);
   mNoise.synth.setVolume(0.0741 / AMP_RANGE * v);
-  mDmc.synth.setVolume(0.42545 / 127 * v);
+  mDmc.mSynth.setVolume(0.42545 / 127 * v);
 }
 
 void NesApu::SetOutput(BlipBuffer *buffer) {
@@ -98,10 +98,10 @@ void NesApu::Reset(bool pal_mode, int initial_dmc_dac) {
   for (nes_addr_t addr = START_ADDR; addr <= 0x4013; addr++)
     WriteRegister(0, addr, (addr & 3) ? 0x00 : 0x10);
 
-  mDmc.dac = initial_dmc_dac;
-  if (!mDmc.nonlinear)
+  mDmc.mDac = initial_dmc_dac;
+  if (!mDmc.mNonlinear)
     mTriangle.mLastAmp = 15;
-  if (!mDmc.nonlinear)                // TODO: remove?
+  if (!mDmc.mNonlinear)                // TODO: remove?
     mDmc.mLastAmp = initial_dmc_dac;  // prevent output transition
 }
 
@@ -127,7 +127,7 @@ void NesApu::RunUntil(nes_time_t end_time) {
   if (end_time > NextDmcReadTime()) {
     nes_time_t start = mLastDmcTime;
     mLastDmcTime = end_time;
-    mDmc.run(start, end_time);
+    mDmc.mRun(start, end_time);
   }
 }
 
@@ -140,7 +140,7 @@ void NesApu::mRunUntil(nes_time_t end_time) {
   if (mLastDmcTime < end_time) {
     nes_time_t start = mLastDmcTime;
     mLastDmcTime = end_time;
-    mDmc.run(start, end_time);
+    mDmc.mRun(start, end_time);
   }
 
   while (true) {
@@ -219,7 +219,7 @@ void NesApu::EndFrame(nes_time_t end_time) {
   if (end_time > mLastTime)
     mRunUntil(end_time);
 
-  if (mDmc.nonlinear) {
+  if (mDmc.mNonlinear) {
     zero_apu_osc(&mSquare1, mLastTime);
     zero_apu_osc(&mSquare2, mLastTime);
     zero_apu_osc(&mTriangle, mLastTime);
@@ -277,7 +277,7 @@ void NesApu::mWriteChannelReg(nes_addr_t addr, uint8_t data) {
 
   // DMC channel?
   if (channel == 4)
-    return mDmc.writeRegister(reg, data);
+    return mDmc.mWriteRegister(reg, data);
 
   if (reg == 3) {
     // load length counter
@@ -309,7 +309,7 @@ void NesApu::mWriteR4015(uint8_t data) {
     mDmc.mNextIRQ = NO_IRQ;
     recalc_irq = true;
   } else if (!(old_enables & 0x10)) {
-    mDmc.start();  // dmc just enabled
+    mDmc.mStart();  // dmc just enabled
   }
 
   if (recalc_irq)

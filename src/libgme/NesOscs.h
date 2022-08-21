@@ -136,31 +136,27 @@ struct NesDmc : NesOsc {
 
   enum { LOOP_FLAG = 0x40 };
 
-  uint8_t dac;
+  uint8_t mDac;
 
   nes_time_t mNextIRQ;
-  bool irq_enabled;
+  bool mIsIRQEnabled;
   bool mIRQFlag;
-  bool nonlinear;
+  bool mNonlinear;
 
-  DmcReaderFn prg_reader;  // needs to be initialized to prg read function
-  void *prg_reader_data;
+  DmcReaderFn mPrgReader;  // needs to be initialized to prg read function
+  void *mPrgReaderData;
 
-  BlipSynth<BLIP_MED_QUALITY, 1> synth;
+  BlipSynth<BLIP_MED_QUALITY, 1> mSynth;
 
-  void start();
-  void writeRegister(int, int);
-  void run(nes_time_t, nes_time_t);
-  void recalc_irq();
-  void fill_buffer();
-  void reload_sample();
+  void mStart();
+  void mWriteRegister(int, int);
+  void mRun(nes_time_t, nes_time_t);
+  void mRecalcIRQ();
+  void mFillBuffer();
+  void mReloadSample();
   void mReset();
-  int count_reads(nes_time_t, nes_time_t *) const;
-  nes_time_t next_read_time() const {
-    if (mLengthCounter == 0)
-      return NesApu::NO_IRQ;  // not reading
-    return mApu->mLastDmcTime + mDelay + long(bits_remain - 1) * period;
-  }
+  int mGetCountReads(nes_time_t, nes_time_t *) const;
+  nes_time_t mGetNextReadTime() const;
 
  private:
   static int sGetDelta(uint8_t dacNew, uint8_t dacOld);

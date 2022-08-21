@@ -30,8 +30,8 @@ class NesApu {
   // When callback is invoked, 'user_data' is passed unchanged as the
   // first parameter.
   void SetDmcReader(DmcReaderFn fn, void *data) {
-    mDmc.prg_reader_data = data;
-    mDmc.prg_reader = fn;
+    mDmc.mPrgReaderData = data;
+    mDmc.mPrgReader = fn;
   }
 
   // All time values are the number of CPU clock cycles relative to the
@@ -104,11 +104,11 @@ class NesApu {
   // executed. If last_read is not NULL, set *last_read to the earliest time
   // that 'CountDmcReads( time )' would result in the same result.
   int CountDmcReads(nes_time_t time, nes_time_t *last_read = nullptr) const {
-    return mDmc.count_reads(time, last_read);
+    return mDmc.mGetCountReads(time, last_read);
   }
 
   // Time when next DMC memory read will occur
-  nes_time_t NextDmcReadTime() const { return mDmc.next_read_time(); }
+  nes_time_t NextDmcReadTime() const { return mDmc.mGetNextReadTime(); }
 
   // Run DMC until specified time, so that any DMC memory reads can be
   // accounted for (i.e. inserting CPU wait states).
