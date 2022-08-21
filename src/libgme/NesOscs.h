@@ -17,6 +17,7 @@ using DmcReaderFn = std::function<int(void *, nes_addr_t)>;
 class NesApu;
 
 struct NesOsc {
+  BlipBuffer *mOutput;
   int mLengthCounter;  // length counter (0 if unused by oscillator)
   int mDelay;          // delay until next (potential) transition
   int mLastAmp;        // last amplitude oscillator was outputting
@@ -30,7 +31,6 @@ struct NesOsc {
   NesOsc() = delete;
   NesOsc(NesApu *apu) : mApu(apu) {}
   NesApu *mApu;
-  BlipBuffer *mOutput;
   int mGetPeriod() const { return mRegs[3] % 8 * 256 + mRegs[2]; }
   void mReset() {
     mDelay = 0;
