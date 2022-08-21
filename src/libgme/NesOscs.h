@@ -46,7 +46,7 @@ struct NesOsc {
         int last_amp = mLastAmp;
         mLastAmp = 0;
         if (mOutput != nullptr && last_amp)
-            this->synth.offset(time, -last_amp, mOutput);
+            this->mSynth.offset(time, -last_amp, mOutput);
     }
 #endif
 };
@@ -75,9 +75,9 @@ struct NesSquare : NesEnvelope {
   int sweep_delay;
 
   typedef BlipSynth<BLIP_GOOD_QUALITY, 1> Synth;
-  Synth const &synth;  // shared between squares
+  Synth const &mSynth;  // shared between squares
 
-  NesSquare(const Synth *s) : NesEnvelope(nullptr), synth(*s) {}
+  NesSquare(const Synth *s) : NesEnvelope(nullptr), mSynth(*s) {}
 
   void doSweepClock(int adjust);
   void run(nes_time_t, nes_time_t);
@@ -94,7 +94,7 @@ struct NesTriangle : NesOsc {
   enum { PHASE_RANGE = 16 };
   int phase;
   int linear_counter;
-  BlipSynth<BLIP_MED_QUALITY, 1> synth;
+  BlipSynth<BLIP_MED_QUALITY, 1> mSynth;
 
   int calc_amp() const;
   void run(nes_time_t, nes_time_t);
@@ -111,7 +111,7 @@ struct NesTriangle : NesOsc {
 struct NesNoise : NesEnvelope {
   NesNoise(NesApu *apu) : NesEnvelope(apu) {}
   int noise;
-  BlipSynth<BLIP_MED_QUALITY, 1> synth;
+  BlipSynth<BLIP_MED_QUALITY, 1> mSynth;
 
   void run(nes_time_t, nes_time_t);
   void mReset() {

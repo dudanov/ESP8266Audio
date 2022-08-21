@@ -35,8 +35,8 @@ NesApu::NesApu() : mTriangle(this), mNoise(this), mDmc(this) {
 
 void NesApu::SetTrebleEq(const BlipEq &eq) {
   mSquareSynth.setTrebleEq(eq);
-  mTriangle.synth.setTrebleEq(eq);
-  mNoise.synth.setTrebleEq(eq);
+  mTriangle.mSynth.setTrebleEq(eq);
+  mNoise.mSynth.setTrebleEq(eq);
   mDmc.mSynth.setTrebleEq(eq);
 }
 
@@ -45,8 +45,8 @@ void NesApu::mEnableNonlinear(double v) {
   mSquareSynth.setVolume(1.3 * 0.25751258 / 0.742467605 * 0.25 / AMP_RANGE * v);
 
   const double tnd = 0.48 / 202 * mNonlinearTndGain();
-  mTriangle.synth.setVolume(3.0 * tnd);
-  mNoise.synth.setVolume(2.0 * tnd);
+  mTriangle.mSynth.setVolume(3.0 * tnd);
+  mNoise.mSynth.setVolume(2.0 * tnd);
   mDmc.mSynth.setVolume(tnd);
 
   mSquare1.mLastAmp = 0;
@@ -59,8 +59,8 @@ void NesApu::mEnableNonlinear(double v) {
 void NesApu::SetVolume(double v) {
   mDmc.mNonlinear = false;
   mSquareSynth.setVolume(0.1128 / AMP_RANGE * v);
-  mTriangle.synth.setVolume(0.12765 / AMP_RANGE * v);
-  mNoise.synth.setVolume(0.0741 / AMP_RANGE * v);
+  mTriangle.mSynth.setVolume(0.12765 / AMP_RANGE * v);
+  mNoise.mSynth.setVolume(0.0741 / AMP_RANGE * v);
   mDmc.mSynth.setVolume(0.42545 / 127 * v);
 }
 
@@ -212,7 +212,7 @@ template<class T> inline void zero_apu_osc(T *osc, nes_time_t time) {
   int last_amp = osc->mLastAmp;
   osc->mLastAmp = 0;
   if (output && last_amp)
-    osc->synth.offset(time, -last_amp, output);
+    osc->mSynth.offset(time, -last_amp, output);
 }
 
 void NesApu::EndFrame(nes_time_t end_time) {

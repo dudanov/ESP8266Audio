@@ -107,7 +107,7 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
   const int volume = this->volume();
   if (volume == 0 || period < 8 || (period + offset) >= 0x800) {
     if (mLastAmp) {
-      this->synth.offset(time, -mLastAmp, mOutput);
+      this->mSynth.offset(time, -mLastAmp, mOutput);
       mLastAmp = 0;
     }
 
@@ -128,13 +128,13 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
     {
       int delta = mUpdateAmp(amp);
       if (delta)
-        this->synth.offset(time, delta, mOutput);
+        this->mSynth.offset(time, delta, mOutput);
     }
 
     time += mDelay;
     if (time < end_time) {
       BlipBuffer *const output = mOutput;
-      const Synth &synth = this->synth;
+      const Synth &synth = this->mSynth;
       int delta = amp * 2 - volume;
       int phase = this->phase;
 
@@ -203,7 +203,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
 
   int delta = mUpdateAmp(this->calc_amp());
   if (delta)
-    this->synth.offset(time, delta, mOutput);
+    this->mSynth.offset(time, delta, mOutput);
 
   time += mDelay;
   if (mLengthCounter == 0 || this->linear_counter == 0 || timer_period < 3) {
@@ -223,7 +223,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
         phase = PHASE_RANGE;
         volume = -volume;
       } else {
-        this->synth.offset(time, volume, output);
+        this->mSynth.offset(time, volume, output);
       }
 
       time += timer_period;
@@ -444,7 +444,7 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
   {
     int delta = mUpdateAmp(amp);
     if (delta)
-      this->synth.offset(time, delta, mOutput);
+      this->mSynth.offset(time, delta, mOutput);
   }
 
   time += mDelay;
@@ -476,7 +476,7 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
         if ((this->noise + 1) & 2) {
           // bits 0 and 1 of noise differ
           delta = -delta;
-          this->synth.offsetResampled(rtime, delta, mOutput);
+          this->mSynth.offsetResampled(rtime, delta, mOutput);
         }
 
         rtime += rperiod;
