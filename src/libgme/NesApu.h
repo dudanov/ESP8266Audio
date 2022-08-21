@@ -120,9 +120,12 @@ class NesApu {
 
  private:
   friend struct NesDmc;
-  void mIrqChanged();
+  void mIRQChanged();
   void mStateRestored();
   void mRunUntil(nes_time_t);
+  void mWriteChannelReg(nes_addr_t addr, uint8_t data);
+  void mWriteR4015(uint8_t data);
+  void mWriteR4017(nes_time_t time, uint8_t data);
 
   NesSquare::Synth mSquareSynth;  // shared by squares
   NesSquare mSquare1{&mSquareSynth};
@@ -136,15 +139,15 @@ class NesApu {
   nes_time_t mLastTime;  // has been run until this time in current frame
   nes_time_t m_lastDmcTime;
   nes_time_t m_earliestIrq;
-  nes_time_t m_nextIrq;
+  nes_time_t mNextIRQ;
   int m_framePeriod;
   int m_frameDelay;  // cycles until frame counter runs next
   int m_frame;       // current frame (0-3)
-  int m_oscEnables;
+  int mOscEnables;
   int m_frameMode;
   IrqNotifyFn m_irqNotifier;
   void *m_irqData;
-  bool m_irqFlag;
+  bool mIRQFlag;
   bool m_palMode;
 };
 

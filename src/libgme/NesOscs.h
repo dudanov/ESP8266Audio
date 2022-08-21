@@ -17,36 +17,36 @@ using DmcReaderFn = std::function<int(void *, nes_addr_t)>;
 class NesApu;
 
 struct NesOsc {
-  BlipBuffer *mOutput;
   int mLengthCounter;  // length counter (0 if unused by oscillator)
   int mDelay;          // delay until next (potential) transition
   int mLastAmp;        // last amplitude oscillator was outputting
   std::array<uint8_t, 4> mRegs;
   std::array<bool, 4> mRegWritten;
 
-  void SetOutput(BlipBuffer *output) { this->mOutput = output; }
+  void SetOutput(BlipBuffer *output) { mOutput = output; }
   void doLengthClock(int halt_mask);
-  int mGetPeriod() const { return 256 * (this->mRegs[3] & 0b111) + this->mRegs[2]; }
 
  protected:
   NesOsc() = delete;
   NesOsc(NesApu *apu) : mApu(apu) {}
   NesApu *mApu;
+  BlipBuffer *mOutput;
+  int mGetPeriod() const { return mRegs[3] % 8 * 256 + mRegs[2]; }
   void mReset() {
-    this->mDelay = 0;
-    this->mLastAmp = 0;
+    mDelay = 0;
+    mLastAmp = 0;
   }
   int mUpdateAmp(int amp) {
-    int delta = amp - this->mLastAmp;
-    this->mLastAmp = amp;
+    int delta = amp - mLastAmp;
+    mLastAmp = amp;
     return delta;
   }
 #if 0
     void zero_apu_osc(nes_time_t time) {
-        int last_amp = this->mLastAmp;
-        this->mLastAmp = 0;
-        if (this->mOutput != nullptr && last_amp)
-            this->synth.offset(time, -last_amp, this->mOutput);
+        int last_amp = mLastAmp;
+        mLastAmp = 0;
+        if (mOutput != nullptr && last_amp)
+            this->synth.offset(time, -last_amp, mOutput);
     }
 #endif
 };
@@ -138,9 +138,9 @@ struct NesDmc : NesOsc {
 
   uint8_t dac;
 
-  nes_time_t m_nextIrq;
+  nes_time_t mNextIRQ;
   bool irq_enabled;
-  bool m_irqFlag;
+  bool mIRQFlag;
   bool nonlinear;
 
   DmcReaderFn prg_reader;  // needs to be initialized to prg read function
