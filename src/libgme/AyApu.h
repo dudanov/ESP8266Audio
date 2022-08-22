@@ -80,17 +80,12 @@ class AyApu {
   };
 
   struct Envelope {
-    enum {
-      HOLD = 0b0001,
-      ALTERNATE = 0b0010,
-      ATTACK = 0b0100,
-      CONTINUE = 0b1000,
-    };
+    enum { HOLD = 0b0001, ALTERNATE = 0b0010, ATTACK = 0b0100, CONTINUE = 0b1000 };
     Envelope();
     blip_time_t mDelay;
     const uint8_t *mWave;
     int mPos;
-    uint8_t mModes[8][48];  // values already passed through volume table
+    // uint8_t mModes[8][48];  // values already passed through volume table
   };
 
   unsigned mGetPeriod(unsigned idx) { return get_le16(&mRegs[idx * 2]) % 4096 * CLK_PSC; }
