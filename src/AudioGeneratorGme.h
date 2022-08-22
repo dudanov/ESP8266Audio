@@ -27,7 +27,7 @@
 
 class AudioGeneratorGme : public AudioGenerator, public DataReader {
  public:
-  AudioGeneratorGme() : mPos(mBuf.size()) {}
+  AudioGeneratorGme() : mPos(mBuf.end()) {}
   ~AudioGeneratorGme();
   bool begin(AudioFileSource *source, AudioOutput *output) override;
   bool isRunning() override { return this->running; }
@@ -39,7 +39,7 @@ class AudioGeneratorGme : public AudioGenerator, public DataReader {
   gme_type_t mType{nullptr};
   MusicEmu *mEmu{nullptr};
   std::array<int16_t, 1024> mBuf;
-  unsigned mPos;
+  std::array<int16_t, 1024>::iterator mPos;
   bool mEmuCreate(gme_type_t file_type);
   void mEmuDestroy();
   bool mLoad();

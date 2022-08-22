@@ -51,17 +51,17 @@ AudioGeneratorGme::~AudioGeneratorGme() {
 
 bool AudioGeneratorGme::loop() {
   while (this->running) {
-    for (; mPos != mBuf.size(); mPos += 2)
-      if (!this->output->ConsumeSample(&mBuf[mPos]))
+    for (; mPos != mBuf.end(); mPos += 2)
+      if (!this->output->ConsumeSample(mPos))
         break;
-    if (mPos != mBuf.size())
+    if (mPos != mBuf.end())
       break;
     if (mEmu->IsTrackEnded()) {
       this->running = false;
       this->cb.st(0, "Stop");
       break;
     }
-    mPos = 0;
+    mPos = mBuf.begin();
     gme_err_t err = mEmu->Play(mBuf.size(), mBuf.data());
     if (err != nullptr) {
       this->cb.st(-1, err);
@@ -158,7 +158,7 @@ bool AudioGeneratorGme::playTrack(unsigned num) {
 
 bool AudioGeneratorGme::stop() {
   this->running = false;
-  mPos = mBuf.size();
+  mPos = mBuf.end();
   return true;
 }
 
