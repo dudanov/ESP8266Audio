@@ -1,7 +1,7 @@
 /*
   AudioFileSourceFS
   Input Arduion "file" to be used by AudioGenerator
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,26 +18,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCESPIFFS_H
-#define _AUDIOFILESOURCESPIFFS_H
+#pragma once
 
 #include <Arduino.h>
 #include <FS.h>
-
 #include "AudioFileSource.h"
 #include "AudioFileSourceFS.h"
 
 // Yes, I know SPIFFS is deprecated
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-class AudioFileSourceSPIFFS : public AudioFileSourceFS
-{
-  public:
-    AudioFileSourceSPIFFS() : AudioFileSourceFS(SPIFFS) { };
-    AudioFileSourceSPIFFS(const char *filename) : AudioFileSourceFS(SPIFFS, filename) {};
-    // Others are inherited from base
+class AudioFileSourceSPIFFS : public AudioFileSourceFS {
+ public:
+  AudioFileSourceSPIFFS() : AudioFileSourceFS(SPIFFS){};
+  AudioFileSourceSPIFFS(const char *filename) : AudioFileSourceFS(SPIFFS, filename){};
+  // Others are inherited from base
 };
-
-
-#endif
-

@@ -18,12 +18,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCEFUNCTION_H
-#define _AUDIOFILESOURCEFUNCTION_H
+#pragma once
 
 #include <Arduino.h>
-#include <vector>
 #include <functional>
+#include <vector>
 
 #include "AudioFileSource.h"
 
@@ -33,7 +32,8 @@ class AudioFileSourceFunction : public AudioFileSource {
       // RIFF chunk
       struct {
         char chunk_id[4];     // "RIFF"
-        uint32_t chunk_size;  // 4 + (8 + sizeof(format_chunk)(16)) + (8 + sizeof(data_chunk))
+        uint32_t chunk_size;  // 4 + (8 + sizeof(format_chunk)(16)) + (8 +
+                              // sizeof(data_chunk))
         char format[4];       // "WAVE"
       } riff;
       // format chunk
@@ -43,7 +43,8 @@ class AudioFileSourceFunction : public AudioFileSource {
         uint16_t format_tag;         // 1: PCM
         uint16_t channels;           // 1: MONO, 2: STEREO
         uint32_t sample_per_sec;     // 8000, 11025, 22050, 44100, 48000
-        uint32_t avg_bytes_per_sec;  // sample_per_sec * channels * bits_per_sample / 8
+        uint32_t avg_bytes_per_sec;  // sample_per_sec * channels *
+                                     // bits_per_sample / 8
         uint16_t block_align;        // channels * bits_per_sample / 8
         uint16_t bits_per_sample;    // 8, 16, 32
       } format;
@@ -79,12 +80,12 @@ class AudioFileSourceFunction : public AudioFileSource {
   bool is_ready;
   bool is_unique;
 
-public:
-  AudioFileSourceFunction(float sec, uint16_t channels = 1, uint32_t sample_per_sec = 8000, uint16_t bits_per_sample = 16);
+ public:
+  AudioFileSourceFunction(float sec, uint16_t channels = 1, uint32_t sample_per_sec = 8000,
+                          uint16_t bits_per_sample = 16);
   virtual ~AudioFileSourceFunction() override;
 
-  template <typename F, typename... Fs>
-  bool addAudioGenerators(const F& f, Fs&&... fs) {
+  template<typename F, typename... Fs> bool addAudioGenerators(const F &f, Fs &&...fs) {
     funcs.emplace_back(f);
     return addAudioGenerators(std::forward<Fs>(fs)...);
   }
@@ -106,7 +107,7 @@ public:
     }
   }
 
-  virtual uint32_t read(void* data, uint32_t len) override;
+  virtual uint32_t read(void *data, uint32_t len) override;
   virtual bool seek(int32_t pos, int dir) override;
 
   virtual bool close() override;
@@ -115,5 +116,3 @@ public:
   virtual uint32_t getSize() override;
   virtual uint32_t getPos() override;
 };
-
-#endif  // _AUDIOFILESOURCEFUNCTION_H

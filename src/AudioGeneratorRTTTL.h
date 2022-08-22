@@ -4,7 +4,7 @@
 
   Based on the Rtttl Arduino library by James BM, https://github.com/spicajames/Rtttl
   Based on the gist from Daniel Hall https://gist.github.com/smarthall/1618800
-    
+
   Copyright (C) 2018  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -21,46 +21,41 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOGENERATORRTTTL_H
-#define _AUDIOGENERATORRTTTL_H
+#pragma once
 
 #include "AudioGenerator.h"
 
-class AudioGeneratorRTTTL : public AudioGenerator
-{
-  public:
-    AudioGeneratorRTTTL();
-    virtual ~AudioGeneratorRTTTL() override;
-    virtual bool begin(AudioFileSource *source, AudioOutput *output) override;
-    virtual bool loop() override;
-    virtual bool stop() override;
-    virtual bool isRunning() override;
-    void SetRate(uint16_t hz) { rate = hz; }
+class AudioGeneratorRTTTL : public AudioGenerator {
+ public:
+  AudioGeneratorRTTTL();
+  virtual ~AudioGeneratorRTTTL() override;
+  virtual bool begin(AudioFileSource *source, AudioOutput *output) override;
+  virtual bool loop() override;
+  virtual bool stop() override;
+  virtual bool isRunning() override;
+  void SetRate(uint16_t hz) { rate = hz; }
 
-  private:
-    bool SkipWhitespace();
-    bool ReadInt(int *dest);
-    bool ParseHeader();
-    bool GetNextNote();
-    
-  protected:
-    uint16_t rate;
+ private:
+  bool SkipWhitespace();
+  bool ReadInt(int *dest);
+  bool ParseHeader();
+  bool GetNextNote();
 
-    // We copy the entire tiny song to a buffer for easier access
-    char *buff;
-    int len;
-    int ptr;
+ protected:
+  uint16_t rate;
 
-    // Song-global settings
-    int defaultDuration;
-    int defaultOctave;
-    int wholeNoteMS;
+  // We copy the entire tiny song to a buffer for easier access
+  char *buff;
+  int len;
+  int ptr;
 
-    // The note we're currently playing
-    int ttlSamplesPerWaveFP10;
-    int ttlSamples;
-    int samplesSent;
+  // Song-global settings
+  int defaultDuration;
+  int defaultOctave;
+  int wholeNoteMS;
+
+  // The note we're currently playing
+  int ttlSamplesPerWaveFP10;
+  int ttlSamples;
+  int samplesSent;
 };
-
-#endif
-

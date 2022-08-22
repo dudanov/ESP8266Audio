@@ -1,7 +1,7 @@
 /*
   AudioOutputMixer
   Simple mixer which can combine multiple inputs to a single output stream
-  
+
   Copyright (C) 2018  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -21,59 +21,36 @@
 #include <Arduino.h>
 #include "AudioOutputMixer.h"
 
-AudioOutputMixerStub::AudioOutputMixerStub(AudioOutputMixer *sink, int id) : AudioOutput()
-{
+AudioOutputMixerStub::AudioOutputMixerStub(AudioOutputMixer *sink, int id) : AudioOutput() {
   this->id = id;
   this->parent = sink;
   SetGain(1.0);
 }
 
-AudioOutputMixerStub::~AudioOutputMixerStub()
-{
-  parent->RemoveInput(id);
-}
+AudioOutputMixerStub::~AudioOutputMixerStub() { parent->RemoveInput(id); }
 
-bool AudioOutputMixerStub::SetRate(int hz)
-{
-  return parent->SetRate(hz, id);
-}
+bool AudioOutputMixerStub::SetRate(int hz) { return parent->SetRate(hz, id); }
 
-bool AudioOutputMixerStub::SetBitsPerSample(int bits)
-{
-  return parent->SetBitsPerSample(bits, id);
-}
+bool AudioOutputMixerStub::SetBitsPerSample(int bits) { return parent->SetBitsPerSample(bits, id); }
 
-bool AudioOutputMixerStub::SetChannels(int channels)
-{
-  return parent->SetChannels(channels, id);
-}
+bool AudioOutputMixerStub::SetChannels(int channels) { return parent->SetChannels(channels, id); }
 
-bool AudioOutputMixerStub::begin()
-{
-  return parent->begin(id);
-}
+bool AudioOutputMixerStub::begin() { return parent->begin(id); }
 
-bool AudioOutputMixerStub::ConsumeSample(int16_t sample[2])
-{
+bool AudioOutputMixerStub::ConsumeSample(int16_t sample[2]) {
   int16_t amp[2];
   amp[LEFTCHANNEL] = Amplify(sample[LEFTCHANNEL]);
   amp[RIGHTCHANNEL] = Amplify(sample[RIGHTCHANNEL]);
   return parent->ConsumeSample(amp, id);
 }
 
-bool AudioOutputMixerStub::stop()
-{
-  return parent->stop(id);
-}
+bool AudioOutputMixerStub::stop() { return parent->stop(id); }
 
-
-
-AudioOutputMixer::AudioOutputMixer(int buffSizeSamples, AudioOutput *dest) : AudioOutput()
-{
+AudioOutputMixer::AudioOutputMixer(int buffSizeSamples, AudioOutput *dest) : AudioOutput() {
   buffSize = buffSizeSamples;
-  leftAccum = (int32_t*)calloc(sizeof(int32_t), buffSize);
-  rightAccum = (int32_t*)calloc(sizeof(int32_t), buffSize);
-  for (int i=0; i<maxStubs; i++) {
+  leftAccum = (int32_t *) calloc(sizeof(int32_t), buffSize);
+  rightAccum = (int32_t *) calloc(sizeof(int32_t), buffSize);
+  for (int i = 0; i < maxStubs; i++) {
     stubAllocated[i] = false;
     stubRunning[i] = false;
     writePtr[i] = 0;
@@ -83,70 +60,53 @@ AudioOutputMixer::AudioOutputMixer(int buffSizeSamples, AudioOutput *dest) : Aud
   sinkStarted = false;
 }
 
-AudioOutputMixer::~AudioOutputMixer()
-{
+AudioOutputMixer::~AudioOutputMixer() {
   free(leftAccum);
   free(rightAccum);
 }
 
-
 // Most "standard" interfaces should fail, only MixerStub should be able to talk to us
-bool AudioOutputMixer::SetRate(int hz)
-{
+bool AudioOutputMixer::SetRate(int hz) {
   (void) hz;
   return false;
 }
 
-bool AudioOutputMixer::SetBitsPerSample(int bits)
-{
+bool AudioOutputMixer::SetBitsPerSample(int bits) {
   (void) bits;
   return false;
 }
 
-bool AudioOutputMixer::SetChannels(int channels)
-{
+bool AudioOutputMixer::SetChannels(int channels) {
   (void) channels;
   return false;
 }
 
-bool AudioOutputMixer::ConsumeSample(int16_t sample[2])
-{
+bool AudioOutputMixer::ConsumeSample(int16_t sample[2]) {
   (void) sample;
   return false;
 }
 
-bool AudioOutputMixer::begin()
-{
-  return false;
-}
+bool AudioOutputMixer::begin() { return false; }
 
-bool AudioOutputMixer::stop()
-{
-  return false;
-}
-
+bool AudioOutputMixer::stop() { return false; }
 
 // TODO - actually ensure all samples are same speed, size, channels, rate
-bool AudioOutputMixer::SetRate(int hz, int id)
-{
+bool AudioOutputMixer::SetRate(int hz, int id) {
   (void) id;
   return sink->SetRate(hz);
 }
 
-bool AudioOutputMixer::SetBitsPerSample(int bits, int id)
-{
+bool AudioOutputMixer::SetBitsPerSample(int bits, int id) {
   (void) id;
   return sink->SetBitsPerSample(bits);
 }
 
-bool AudioOutputMixer::SetChannels(int channels, int id)
-{
+bool AudioOutputMixer::SetChannels(int channels, int id) {
   (void) id;
   return sink->SetChannels(channels);
 }
 
-bool AudioOutputMixer::begin(int id)
-{
+bool AudioOutputMixer::begin(int id) {
   stubRunning[id] = true;
 
   if (!sinkStarted) {
@@ -156,14 +116,13 @@ bool AudioOutputMixer::begin(int id)
     return true;
   }
 }
-  
-AudioOutputMixerStub *AudioOutputMixer::NewInput()
-{
-  for (int i=0; i<maxStubs; i++) {
+
+AudioOutputMixerStub *AudioOutputMixer::NewInput() {
+  for (int i = 0; i < maxStubs; i++) {
     if (!stubAllocated[i]) {
       stubAllocated[i] = true;
       stubRunning[i] = false;
-      writePtr[i] = readPtr; // TODO - should it be 1 before readPtr?
+      writePtr[i] = readPtr;  // TODO - should it be 1 before readPtr?
       AudioOutputMixerStub *stub = new AudioOutputMixerStub(this, i);
       return stub;
     }
@@ -171,20 +130,18 @@ AudioOutputMixerStub *AudioOutputMixer::NewInput()
   return nullptr;
 }
 
-void AudioOutputMixer::RemoveInput(int id)
-{
+void AudioOutputMixer::RemoveInput(int id) {
   stubAllocated[id] = false;
   stubRunning[id] = false;
 }
 
-bool AudioOutputMixer::loop()
-{
+bool AudioOutputMixer::loop() {
   // First, try and fill I2S...
   // This is not optimal, but algorithmically should work fine
   bool avail;
   do {
     avail = true;
-    for (int i=0; i<maxStubs && avail; i++) {
+    for (int i = 0; i < maxStubs && avail; i++) {
       if (stubRunning[i] && writePtr[i] == readPtr) {
         avail = false;  // The read pointer is touching an active writer, can't advance
       }
@@ -205,10 +162,10 @@ bool AudioOutputMixer::loop()
       } else {
         s[RIGHTCHANNEL] = rightAccum[readPtr];
       }
-//      s[LEFTCHANNEL] = Amplify(s[LEFTCHANNEL]);
-//      s[RIGHTCHANNEL] = Amplify(s[RIGHTCHANNEL]);
+      //      s[LEFTCHANNEL] = Amplify(s[LEFTCHANNEL]);
+      //      s[RIGHTCHANNEL] = Amplify(s[RIGHTCHANNEL]);
       if (!sink->ConsumeSample(s)) {
-        break; // Can't stuff any more in I2S...
+        break;  // Can't stuff any more in I2S...
       }
       // Clear the accums and advance the pointer to next potential sample
       leftAccum[readPtr] = 0;
@@ -219,9 +176,8 @@ bool AudioOutputMixer::loop()
   return true;
 }
 
-bool AudioOutputMixer::ConsumeSample(int16_t sample[2], int id)
-{
-  loop(); // Send any pre-existing, completed I2S data we can fit
+bool AudioOutputMixer::ConsumeSample(int16_t sample[2], int id) {
+  loop();  // Send any pre-existing, completed I2S data we can fit
 
   // Now, do we have space for a new sample?
   int nextWritePtr = (writePtr[id] + 1) % buffSize;
@@ -235,10 +191,7 @@ bool AudioOutputMixer::ConsumeSample(int16_t sample[2], int id)
   return true;
 }
 
-bool AudioOutputMixer::stop(int id)
-{
+bool AudioOutputMixer::stop(int id) {
   stubRunning[id] = false;
   return true;
 }
-
-

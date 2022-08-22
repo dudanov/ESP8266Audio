@@ -1,7 +1,7 @@
 /*
   AudioGenerator
   Base class of an audio output generator
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,37 +18,40 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOGENERATOR_H
-#define _AUDIOGENERATOR_H
+#pragma once
 
 #include <Arduino.h>
 #include "AudioStatus.h"
 #include "AudioFileSource.h"
 #include "AudioOutput.h"
 
-class AudioGenerator
-{
-  public:
-    AudioGenerator() { lastSample[0] = 0; lastSample[1] = 0; };
-    virtual ~AudioGenerator() {};
-    virtual bool begin(AudioFileSource *source, AudioOutput *output) { (void)source; (void)output; return false; };
-    virtual bool loop() { return false; };
-    virtual bool stop() { return false; };
-    virtual bool isRunning() { return false;};
-    virtual void desync () { };
+class AudioGenerator {
+ public:
+  AudioGenerator() {
+    lastSample[0] = 0;
+    lastSample[1] = 0;
+  };
+  virtual ~AudioGenerator(){};
+  virtual bool begin(AudioFileSource *source, AudioOutput *output) {
+    (void) source;
+    (void) output;
+    return false;
+  };
+  virtual bool loop() { return false; };
+  virtual bool stop() { return false; };
+  virtual bool isRunning() { return false; };
+  virtual void desync(){};
 
-  public:
-    virtual bool RegisterMetadataCB(AudioStatus::metadataCBFn fn, void *data) { return cb.RegisterMetadataCB(fn, data); }
-    virtual bool RegisterStatusCB(AudioStatus::statusCBFn fn, void *data) { return cb.RegisterStatusCB(fn, data); }
+ public:
+  virtual bool RegisterMetadataCB(AudioStatus::metadataCBFn fn, void *data) { return cb.RegisterMetadataCB(fn, data); }
+  virtual bool RegisterStatusCB(AudioStatus::statusCBFn fn, void *data) { return cb.RegisterStatusCB(fn, data); }
 
-  protected:
-    bool running{false};
-    AudioFileSource *file{nullptr};
-    AudioOutput *output{nullptr};
-    int16_t lastSample[2];
+ protected:
+  bool running{false};
+  AudioFileSource *file{nullptr};
+  AudioOutput *output{nullptr};
+  int16_t lastSample[2];
 
-  protected:
-    AudioStatus cb;
+ protected:
+  AudioStatus cb;
 };
-
-#endif

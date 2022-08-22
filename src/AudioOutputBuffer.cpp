@@ -1,7 +1,7 @@
 /*
   AudioOutputBuffer
   Adds additional bufferspace to the output chain
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -21,50 +21,38 @@
 #include <Arduino.h>
 #include "AudioOutputBuffer.h"
 
-AudioOutputBuffer::AudioOutputBuffer(int buffSizeSamples, AudioOutput *dest)
-{
+AudioOutputBuffer::AudioOutputBuffer(int buffSizeSamples, AudioOutput *dest) {
   buffSize = buffSizeSamples;
-  leftSample = (int16_t*)malloc(sizeof(int16_t) * buffSize);
-  rightSample = (int16_t*)malloc(sizeof(int16_t) * buffSize);
+  leftSample = (int16_t *) malloc(sizeof(int16_t) * buffSize);
+  rightSample = (int16_t *) malloc(sizeof(int16_t) * buffSize);
   writePtr = 0;
   readPtr = 0;
   sink = dest;
 }
 
-AudioOutputBuffer::~AudioOutputBuffer()
-{
+AudioOutputBuffer::~AudioOutputBuffer() {
   free(leftSample);
   free(rightSample);
 }
 
-bool AudioOutputBuffer::SetRate(int hz)
-{
-  return sink->SetRate(hz);
-}
+bool AudioOutputBuffer::SetRate(int hz) { return sink->SetRate(hz); }
 
-bool AudioOutputBuffer::SetBitsPerSample(int bits)
-{
-  return sink->SetBitsPerSample(bits);
-}
+bool AudioOutputBuffer::SetBitsPerSample(int bits) { return sink->SetBitsPerSample(bits); }
 
-bool AudioOutputBuffer::SetChannels(int channels)
-{
-  return sink->SetChannels(channels);
-}
+bool AudioOutputBuffer::SetChannels(int channels) { return sink->SetChannels(channels); }
 
-bool AudioOutputBuffer::begin()
-{
+bool AudioOutputBuffer::begin() {
   filled = false;
   return sink->begin();
 }
 
-bool AudioOutputBuffer::ConsumeSample(int16_t sample[2])
-{
+bool AudioOutputBuffer::ConsumeSample(int16_t sample[2]) {
   // First, try and fill I2S...
   if (filled) {
     while (readPtr != writePtr) {
       int16_t s[2] = {leftSample[readPtr], rightSample[readPtr]};
-      if (!sink->ConsumeSample(s)) break; // Can't stuff any more in I2S...
+      if (!sink->ConsumeSample(s))
+        break;  // Can't stuff any more in I2S...
       readPtr = (readPtr + 1) % buffSize;
     }
   }
@@ -81,9 +69,4 @@ bool AudioOutputBuffer::ConsumeSample(int16_t sample[2])
   return true;
 }
 
-bool AudioOutputBuffer::stop()
-{
-  return sink->stop();
-}
-
-
+bool AudioOutputBuffer::stop() { return sink->stop(); }

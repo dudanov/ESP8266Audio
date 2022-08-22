@@ -1,7 +1,7 @@
 /*
   AudioFileSourceFS
   Input Arduion "file" to be used by AudioGenerator
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,14 +18,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCEFATFS_H
-#define _AUDIOFILESOURCEFATFS_H
+#pragma once
 
 #ifdef ESP32
 
 #include <Arduino.h>
-#include <FS.h>
 #include <FFat.h>
+#include <FS.h>
 
 #include "AudioFileSource.h"
 #include "AudioFileSourceFS.h"
@@ -33,32 +32,28 @@
 /*
  AudioFileSource for FAT filesystem.
  */
-class AudioFileSourceFATFS : public AudioFileSourceFS
-{
-  public:
-    AudioFileSourceFATFS() : AudioFileSourceFS(FFat) {};
-    AudioFileSourceFATFS(const char *filename) : AudioFileSourceFS(FFat) {
-      // We call open() ourselves because calling AudioFileSourceFS(FFat, filename)
-      // would call the parent open() and we do not want that
-      open(filename);
-    };
+class AudioFileSourceFATFS : public AudioFileSourceFS {
+ public:
+  AudioFileSourceFATFS() : AudioFileSourceFS(FFat){};
+  AudioFileSourceFATFS(const char *filename) : AudioFileSourceFS(FFat) {
+    // We call open() ourselves because calling AudioFileSourceFS(FFat,
+    // filename) would call the parent open() and we do not want that
+    open(filename);
+  };
 
-    virtual bool open(const char *filename) override {
-      // make sure that the FATFS filesystem has been mounted
-      if (!FFat.begin()) {
-        audioLogger->printf_P(PSTR("Unable to initialize FATFS filesystem\n"));
-        return false;
-      } else {
-        // now that the fielsystem has been mounted, we can call the regular parent open() function
-        return AudioFileSourceFS::open(filename);
-      }
-    };
+  virtual bool open(const char *filename) override {
+    // make sure that the FATFS filesystem has been mounted
+    if (!FFat.begin()) {
+      audioLogger->printf_P(PSTR("Unable to initialize FATFS filesystem\n"));
+      return false;
+    } else {
+      // now that the fielsystem has been mounted, we can call the regular
+      // parent open() function
+      return AudioFileSourceFS::open(filename);
+    }
+  };
 
-    // Others are inherited from base
+  // Others are inherited from base
 };
 
 #endif
-
-
-#endif
-

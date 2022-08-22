@@ -26,40 +26,39 @@
 #include "AudioOutputSTDIO.h"
 #include <unistd.h>
 
-static const uint8_t wavHeaderTemplate[] PROGMEM = { // Hardcoded simple WAV header with 0xffffffff lengths all around
-    0x52, 0x49, 0x46, 0x46, 0xff, 0xff, 0xff, 0xff, 0x57, 0x41, 0x56, 0x45,
-    0x66, 0x6d, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x22, 0x56, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x04, 0x00, 0x10, 0x00,
-    0x64, 0x61, 0x74, 0x61, 0xff, 0xff, 0xff, 0xff };
+static const uint8_t wavHeaderTemplate[] PROGMEM = {  // Hardcoded simple WAV header with 0xffffffff lengths all around
+    0x52, 0x49, 0x46, 0x46, 0xff, 0xff, 0xff, 0xff, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6d, 0x74,
+    0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x22, 0x56, 0x00, 0x00, 0x88, 0x58,
+    0x01, 0x00, 0x04, 0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61, 0xff, 0xff, 0xff, 0xff};
 
-void AudioOutputSTDIO::SetFilename(const char *name)
-{
+void AudioOutputSTDIO::SetFilename(const char *name) {
   free(filename);
   filename = strdup(name);
 }
 
-bool AudioOutputSTDIO::begin()
-{
+bool AudioOutputSTDIO::begin() {
   uint8_t wavHeader[sizeof(wavHeaderTemplate)];
   memset(wavHeader, 0, sizeof(wavHeader));
 
-  if (f) return false; // Already open!
+  if (f)
+    return false;  // Already open!
   unlink(filename);
   f = fopen(filename, "wb+");
-  if (!f) return false;
-  
+  if (!f)
+    return false;
+
   // We'll fix the header up when we close the file
   fwrite(wavHeader, sizeof(wavHeader), 1, f);
   return true;
 }
 
-bool AudioOutputSTDIO::ConsumeSample(int16_t sample[2])
-{
+bool AudioOutputSTDIO::ConsumeSample(int16_t sample[2]) {
   static int avail = 100;
   if (!(--avail)) {
-      avail = 100;
-      return false;
+    avail = 100;
+    return false;
   }
-  for (int i=0; i<channels; i++) {
+  for (int i = 0; i < channels; i++) {
     if (bps == 8) {
       uint8_t l = sample[i] & 0xff;
       fwrite(&l, sizeof(l), 1, f);
@@ -73,18 +72,16 @@ bool AudioOutputSTDIO::ConsumeSample(int16_t sample[2])
   return true;
 }
 
-
-bool AudioOutputSTDIO::stop()
-{
+bool AudioOutputSTDIO::stop() {
   uint8_t wavHeader[sizeof(wavHeaderTemplate)];
 
   memcpy_P(wavHeader, wavHeaderTemplate, sizeof(wavHeaderTemplate));
 
   int chunksize = ftell(f) - 8;
   wavHeader[4] = chunksize & 0xff;
-  wavHeader[5] = (chunksize>>8)&0xff;
-  wavHeader[6] = (chunksize>>16)&0xff;
-  wavHeader[7] = (chunksize>>24)&0xff;
+  wavHeader[5] = (chunksize >> 8) & 0xff;
+  wavHeader[6] = (chunksize >> 16) & 0xff;
+  wavHeader[7] = (chunksize >> 24) & 0xff;
 
   wavHeader[22] = channels & 0xff;
   wavHeader[23] = 0;
@@ -105,9 +102,9 @@ bool AudioOutputSTDIO::stop()
 
   int datasize = ftell(f) - sizeof(wavHeader);
   wavHeader[40] = datasize & 0xff;
-  wavHeader[41] = (datasize>>8)&0xff;
-  wavHeader[42] = (datasize>>16)&0xff;
-  wavHeader[43] = (datasize>>24)&0xff;
+  wavHeader[41] = (datasize >> 8) & 0xff;
+  wavHeader[42] = (datasize >> 16) & 0xff;
+  wavHeader[43] = (datasize >> 24) & 0xff;
 
   // Write real header out
   fseek(f, 0, SEEK_SET);
@@ -117,4 +114,3 @@ bool AudioOutputSTDIO::stop()
 }
 
 #endif
- 

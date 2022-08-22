@@ -1,7 +1,7 @@
 /*
   AudioOutputFilterDecimate
   Implements a user-defined FIR on a passthrough w/rational decimation
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,34 +18,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOOUTPUTFILTERDECIMATE_H
-#define _AUDIOOUTPUTFILTERDECIMATE_H
+#pragma once
 
 #include "AudioOutput.h"
 
-class AudioOutputFilterDecimate : public AudioOutput
-{
-  public:
-    AudioOutputFilterDecimate(uint8_t taps, const int16_t *tap, int num, int den, AudioOutput *sink);
-    virtual ~AudioOutputFilterDecimate() override;
-    virtual bool SetRate(int hz) override;
-    virtual bool SetBitsPerSample(int bits) override;
-    virtual bool SetChannels(int chan) override;
-    virtual bool SetGain(float f) override;
-    virtual bool begin() override;
-    virtual bool ConsumeSample(int16_t sample[2]) override;
-    virtual bool stop() override;
+class AudioOutputFilterDecimate : public AudioOutput {
+ public:
+  AudioOutputFilterDecimate(uint8_t taps, const int16_t *tap, int num, int den, AudioOutput *sink);
+  virtual ~AudioOutputFilterDecimate() override;
+  virtual bool SetRate(int hz) override;
+  virtual bool SetBitsPerSample(int bits) override;
+  virtual bool SetChannels(int chan) override;
+  virtual bool SetGain(float f) override;
+  virtual bool begin() override;
+  virtual bool ConsumeSample(int16_t sample[2]) override;
+  virtual bool stop() override;
 
-  protected:
-    AudioOutput *sink;
-    uint8_t taps;
-    int16_t *tap;
-    int16_t *hist[2];
-    int idx;
-    int num;
-    int den;
-    int err;
+ protected:
+  AudioOutput *sink;
+  uint8_t taps;
+  int16_t *tap;
+  int16_t *hist[2];
+  int idx;
+  int num;
+  int den;
+  int err;
 };
-
-#endif
-

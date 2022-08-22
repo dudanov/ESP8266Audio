@@ -1,7 +1,7 @@
 /*
   AudioFileSourceID3
   ID3 filter that extracts any ID3 fields and sends to CB function
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,31 +18,24 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCEID3_H
-#define _AUDIOFILESOURCEID3_H
+#pragma once
 
 #include <Arduino.h>
-
 #include "AudioFileSource.h"
 
-class AudioFileSourceID3 : public AudioFileSource
-{
-  public:
-    AudioFileSourceID3(AudioFileSource *src);
-    virtual ~AudioFileSourceID3() override;
-    
-    virtual uint32_t read(void *data, uint32_t len) override;
-    virtual bool seek(int32_t pos, int dir) override;
-    virtual bool close() override;
-    virtual bool isOpen() override;
-    virtual uint32_t getSize() override;
-    virtual uint32_t getPos() override;
+class AudioFileSourceID3 : public AudioFileSource {
+ public:
+  AudioFileSourceID3(AudioFileSource *src);
+  virtual ~AudioFileSourceID3() override;
 
-  private:
-    AudioFileSource *src;
-    bool checked;
+  virtual uint32_t read(void *data, uint32_t len) override;
+  virtual bool seek(int32_t pos, int dir) override;
+  virtual bool close() override;
+  virtual bool isOpen() override;
+  virtual uint32_t getSize() override;
+  virtual uint32_t getPos() override;
+
+ private:
+  AudioFileSource *src;
+  bool checked;
 };
-
-
-#endif
-

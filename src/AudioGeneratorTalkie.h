@@ -4,7 +4,7 @@
   Output is locked at 8khz as that's that the hardcoded LPC coefficients are built around
 
   Based on the Talkie Arduino library by Peter Knight, https://github.com/going-digital/Talkie
-    
+
   Copyright (C) 2020 Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -21,46 +21,41 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOGENERATORTALKIE_H
-#define _AUDIOGENERATORTALKIE_H
+#pragma once
 
 #include "AudioGenerator.h"
 
-class AudioGeneratorTalkie : public AudioGenerator
-{
-  public:
-    AudioGeneratorTalkie();
-    virtual ~AudioGeneratorTalkie() override;
-    virtual bool begin(AudioFileSource *source, AudioOutput *output) override;
-    virtual bool loop() override;
-    virtual bool stop() override;
-    virtual bool isRunning() override;
-    bool say(const uint8_t *data, size_t len, bool async = false);
-    
-  protected:
-    // The data stream we're playing
-    uint8_t *buff;
-    
-    // Codeword stream handlers
-    uint8_t *ptrAddr;
-    uint8_t ptrBit;
+class AudioGeneratorTalkie : public AudioGenerator {
+ public:
+  AudioGeneratorTalkie();
+  virtual ~AudioGeneratorTalkie() override;
+  virtual bool begin(AudioFileSource *source, AudioOutput *output) override;
+  virtual bool loop() override;
+  virtual bool stop() override;
+  virtual bool isRunning() override;
+  bool say(const uint8_t *data, size_t len, bool async = false);
 
-    bool    lastFrame;
-    bool    genOneFrame(); // Fill up one frame's worth of data, returns if this is the last frame
-    int16_t genOneSample(); // Generate one sample of a frame
-    
-    // Utilities
-    uint8_t rev(uint8_t a);
-    uint8_t getBits(uint8_t bits);
+ protected:
+  // The data stream we're playing
+  uint8_t *buff;
 
-    // Synthesizer state
-    uint8_t  synthPeriod;
-    uint16_t synthEnergy;
-    int16_t  synthK1, synthK2;
-    int8_t   synthK3, synthK4, synthK5, synthK6, synthK7, synthK8, synthK9, synthK10;
-    
-    int frameLeft;
+  // Codeword stream handlers
+  uint8_t *ptrAddr;
+  uint8_t ptrBit;
+
+  bool lastFrame;
+  bool genOneFrame();      // Fill up one frame's worth of data, returns if this is the last frame
+  int16_t genOneSample();  // Generate one sample of a frame
+
+  // Utilities
+  uint8_t rev(uint8_t a);
+  uint8_t getBits(uint8_t bits);
+
+  // Synthesizer state
+  uint8_t synthPeriod;
+  uint16_t synthEnergy;
+  int16_t synthK1, synthK2;
+  int8_t synthK3, synthK4, synthK5, synthK6, synthK7, synthK8, synthK9, synthK10;
+
+  int frameLeft;
 };
-
-#endif
-

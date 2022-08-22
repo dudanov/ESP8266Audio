@@ -1,7 +1,7 @@
 /*
   AudioOutputSerialWAV
   Writes a mostly correct WAV file to the serial port
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,22 +18,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOOUTPUTSERIALWAV_H
-#define _AUDIOOUTPUTSERIALWAV_H
+#pragma once
 
 #include "AudioOutput.h"
 
-class AudioOutputSerialWAV : public AudioOutput
-{
-  public:
-    AudioOutputSerialWAV() {};
-    ~AudioOutputSerialWAV() {};
-    virtual bool begin() override;
-    virtual bool ConsumeSample(int16_t sample[2]) override;
-    virtual bool stop() override;
-  private:
-    int count;
+class AudioOutputSerialWAV : public AudioOutput {
+ public:
+  AudioOutputSerialWAV(){};
+  ~AudioOutputSerialWAV(){};
+  virtual bool begin() override;
+  virtual bool ConsumeSample(int16_t sample[2]) override;
+  virtual bool stop() override;
+
+ private:
+  int count;
 };
-
-#endif
-

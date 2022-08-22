@@ -1,7 +1,7 @@
 /*
   AudioOutputSPIFFSWAV
   Writes a WAV file to the SPIFFS filesystem
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOOUTPUTSPIFFSWAV_H
-#define _AUDIOOUTPUTSPIFFSWAV_H
+#pragma once
 
 #if !defined(ARDUINO_ARCH_RP2040)
 
@@ -28,21 +27,18 @@
 
 #include "AudioOutput.h"
 
-class AudioOutputSPIFFSWAV : public AudioOutput
-{
-  public:
-    AudioOutputSPIFFSWAV() { filename = NULL; };
-    ~AudioOutputSPIFFSWAV() { free(filename); };
-    virtual bool begin() override;
-    virtual bool ConsumeSample(int16_t sample[2]) override;
-    virtual bool stop() override;
-    void SetFilename(const char *name);
+class AudioOutputSPIFFSWAV : public AudioOutput {
+ public:
+  AudioOutputSPIFFSWAV() { filename = NULL; };
+  ~AudioOutputSPIFFSWAV() { free(filename); };
+  virtual bool begin() override;
+  virtual bool ConsumeSample(int16_t sample[2]) override;
+  virtual bool stop() override;
+  void SetFilename(const char *name);
 
-  private:
-    File f;
-    char *filename;
+ private:
+  File f;
+  char *filename;
 };
-
-#endif
 
 #endif

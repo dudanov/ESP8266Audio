@@ -1,7 +1,7 @@
 /*
   AudioOutputSPIFFSWAV
   Writes a WAV file to the SPIFFS filesystem
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -29,38 +29,37 @@
 // Yes, I know SPIFFS is deprecated
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-
 #include "AudioOutputSPIFFSWAV.h"
 
-static const uint8_t wavHeaderTemplate[] PROGMEM = { // Hardcoded simple WAV header with 0xffffffff lengths all around
-    0x52, 0x49, 0x46, 0x46, 0xff, 0xff, 0xff, 0xff, 0x57, 0x41, 0x56, 0x45,
-    0x66, 0x6d, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x22, 0x56, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x04, 0x00, 0x10, 0x00,
-    0x64, 0x61, 0x74, 0x61, 0xff, 0xff, 0xff, 0xff };
+static const uint8_t wavHeaderTemplate[] PROGMEM = {  // Hardcoded simple WAV header with 0xffffffff lengths all around
+    0x52, 0x49, 0x46, 0x46, 0xff, 0xff, 0xff, 0xff, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6d, 0x74,
+    0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x22, 0x56, 0x00, 0x00, 0x88, 0x58,
+    0x01, 0x00, 0x04, 0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61, 0xff, 0xff, 0xff, 0xff};
 
-void AudioOutputSPIFFSWAV::SetFilename(const char *name)
-{
-  if (filename) free(filename);
+void AudioOutputSPIFFSWAV::SetFilename(const char *name) {
+  if (filename)
+    free(filename);
   filename = strdup(name);
 }
 
-bool AudioOutputSPIFFSWAV::begin()
-{
+bool AudioOutputSPIFFSWAV::begin() {
   uint8_t wavHeader[sizeof(wavHeaderTemplate)];
   memset(wavHeader, 0, sizeof(wavHeader));
 
-  if (f) return false; // Already open!
+  if (f)
+    return false;  // Already open!
   SPIFFS.remove(filename);
   f = SPIFFS.open(filename, "w+");
-  if (!f) return false;
-  
+  if (!f)
+    return false;
+
   // We'll fix the header up when we close the file
   f.write(wavHeader, sizeof(wavHeader));
   return true;
 }
 
-bool AudioOutputSPIFFSWAV::ConsumeSample(int16_t sample[2])
-{
-  for (int i=0; i<channels; i++) {
+bool AudioOutputSPIFFSWAV::ConsumeSample(int16_t sample[2]) {
+  for (int i = 0; i < channels; i++) {
     if (bps == 8) {
       uint8_t l = sample[i] & 0xff;
       f.write(&l, sizeof(l));
@@ -74,18 +73,16 @@ bool AudioOutputSPIFFSWAV::ConsumeSample(int16_t sample[2])
   return true;
 }
 
-
-bool AudioOutputSPIFFSWAV::stop()
-{
+bool AudioOutputSPIFFSWAV::stop() {
   uint8_t wavHeader[sizeof(wavHeaderTemplate)];
 
   memcpy_P(wavHeader, wavHeaderTemplate, sizeof(wavHeaderTemplate));
 
   int chunksize = f.size() - 8;
   wavHeader[4] = chunksize & 0xff;
-  wavHeader[5] = (chunksize>>8)&0xff;
-  wavHeader[6] = (chunksize>>16)&0xff;
-  wavHeader[7] = (chunksize>>24)&0xff;
+  wavHeader[5] = (chunksize >> 8) & 0xff;
+  wavHeader[6] = (chunksize >> 16) & 0xff;
+  wavHeader[7] = (chunksize >> 24) & 0xff;
 
   wavHeader[22] = channels & 0xff;
   wavHeader[23] = 0;
@@ -106,9 +103,9 @@ bool AudioOutputSPIFFSWAV::stop()
 
   int datasize = f.size() - sizeof(wavHeader);
   wavHeader[40] = datasize & 0xff;
-  wavHeader[41] = (datasize>>8)&0xff;
-  wavHeader[42] = (datasize>>16)&0xff;
-  wavHeader[43] = (datasize>>24)&0xff;
+  wavHeader[41] = (datasize >> 8) & 0xff;
+  wavHeader[42] = (datasize >> 16) & 0xff;
+  wavHeader[43] = (datasize >> 24) & 0xff;
 
   // Write real header out
   f.seek(0, SeekSet);
@@ -116,6 +113,5 @@ bool AudioOutputSPIFFSWAV::stop()
   f.close();
   return true;
 }
-
 
 #endif

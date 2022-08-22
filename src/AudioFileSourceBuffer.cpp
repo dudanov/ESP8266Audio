@@ -1,7 +1,7 @@
 /*
   AudioFileSourceBuffer
   Double-buffered file source using system RAM
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,16 +18,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <Arduino.h>
 #include "AudioFileSourceBuffer.h"
+#include <Arduino.h>
 
-#pragma GCC optimize ("O3")
+#pragma GCC optimize("O3")
 
-AudioFileSourceBuffer::AudioFileSourceBuffer(AudioFileSource *source, uint32_t buffSizeBytes)
-{
+AudioFileSourceBuffer::AudioFileSourceBuffer(AudioFileSource *source, uint32_t buffSizeBytes) {
   buffSize = buffSizeBytes;
-  buffer = (uint8_t*)malloc(sizeof(uint8_t) * buffSize);
-  if (!buffer) audioLogger->printf_P(PSTR("Unable to allocate AudioFileSourceBuffer::buffer[]\n"));
+  buffer = (uint8_t *) malloc(sizeof(uint8_t) * buffSize);
+  if (!buffer)
+    audioLogger->printf_P(PSTR("Unable to allocate AudioFileSourceBuffer::buffer[]\n"));
   deallocateBuffer = true;
   writePtr = 0;
   readPtr = 0;
@@ -36,10 +36,9 @@ AudioFileSourceBuffer::AudioFileSourceBuffer(AudioFileSource *source, uint32_t b
   filled = false;
 }
 
-AudioFileSourceBuffer::AudioFileSourceBuffer(AudioFileSource *source, void *inBuff, uint32_t buffSizeBytes)
-{
+AudioFileSourceBuffer::AudioFileSourceBuffer(AudioFileSource *source, void *inBuff, uint32_t buffSizeBytes) {
   buffSize = buffSizeBytes;
-  buffer = (uint8_t*)inBuff;
+  buffer = (uint8_t *) inBuff;
   deallocateBuffer = false;
   writePtr = 0;
   readPtr = 0;
@@ -48,15 +47,14 @@ AudioFileSourceBuffer::AudioFileSourceBuffer(AudioFileSource *source, void *inBu
   filled = false;
 }
 
-AudioFileSourceBuffer::~AudioFileSourceBuffer()
-{
-  if (deallocateBuffer) free(buffer);
+AudioFileSourceBuffer::~AudioFileSourceBuffer() {
+  if (deallocateBuffer)
+    free(buffer);
   buffer = NULL;
 }
 
-bool AudioFileSourceBuffer::seek(int32_t pos, int dir)
-{
-  if(dir == SEEK_CUR && (readPtr+pos) < length) {
+bool AudioFileSourceBuffer::seek(int32_t pos, int dir) {
+  if (dir == SEEK_CUR && (readPtr + pos) < length) {
     readPtr += pos;
     return true;
   } else {
@@ -68,36 +66,24 @@ bool AudioFileSourceBuffer::seek(int32_t pos, int dir)
   }
 }
 
-bool AudioFileSourceBuffer::close()
-{
-  if (deallocateBuffer) free(buffer);
+bool AudioFileSourceBuffer::close() {
+  if (deallocateBuffer)
+    free(buffer);
   buffer = NULL;
   return src->close();
 }
 
-bool AudioFileSourceBuffer::isOpen()
-{
-  return src->isOpen();
-}
+bool AudioFileSourceBuffer::isOpen() { return src->isOpen(); }
 
-uint32_t AudioFileSourceBuffer::getSize()
-{
-  return src->getSize();
-}
+uint32_t AudioFileSourceBuffer::getSize() { return src->getSize(); }
 
-uint32_t AudioFileSourceBuffer::getPos()
-{
-  return src->getPos();
-}
+uint32_t AudioFileSourceBuffer::getPos() { return src->getPos(); }
 
-uint32_t AudioFileSourceBuffer::getFillLevel()
-{
-  return length;
-}
+uint32_t AudioFileSourceBuffer::getFillLevel() { return length; }
 
-uint32_t AudioFileSourceBuffer::read(void *data, uint32_t len)
-{
-  if (!buffer) return src->read(data, len);
+uint32_t AudioFileSourceBuffer::read(void *data, uint32_t len) {
+  if (!buffer)
+    return src->read(data, len);
 
   uint32_t bytes = 0;
   if (!filled) {
@@ -109,10 +95,11 @@ uint32_t AudioFileSourceBuffer::read(void *data, uint32_t len)
   }
 
   // Pull from buffer until we've got none left or we've satisfied the request
-  uint8_t *ptr = reinterpret_cast<uint8_t*>(data);
+  uint8_t *ptr = reinterpret_cast<uint8_t *>(data);
   uint32_t toReadFromBuffer = (len < length) ? len : length;
-  if ( (toReadFromBuffer > 0) && (readPtr >= writePtr) ) {
-    uint32_t toReadToEnd = (toReadFromBuffer < (uint32_t)(buffSize - readPtr)) ? toReadFromBuffer : (buffSize - readPtr);
+  if ((toReadFromBuffer > 0) && (readPtr >= writePtr)) {
+    uint32_t toReadToEnd =
+        (toReadFromBuffer < (uint32_t) (buffSize - readPtr)) ? toReadFromBuffer : (buffSize - readPtr);
     memcpy(ptr, &buffer[readPtr], toReadToEnd);
     readPtr = (readPtr + toReadToEnd) % buffSize;
     len -= toReadToEnd;
@@ -121,7 +108,7 @@ uint32_t AudioFileSourceBuffer::read(void *data, uint32_t len)
     bytes += toReadToEnd;
     toReadFromBuffer -= toReadToEnd;
   }
-  if (toReadFromBuffer > 0) { // We know RP < WP at this point
+  if (toReadFromBuffer > 0) {  // We know RP < WP at this point
     memcpy(ptr, &buffer[readPtr], toReadFromBuffer);
     readPtr = (readPtr + toReadFromBuffer) % buffSize;
     len -= toReadFromBuffer;
@@ -134,7 +121,8 @@ uint32_t AudioFileSourceBuffer::read(void *data, uint32_t len)
   if (len) {
     // Still need more, try direct read from src
     bytes += src->read(ptr, len);
-    // We're out of buffered data, need to force a complete refill.  Thanks, @armSeb
+    // We're out of buffered data, need to force a complete refill.  Thanks,
+    // @armSeb
     readPtr = 0;
     writePtr = 0;
     length = 0;
@@ -147,14 +135,15 @@ uint32_t AudioFileSourceBuffer::read(void *data, uint32_t len)
   return bytes;
 }
 
-void AudioFileSourceBuffer::fill()
-{
-  if (!buffer) return;
+void AudioFileSourceBuffer::fill() {
+  if (!buffer)
+    return;
 
   if (length < buffSize) {
     // Now try and opportunistically fill the buffer
     if (readPtr > writePtr) {
-      if (readPtr == writePtr+1) return;
+      if (readPtr == writePtr + 1)
+        return;
       uint32_t bytesAvailMid = readPtr - writePtr - 1;
       int cnt = src->readNonBlock(&buffer[writePtr], bytesAvailMid);
       length += cnt;
@@ -167,7 +156,8 @@ void AudioFileSourceBuffer::fill()
       int cnt = src->readNonBlock(&buffer[writePtr], bytesAvailEnd);
       length += cnt;
       writePtr = (writePtr + cnt) % buffSize;
-      if (cnt != (int)bytesAvailEnd) return;
+      if (cnt != (int) bytesAvailEnd)
+        return;
     }
 
     if (readPtr > 1) {
@@ -179,12 +169,9 @@ void AudioFileSourceBuffer::fill()
   }
 }
 
-
-
-bool AudioFileSourceBuffer::loop()
-{
-  if (!src->loop()) return false;
+bool AudioFileSourceBuffer::loop() {
+  if (!src->loop())
+    return false;
   fill();
   return true;
-}  
-
+}

@@ -1,7 +1,7 @@
 /*
   AudioFileSourceFS
   Input Arduion "file" to be used by AudioGenerator
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCELITTLEFS_H
-#define _AUDIOFILESOURCELITTLEFS_H
+#pragma once
 
 #include <Arduino.h>
 #include <LittleFS.h>
@@ -27,13 +26,9 @@
 #include "AudioFileSource.h"
 #include "AudioFileSourceFS.h"
 
-class AudioFileSourceLittleFS : public AudioFileSourceFS
-{
-  public:
-    AudioFileSourceLittleFS() : AudioFileSourceFS(LittleFS) { };
-    AudioFileSourceLittleFS(const char *filename) : AudioFileSourceFS(LittleFS, filename) {};
-    // Others are inherited from base
+class AudioFileSourceLittleFS : public AudioFileSourceFS {
+ public:
+  AudioFileSourceLittleFS() : AudioFileSourceFS(LittleFS){};
+  AudioFileSourceLittleFS(const char *filename) : AudioFileSourceFS(LittleFS, filename){};
+  // Others are inherited from base
 };
-
-#endif
-

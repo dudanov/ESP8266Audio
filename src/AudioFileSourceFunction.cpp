@@ -20,15 +20,16 @@
 
 #include "AudioFileSourceFunction.h"
 
-AudioFileSourceFunction::AudioFileSourceFunction(float sec, uint16_t channels, uint32_t sample_per_sec, uint16_t bits_per_sample) {
+AudioFileSourceFunction::AudioFileSourceFunction(float sec, uint16_t channels, uint32_t sample_per_sec,
+                                                 uint16_t bits_per_sample) {
   uint32_t bytes_per_sec = sample_per_sec * channels * bits_per_sample / 8;
-  uint32_t len = uint32_t(sec * (float)bytes_per_sec);
+  uint32_t len = uint32_t(sec * (float) bytes_per_sec);
 
   // RIFF chunk
   memcpy(wav_header.riff.chunk_id, "RIFF", 4);
-  wav_header.riff.chunk_size = 4         // size of riff chunk w/o chunk_id and chunk_size
-                             + 8 + 16    // size of format chunk
-                             + 8 + len;  // size of data chunk
+  wav_header.riff.chunk_size = 4           // size of riff chunk w/o chunk_id and chunk_size
+                               + 8 + 16    // size of format chunk
+                               + 8 + len;  // size of data chunk
   memcpy(wav_header.riff.format, "WAVE", 4);
 
   // format chunk
@@ -52,16 +53,14 @@ AudioFileSourceFunction::AudioFileSourceFunction(float sec, uint16_t channels, u
   is_unique = false;
 }
 
-AudioFileSourceFunction::~AudioFileSourceFunction() {
-  close();
-}
+AudioFileSourceFunction::~AudioFileSourceFunction() { close(); }
 
-uint32_t AudioFileSourceFunction::read(void* data, uint32_t len) {
+uint32_t AudioFileSourceFunction::read(void *data, uint32_t len) {
   // callback size must be 1 or equal to channels
   if (!is_ready)
     return 0;
 
-  uint8_t* d = reinterpret_cast<uint8_t*>(data);
+  uint8_t *d = reinterpret_cast<uint8_t *>(data);
   uint32_t i = 0;
   while (i < len) {
     uint32_t p = pos + i;
@@ -71,7 +70,7 @@ uint32_t AudioFileSourceFunction::read(void* data, uint32_t len) {
       i += 1;
     } else {
       // data bytes
-      float time = (float)(p - sizeof(WavHeader)) / (float)wav_header.format.avg_bytes_per_sec;
+      float time = (float) (p - sizeof(WavHeader)) / (float) wav_header.format.avg_bytes_per_sec;
       float v = funcs[0](time);
       for (size_t ch = 0; ch < wav_header.format.channels; ++ch) {
         if (!is_unique && ch > 0)
@@ -79,12 +78,12 @@ uint32_t AudioFileSourceFunction::read(void* data, uint32_t len) {
 
         switch (wav_header.format.bits_per_sample) {
           case 8: {
-            Uint8AndInt8 vs {int8_t(v * (float)0x7F)};
+            Uint8AndInt8 vs{int8_t(v * (float) 0x7F)};
             d[i] = vs.u;
             break;
           }
           case 32: {
-            Uint8AndInt32 vs {int32_t(v * (float)0x7FFFFFFF)};
+            Uint8AndInt32 vs{int32_t(v * (float) 0x7FFFFFFF)};
             d[i + 0] = vs.u[0];
             d[i + 1] = vs.u[1];
             d[i + 2] = vs.u[2];
@@ -93,7 +92,7 @@ uint32_t AudioFileSourceFunction::read(void* data, uint32_t len) {
           }
           case 16:
           default: {
-            Uint8AndInt16 vs {int16_t(v * (float)0x7FFF)};
+            Uint8AndInt16 vs{int16_t(v * (float) 0x7FFF)};
             d[i + 0] = vs.u[0];
             d[i + 1] = vs.u[1];
             break;
@@ -109,17 +108,17 @@ uint32_t AudioFileSourceFunction::read(void* data, uint32_t len) {
 
 bool AudioFileSourceFunction::seek(int32_t pos, int dir) {
   if (dir == SEEK_SET) {
-    if (pos < 0 || (uint32_t)pos >= size)
+    if (pos < 0 || (uint32_t) pos >= size)
       return false;
     this->pos = pos;
   } else if (dir == SEEK_CUR) {
-    int32_t p = (int32_t)this->pos + pos;
-    if (p < 0 || (uint32_t)p >= size)
+    int32_t p = (int32_t) this->pos + pos;
+    if (p < 0 || (uint32_t) p >= size)
       return false;
     this->pos = p;
   } else {
-    int32_t p = (int32_t)this->size + pos;
-    if (p < 0 || (uint32_t)p >= size)
+    int32_t p = (int32_t) this->size + pos;
+    if (p < 0 || (uint32_t) p >= size)
       return false;
     this->pos = p;
   }
@@ -135,14 +134,8 @@ bool AudioFileSourceFunction::close() {
   return true;
 }
 
-bool AudioFileSourceFunction::isOpen() {
-  return is_ready;
-}
+bool AudioFileSourceFunction::isOpen() { return is_ready; }
 
-uint32_t AudioFileSourceFunction::getSize() {
-  return size;
-}
+uint32_t AudioFileSourceFunction::getSize() { return size; }
 
-uint32_t AudioFileSourceFunction::getPos() {
-  return pos;
-}
+uint32_t AudioFileSourceFunction::getPos() { return pos; }

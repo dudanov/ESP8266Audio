@@ -26,7 +26,7 @@
 #include <array>
 
 class AudioGeneratorGme : public AudioGenerator, public DataReader {
-public:
+ public:
   AudioGeneratorGme() : mPos(mBuf.size()) {}
   ~AudioGeneratorGme();
   bool begin(AudioFileSource *source, AudioOutput *output) override;
@@ -35,7 +35,7 @@ public:
   bool stop() override;
   bool playTrack(unsigned num);
 
-protected:
+ protected:
   gme_type_t mType{nullptr};
   MusicEmu *mEmu{nullptr};
   std::array<int16_t, 1024> mBuf;

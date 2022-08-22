@@ -1,7 +1,7 @@
 /*
   AudioOutputSerialWAV
   Writes a mostly correct WAV file to the serial port
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,12 @@
 
 #include "AudioOutputSerialWAV.h"
 
-static const uint8_t wavHeaderTemplate[] PROGMEM = { // Hardcoded simple WAV header with 0xffffffff lengths all around
-    0x52, 0x49, 0x46, 0x46, 0xff, 0xff, 0xff, 0xff, 0x57, 0x41, 0x56, 0x45,
-    0x66, 0x6d, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x22, 0x56, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x04, 0x00, 0x10, 0x00,
-    0x64, 0x61, 0x74, 0x61, 0xff, 0xff, 0xff, 0xff };
+static const uint8_t wavHeaderTemplate[] PROGMEM = {  // Hardcoded simple WAV header with 0xffffffff lengths all around
+    0x52, 0x49, 0x46, 0x46, 0xff, 0xff, 0xff, 0xff, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6d, 0x74,
+    0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x22, 0x56, 0x00, 0x00, 0x88, 0x58,
+    0x01, 0x00, 0x04, 0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61, 0xff, 0xff, 0xff, 0xff};
 
-bool AudioOutputSerialWAV::begin()
-{
+bool AudioOutputSerialWAV::begin() {
   uint8_t wavHeader[sizeof(wavHeaderTemplate)];
   memcpy_P(wavHeader, wavHeaderTemplate, sizeof(wavHeaderTemplate));
   wavHeader[22] = channels & 0xff;
@@ -49,13 +48,12 @@ bool AudioOutputSerialWAV::begin()
   return true;
 }
 
-bool AudioOutputSerialWAV::ConsumeSample(int16_t sample[2])
-{
+bool AudioOutputSerialWAV::ConsumeSample(int16_t sample[2]) {
   if (++count == 200) {
     count = 0;
     return false;
   }
-  for (int i=0; i<channels; i++) {
+  for (int i = 0; i < channels; i++) {
     if (bps == 8) {
       uint8_t l = sample[i] & 0xff;
       Serial.write(l);
@@ -69,10 +67,7 @@ bool AudioOutputSerialWAV::ConsumeSample(int16_t sample[2])
   return true;
 }
 
-
-bool AudioOutputSerialWAV::stop()
-{
+bool AudioOutputSerialWAV::stop() {
   audioLogger->printf_P(PSTR("\n\n\nEOF\n\n\n"));
   return true;
 }
- 

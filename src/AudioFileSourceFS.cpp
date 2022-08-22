@@ -1,7 +1,7 @@
 /*
   AudioFileSourceFS
   Input "file" to be used by AudioGenerator
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -23,14 +23,12 @@
 #include "SPIFFS.h"
 #endif
 
-AudioFileSourceFS::AudioFileSourceFS(FS &fs, const char *filename)
-{
+AudioFileSourceFS::AudioFileSourceFS(FS &fs, const char *filename) {
   filesystem = &fs;
   open(filename);
 }
 
-bool AudioFileSourceFS::open(const char *filename)
-{
+bool AudioFileSourceFS::open(const char *filename) {
 #ifndef ESP32
   filesystem->begin();
 #endif
@@ -38,36 +36,26 @@ bool AudioFileSourceFS::open(const char *filename)
   return f;
 }
 
-AudioFileSourceFS::~AudioFileSourceFS()
-{
-  if (f) f.close();
+AudioFileSourceFS::~AudioFileSourceFS() {
+  if (f)
+    f.close();
 }
 
-uint32_t AudioFileSourceFS::read(void *data, uint32_t len)
-{
-  return f.read(reinterpret_cast<uint8_t*>(data), len);
+uint32_t AudioFileSourceFS::read(void *data, uint32_t len) { return f.read(reinterpret_cast<uint8_t *>(data), len); }
+
+bool AudioFileSourceFS::seek(int32_t pos, int dir) {
+  return f.seek(pos, (dir == SEEK_SET) ? SeekSet : (dir == SEEK_CUR) ? SeekCur : SeekEnd);
 }
 
-bool AudioFileSourceFS::seek(int32_t pos, int dir)
-{
-  return f.seek(pos, (dir==SEEK_SET)?SeekSet:(dir==SEEK_CUR)?SeekCur:SeekEnd);
-}
-
-bool AudioFileSourceFS::close()
-{
+bool AudioFileSourceFS::close() {
   f.close();
   return true;
 }
 
-bool AudioFileSourceFS::isOpen()
-{
-  return f?true:false;
-}
+bool AudioFileSourceFS::isOpen() { return f ? true : false; }
 
-uint32_t AudioFileSourceFS::getSize()
-{
-  if (!f) return 0;
+uint32_t AudioFileSourceFS::getSize() {
+  if (!f)
+    return 0;
   return f.size();
 }
-
-

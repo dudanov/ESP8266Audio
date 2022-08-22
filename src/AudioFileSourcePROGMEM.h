@@ -1,7 +1,7 @@
 /*
   AudioFileSourcePROGMEM
   Store a "file" as a PROGMEM array and use it as audio source data
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,32 +18,32 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCEPROGMEM_H
-#define _AUDIOFILESOURCEPROGMEM_H
+#pragma once
 
 #include "AudioFileSource.h"
 
-class AudioFileSourcePROGMEM : public AudioFileSource
-{
-  public:
-    AudioFileSourcePROGMEM();
-    AudioFileSourcePROGMEM(const void *data, uint32_t len);
-    virtual ~AudioFileSourcePROGMEM() override;
-    virtual uint32_t read(void *data, uint32_t len) override;
-    virtual bool seek(int32_t pos, int dir) override;
-    virtual bool close() override;
-    virtual bool isOpen() override;
-    virtual uint32_t getSize() override;
-    virtual uint32_t getPos() override { if (!opened) return 0; else return filePointer; };
+class AudioFileSourcePROGMEM : public AudioFileSource {
+ public:
+  AudioFileSourcePROGMEM();
+  AudioFileSourcePROGMEM(const void *data, uint32_t len);
+  virtual ~AudioFileSourcePROGMEM() override;
+  virtual uint32_t read(void *data, uint32_t len) override;
+  virtual bool seek(int32_t pos, int dir) override;
+  virtual bool close() override;
+  virtual bool isOpen() override;
+  virtual uint32_t getSize() override;
+  virtual uint32_t getPos() override {
+    if (!opened)
+      return 0;
+    else
+      return filePointer;
+  };
 
-    bool open(const void *data, uint32_t len);
+  bool open(const void *data, uint32_t len);
 
-  private:
-    bool opened;
-    const void *progmemData;
-    uint32_t progmemLen;
-    uint32_t filePointer;
+ private:
+  bool opened;
+  const void *progmemData;
+  uint32_t progmemLen;
+  uint32_t filePointer;
 };
-
-#endif
-

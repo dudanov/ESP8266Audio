@@ -1,7 +1,7 @@
 /*
   AudioGeneratorAAC
   Audio output generator using the Helix AAC decoder
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,12 +18,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma GCC optimize ("O3")
+#pragma GCC optimize("O3")
 
 #include "AudioGeneratorAAC.h"
 
-AudioGeneratorAAC::AudioGeneratorAAC()
-{
+AudioGeneratorAAC::AudioGeneratorAAC() {
   preallocateSpace = NULL;
   preallocateSize = 0;
 
@@ -31,8 +30,8 @@ AudioGeneratorAAC::AudioGeneratorAAC()
   file = NULL;
   output = NULL;
 
-  buff = (uint8_t*)malloc(buffLen);
-  outSample = (int16_t*)malloc(1024 * 2 * sizeof(uint16_t));
+  buff = (uint8_t *) malloc(buffLen);
+  outSample = (int16_t *) malloc(1024 * 2 * sizeof(uint16_t));
   if (!buff || !outSample) {
     audioLogger->printf_P(PSTR("ERROR: Out of memory in AAC\n"));
     Serial.flush();
@@ -52,8 +51,7 @@ AudioGeneratorAAC::AudioGeneratorAAC()
   lastChannels = 0;
 }
 
-AudioGeneratorAAC::AudioGeneratorAAC(void *preallocateData, int preallocateSz)
-{
+AudioGeneratorAAC::AudioGeneratorAAC(void *preallocateData, int preallocateSz) {
   preallocateSpace = preallocateData;
   preallocateSize = preallocateSz;
 
@@ -61,14 +59,14 @@ AudioGeneratorAAC::AudioGeneratorAAC(void *preallocateData, int preallocateSz)
   file = NULL;
   output = NULL;
 
-  uint8_t *p = (uint8_t*)preallocateSpace;
-  buff = (uint8_t*) p;
+  uint8_t *p = (uint8_t *) preallocateSpace;
+  buff = (uint8_t *) p;
   p += (buffLen + 7) & ~7;
-  outSample = (int16_t*) p;
+  outSample = (int16_t *) p;
   p += (1024 * 2 * sizeof(int16_t) + 7) & ~7;
-  int used = p - (uint8_t*)preallocateSpace;
+  int used = p - (uint8_t *) preallocateSpace;
   int availSpace = preallocateSize - used;
-  if (availSpace < 0 ) {
+  if (availSpace < 0) {
     audioLogger->printf_P(PSTR("ERROR: Out of memory in AAC\n"));
   }
 
@@ -85,10 +83,7 @@ AudioGeneratorAAC::AudioGeneratorAAC(void *preallocateData, int preallocateSz)
   lastChannels = 0;
 }
 
-
-
-AudioGeneratorAAC::~AudioGeneratorAAC()
-{
+AudioGeneratorAAC::~AudioGeneratorAAC() {
   if (!preallocateSpace) {
     AACFreeDecoder(hAACDecoder);
     free(buff);
@@ -96,41 +91,39 @@ AudioGeneratorAAC::~AudioGeneratorAAC()
   }
 }
 
-bool AudioGeneratorAAC::stop()
-{
+bool AudioGeneratorAAC::stop() {
   running = false;
   output->stop();
   return file->close();
 }
 
-bool AudioGeneratorAAC::isRunning()
-{
-  return running;
-}
+bool AudioGeneratorAAC::isRunning() { return running; }
 
-bool AudioGeneratorAAC::FillBufferWithValidFrame()
-{
-  buff[0] = 0; // Destroy any existing sync word @ 0
+bool AudioGeneratorAAC::FillBufferWithValidFrame() {
+  buff[0] = 0;  // Destroy any existing sync word @ 0
   int nextSync;
   do {
     nextSync = AACFindSyncWord(buff + lastFrameEnd, buffValid - lastFrameEnd);
-    if (nextSync >= 0) nextSync += lastFrameEnd;
+    if (nextSync >= 0)
+      nextSync += lastFrameEnd;
     lastFrameEnd = 0;
     if (nextSync == -1) {
-      if (buffValid && buff[buffValid-1]==0xff) { // Could be 1st half of syncword, preserve it...
+      if (buffValid && buff[buffValid - 1] == 0xff) {  // Could be 1st half of syncword, preserve it...
         buff[0] = 0xff;
-        buffValid = file->read(buff+1, buffLen-1);
-        if (buffValid==0) return false; // No data available, EOF
-      } else { // Try a whole new buffer
-        buffValid = file->read(buff, buffLen-1);
-        if (buffValid==0) return false; // No data available, EOF
+        buffValid = file->read(buff + 1, buffLen - 1);
+        if (buffValid == 0)
+          return false;  // No data available, EOF
+      } else {           // Try a whole new buffer
+        buffValid = file->read(buff, buffLen - 1);
+        if (buffValid == 0)
+          return false;  // No data available, EOF
       }
     }
   } while (nextSync == -1);
 
   // Move the frame to start at offset 0 in the buffer
-  buffValid -= nextSync; // Throw out prior to nextSync
-  memmove(buff, buff+nextSync, buffValid);
+  buffValid -= nextSync;  // Throw out prior to nextSync
+  memmove(buff, buff + nextSync, buffValid);
 
   // We have a sync word at 0 now, try and fill remainder of buffer
   buffValid += file->read(buff + buffValid, buffLen - buffValid);
@@ -138,20 +131,21 @@ bool AudioGeneratorAAC::FillBufferWithValidFrame()
   return true;
 }
 
-bool AudioGeneratorAAC::loop()
-{
-  if (!running) goto done; // Nothing to do here!
+bool AudioGeneratorAAC::loop() {
+  if (!running)
+    goto done;  // Nothing to do here!
 
   // If we've got data, try and pump it out...
   while (validSamples) {
     if (lastChannels == 1) {
-       lastSample[0] = outSample[curSample];
-       lastSample[1] = outSample[curSample];
+      lastSample[0] = outSample[curSample];
+      lastSample[1] = outSample[curSample];
     } else {
-      lastSample[0] = outSample[curSample*2];
-      lastSample[1] = outSample[curSample*2 + 1];
+      lastSample[0] = outSample[curSample * 2];
+      lastSample[1] = outSample[curSample * 2 + 1];
     }
-    if (!output->ConsumeSample(lastSample)) goto done; // Can't send, but no error detected
+    if (!output->ConsumeSample(lastSample))
+      goto done;  // Can't send, but no error detected
     validSamples--;
     curSample++;
   }
@@ -171,7 +165,7 @@ bool AudioGeneratorAAC::loop()
       lastFrameEnd = buffValid - bytesLeft;
       AACFrameInfo fi;
       AACGetLastFrameInfo(hAACDecoder, &fi);
-      if ((int)fi.sampRateOut != (int)lastRate) {
+      if ((int) fi.sampRateOut != (int) lastRate) {
         output->SetRate(fi.sampRateOut);
         lastRate = fi.sampRateOut;
       }
@@ -183,7 +177,7 @@ bool AudioGeneratorAAC::loop()
       validSamples = fi.outputSamps / lastChannels;
     }
   } else {
-    running = false; // No more data, we're done here...
+    running = false;  // No more data, we're done here...
   }
 
 done:
@@ -193,27 +187,25 @@ done:
   return running;
 }
 
-bool AudioGeneratorAAC::begin(AudioFileSource *source, AudioOutput *output)
-{
-  if (!source) return false;
+bool AudioGeneratorAAC::begin(AudioFileSource *source, AudioOutput *output) {
+  if (!source)
+    return false;
   file = source;
-  if (!output) return false;
+  if (!output)
+    return false;
   this->output = output;
-  if (!file->isOpen()) return false; // Error
+  if (!file->isOpen())
+    return false;  // Error
 
   output->begin();
-  
+
   // AAC always comes out at 16 bits
   output->SetBitsPerSample(16);
- 
 
   memset(buff, 0, buffLen);
-  memset(outSample, 0, 1024*2*sizeof(int16_t));
+  memset(outSample, 0, 1024 * 2 * sizeof(int16_t));
 
- 
   running = true;
-  
+
   return true;
 }
-
-

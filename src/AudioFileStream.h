@@ -1,7 +1,7 @@
 /*
   AudioFileStream
   Convert an AudioFileSource* to a Stream*
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,31 +18,30 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AUDIOFILESTREAM_H
-#define AUDIOFILESTREAM_H
+#pragma once
 
 #include <Arduino.h>
 #include "AudioFileSource.h"
 
-class AudioFileStream : public Stream
-{
-public:
+class AudioFileStream : public Stream {
+ public:
   AudioFileStream(AudioFileSource *source, int definedLen);
   virtual ~AudioFileStream();
 
-public:
+ public:
   // Stream interface - see the Arduino library documentation.
   virtual int available() override;
   virtual int read() override;
   virtual int peek() override;
   virtual void flush() override;
-  virtual size_t write(uint8_t x) override { (void)x; return 0; };
+  virtual size_t write(uint8_t x) override {
+    (void) x;
+    return 0;
+  };
 
-private:
+ private:
   AudioFileSource *src;
   int saved;
   int len;
   int ptr;
 };
-
-#endif

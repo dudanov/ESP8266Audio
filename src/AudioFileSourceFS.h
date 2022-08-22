@@ -1,7 +1,7 @@
 /*
   AudioFileSourceFS
   Input Arduion "file" to be used by AudioGenerator
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,34 +18,33 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCEFS_H
-#define _AUDIOFILESOURCEFS_H
+#pragma once
 
 #include <Arduino.h>
 #include <FS.h>
 
 #include "AudioFileSource.h"
 
-class AudioFileSourceFS : public AudioFileSource
-{
-  public:
-    AudioFileSourceFS(fs::FS &fs) { filesystem = &fs; }
-    AudioFileSourceFS(fs::FS &fs, const char *filename);
-    virtual ~AudioFileSourceFS() override;
-    
-    virtual bool open(const char *filename) override;
-    virtual uint32_t read(void *data, uint32_t len) override;
-    virtual bool seek(int32_t pos, int dir) override;
-    virtual bool close() override;
-    virtual bool isOpen() override;
-    virtual uint32_t getSize() override;
-    virtual uint32_t getPos() override { if (!f) return 0; else return f.position(); };
+class AudioFileSourceFS : public AudioFileSource {
+ public:
+  AudioFileSourceFS(fs::FS &fs) { filesystem = &fs; }
+  AudioFileSourceFS(fs::FS &fs, const char *filename);
+  virtual ~AudioFileSourceFS() override;
 
-  private:
-    fs::FS *filesystem;
-    fs::File f;
+  virtual bool open(const char *filename) override;
+  virtual uint32_t read(void *data, uint32_t len) override;
+  virtual bool seek(int32_t pos, int dir) override;
+  virtual bool close() override;
+  virtual bool isOpen() override;
+  virtual uint32_t getSize() override;
+  virtual uint32_t getPos() override {
+    if (!f)
+      return 0;
+    else
+      return f.position();
+  };
+
+ private:
+  fs::FS *filesystem;
+  fs::File f;
 };
-
-
-#endif
-

@@ -1,7 +1,7 @@
 /*
   AudioGeneratorOpus
   Audio output generator that plays Opus audio files
-    
+
   Copyright (C) 2020  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,7 @@
 
 #include <AudioGeneratorOpus.h>
 
-AudioGeneratorOpus::AudioGeneratorOpus()
-{
+AudioGeneratorOpus::AudioGeneratorOpus() {
   of = nullptr;
   buff = nullptr;
   buffPtr = 0;
@@ -29,9 +28,9 @@ AudioGeneratorOpus::AudioGeneratorOpus()
   running = false;
 }
 
-AudioGeneratorOpus::~AudioGeneratorOpus()
-{
-  if (of) op_free(of);
+AudioGeneratorOpus::~AudioGeneratorOpus() {
+  if (of)
+    op_free(of);
   of = nullptr;
   free(buff);
   buff = nullptr;
@@ -39,19 +38,23 @@ AudioGeneratorOpus::~AudioGeneratorOpus()
 
 #define OPUS_BUFF 1024
 
-bool AudioGeneratorOpus::begin(AudioFileSource *source, AudioOutput *output)
-{
-  buff = (int16_t*)malloc(OPUS_BUFF * sizeof(int16_t));
-  if (!buff) return false;
+bool AudioGeneratorOpus::begin(AudioFileSource *source, AudioOutput *output) {
+  buff = (int16_t *) malloc(OPUS_BUFF * sizeof(int16_t));
+  if (!buff)
+    return false;
 
-  if (!source) return false;
+  if (!source)
+    return false;
   file = source;
-  if (!output) return false;
+  if (!output)
+    return false;
   this->output = output;
-  if (!file->isOpen()) return false; // Error
+  if (!file->isOpen())
+    return false;  // Error
 
-  of = op_open_callbacks((void*)this, &cb, nullptr, 0, nullptr);
-  if (!of) return false;
+  of = op_open_callbacks((void *) this, &cb, nullptr, 0, nullptr);
+  if (!of)
+    return false;
 
   prev_li = -1;
   lastSample[0] = 0;
@@ -71,16 +74,16 @@ bool AudioGeneratorOpus::begin(AudioFileSource *source, AudioOutput *output)
   return true;
 }
 
-bool AudioGeneratorOpus::loop()
-{
+bool AudioGeneratorOpus::loop() {
+  if (!running)
+    goto done;
 
-  if (!running) goto done;
-
-  if (!output->ConsumeSample(lastSample)) goto done; // Try and send last buffered sample
+  if (!output->ConsumeSample(lastSample))
+    goto done;  // Try and send last buffered sample
 
   do {
     if (buffPtr == buffLen) {
-      int ret = op_read_stereo(of, (opus_int16 *)buff, OPUS_BUFF);
+      int ret = op_read_stereo(of, (opus_int16 *) buff, OPUS_BUFF);
       if (ret == OP_HOLE) {
         // fprintf(stderr,"\nHole detected! Corrupt file segment?\n");
         continue;
@@ -88,12 +91,12 @@ bool AudioGeneratorOpus::loop()
         running = false;
         goto done;
       }
-     buffPtr = 0;
-     buffLen = ret * 2;
+      buffPtr = 0;
+      buffLen = ret * 2;
     }
 
-    lastSample[AudioOutput::LEFTCHANNEL] = buff[buffPtr] & 0xffff; 
-    lastSample[AudioOutput::RIGHTCHANNEL] = buff[buffPtr+1] & 0xffff; 
+    lastSample[AudioOutput::LEFTCHANNEL] = buff[buffPtr] & 0xffff;
+    lastSample[AudioOutput::RIGHTCHANNEL] = buff[buffPtr + 1] & 0xffff;
     buffPtr += 2;
   } while (running && output->ConsumeSample(lastSample));
 
@@ -104,9 +107,9 @@ done:
   return running;
 }
 
-bool AudioGeneratorOpus::stop()
-{
-  if (of) op_free(of);
+bool AudioGeneratorOpus::stop() {
+  if (of)
+    op_free(of);
   of = nullptr;
   free(buff);
   buff = nullptr;
@@ -115,26 +118,24 @@ bool AudioGeneratorOpus::stop()
   return true;
 }
 
-bool AudioGeneratorOpus::isRunning()
-{
-  return running;
-}
+bool AudioGeneratorOpus::isRunning() { return running; }
 
 int AudioGeneratorOpus::read_cb(unsigned char *_ptr, int _nbytes) {
-  if (_nbytes == 0) return 0;
+  if (_nbytes == 0)
+    return 0;
   _nbytes = file->read(_ptr, _nbytes);
-  if (_nbytes == 0) return -1;
+  if (_nbytes == 0)
+    return -1;
   return _nbytes;
 }
 
 int AudioGeneratorOpus::seek_cb(opus_int64 _offset, int _whence) {
-  if (!file->seek((int32_t)_offset, _whence)) return -1;
+  if (!file->seek((int32_t) _offset, _whence))
+    return -1;
   return 0;
 }
 
-opus_int64 AudioGeneratorOpus::tell_cb() {
-  return file->getPos();
-}
+opus_int64 AudioGeneratorOpus::tell_cb() { return file->getPos(); }
 
 int AudioGeneratorOpus::close_cb() {
   // NO OP, we close in main loop

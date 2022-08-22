@@ -1,7 +1,7 @@
 /*
   AudioFileSourcePROGMEM
   Store a "file" as a PROGMEM array and use it as audio source data
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -20,26 +20,20 @@
 
 #include "AudioFileSourcePROGMEM.h"
 
-AudioFileSourcePROGMEM::AudioFileSourcePROGMEM()
-{
+AudioFileSourcePROGMEM::AudioFileSourcePROGMEM() {
   opened = false;
   progmemData = NULL;
   progmemLen = 0;
   filePointer = 0;
 }
 
-AudioFileSourcePROGMEM::AudioFileSourcePROGMEM(const void *data, uint32_t len)
-{
-  open(data, len);
-}
+AudioFileSourcePROGMEM::AudioFileSourcePROGMEM(const void *data, uint32_t len) { open(data, len); }
 
-AudioFileSourcePROGMEM::~AudioFileSourcePROGMEM()
-{
-}
+AudioFileSourcePROGMEM::~AudioFileSourcePROGMEM() {}
 
-bool AudioFileSourcePROGMEM::open(const void *data, uint32_t len)
-{
-  if (!data || !len) return false;
+bool AudioFileSourcePROGMEM::open(const void *data, uint32_t len) {
+  if (!data || !len)
+    return false;
 
   opened = true;
   progmemData = data;
@@ -48,52 +42,56 @@ bool AudioFileSourcePROGMEM::open(const void *data, uint32_t len)
   return true;
 }
 
-uint32_t AudioFileSourcePROGMEM::getSize()
-{
-  if (!opened) return 0;
+uint32_t AudioFileSourcePROGMEM::getSize() {
+  if (!opened)
+    return 0;
   return progmemLen;
 }
 
-bool AudioFileSourcePROGMEM::isOpen()
-{
-  return opened;
-}
+bool AudioFileSourcePROGMEM::isOpen() { return opened; }
 
-bool AudioFileSourcePROGMEM::close()
-{
+bool AudioFileSourcePROGMEM::close() {
   opened = false;
   progmemData = NULL;
   progmemLen = 0;
   filePointer = 0;
   return true;
-}  
+}
 
-bool AudioFileSourcePROGMEM::seek(int32_t pos, int dir)
-{
-  if (!opened) return false;
+bool AudioFileSourcePROGMEM::seek(int32_t pos, int dir) {
+  if (!opened)
+    return false;
   uint32_t newPtr;
   switch (dir) {
-    case SEEK_SET: newPtr = pos; break;
-    case SEEK_CUR: newPtr = filePointer + pos; break;
-    case SEEK_END: newPtr = progmemLen - pos; break;
-    default: return false;
+    case SEEK_SET:
+      newPtr = pos;
+      break;
+    case SEEK_CUR:
+      newPtr = filePointer + pos;
+      break;
+    case SEEK_END:
+      newPtr = progmemLen - pos;
+      break;
+    default:
+      return false;
   }
-  if (newPtr > progmemLen) return false;
+  if (newPtr > progmemLen)
+    return false;
   filePointer = newPtr;
   return true;
 }
 
-uint32_t AudioFileSourcePROGMEM::read(void *data, uint32_t len)
-{
-  if (!opened) return 0;
-  if (filePointer >= progmemLen) return 0;
+uint32_t AudioFileSourcePROGMEM::read(void *data, uint32_t len) {
+  if (!opened)
+    return 0;
+  if (filePointer >= progmemLen)
+    return 0;
 
   uint32_t toRead = progmemLen - filePointer;
-  if (toRead > len) toRead = len;
+  if (toRead > len)
+    toRead = len;
 
-  memcpy_P(data, reinterpret_cast<const uint8_t*>(progmemData)+filePointer, toRead);
+  memcpy_P(data, reinterpret_cast<const uint8_t *>(progmemData) + filePointer, toRead);
   filePointer += toRead;
   return toRead;
 }
-
-

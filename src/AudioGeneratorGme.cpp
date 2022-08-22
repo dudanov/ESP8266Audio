@@ -21,13 +21,9 @@
 #include "AudioGeneratorGme.h"
 #include "libgme/MusicEmu.h"
 
-inline long AudioGeneratorGme::remain() const {
-  return this->file->getSize() - this->file->getPos();
-}
+inline long AudioGeneratorGme::remain() const { return this->file->getSize() - this->file->getPos(); }
 
-blargg_err_t AudioGeneratorGme::skip(long count) {
-  return this->file->seek(count, SEEK_CUR) ? nullptr : eof_error;
-}
+blargg_err_t AudioGeneratorGme::skip(long count) { return this->file->seek(count, SEEK_CUR) ? nullptr : eof_error; }
 
 blargg_err_t AudioGeneratorGme::read(void *dst, long size) {
   uint8_t *p = static_cast<uint8_t *>(dst);
