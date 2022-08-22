@@ -105,7 +105,7 @@ void AyApu::mWriteRegister(unsigned addr, uint8_t data) {
 
   // envelope mode
   if (addr == R13)
-    return mWriteR13(data);
+    return mEnvelope.Write(data);
 
   // handle period changes accurately
   unsigned idx = addr / 2;
@@ -124,7 +124,8 @@ void AyApu::mWriteRegister(unsigned addr, uint8_t data) {
   // TODO: same as above for envelope timer, and it also has a divide by two after it
 }
 
-inline void AyApu::mWriteR13(uint8_t data) {
+inline void AyApu::Envelope::Write(uint8_t data) {
+  // Full table of the upper 8 envelope waveforms
   static const uint8_t MODES[8][48] PROGMEM = {
       {0xFF, 0xB4, 0x80, 0x5A, 0x40, 0x2D, 0x20, 0x17, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03, 0x02, 0x00,
        0xFF, 0xB4, 0x80, 0x5A, 0x40, 0x2D, 0x20, 0x17, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03, 0x02, 0x00,
@@ -151,11 +152,11 @@ inline void AyApu::mWriteR13(uint8_t data) {
        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
   };
-  if (!(data & Envelope::CONTINUE))  // convert modes 0-7 to proper equivalents
-    data = (data & Envelope::ATTACK) ? 15 : 9;
-  mEnvelope.mWave = MODES[data - 7];
-  mEnvelope.mPos = -48;
-  mEnvelope.mDelay = 0;  // will get set to envelope period in mRunUntil()
+  if (!(data & CONTINUE))  // convert modes 0-7 to proper equivalents
+    data = (data & ATTACK) ? 15 : 9;
+  mWave = MODES[data - 7];
+  mPos = -48;
+  mDelay = 0;  // will get set to envelope period in mRunUntil()
 }
 
 const unsigned NOISE_OFF = 0b1000;
@@ -192,10 +193,10 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     osc_output->setModified();
 
     // period
-    int half_vol = 0;
+    bool half_vol = false;
     blip_time_t inaudible_period = (blargg_ulong) (osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
     if (osc.mPeriod <= inaudible_period && !(mode & TONE_OFF)) {
-      half_vol = 1;  // Actually around 60%, but 50% is close enough
+      half_vol = true;  // Actually around 60%, but 50% is close enough
       mode |= TONE_OFF;
     }
 

@@ -62,7 +62,6 @@ class AyApu {
  private:
   std::array<uint8_t, RNUM> mRegs;
   void mWriteRegister(unsigned address, uint8_t data);
-  void mWriteR13(uint8_t data);
 
   static uint8_t mGetAmp(size_t idx);
   void mRunUntil(blip_time_t);
@@ -83,6 +82,7 @@ class AyApu {
   struct Envelope {
     enum { HOLD = 0b0001, ALTERNATE = 0b0010, ATTACK = 0b0100, CONTINUE = 0b1000 };
     Envelope();
+    void Write(uint8_t data);
     blip_time_t mDelay;
     const uint8_t *mWave;
     int mPos;
