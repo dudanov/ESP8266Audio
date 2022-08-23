@@ -164,17 +164,17 @@ blargg_err_t HesEmu::mLoad(DataReader &in) {
 
   rom.setAddr(addr);
 
-  mSetChannelsNumber(apu.OSCS_NUM);
+  mSetChannelsNumber(mApu.OSCS_NUM);
 
-  apu.volume(mGetGain());
+  mApu.volume(mGetGain());
 
   return mSetupBuffer(7159091);
 }
 
-void HesEmu::mUpdateEq(BlipEq const &eq) { apu.treble_eq(eq); }
+void HesEmu::mUpdateEq(BlipEq const &eq) { mApu.treble_eq(eq); }
 
 void HesEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
-  apu.osc_output(i, center, left, right);
+  mApu.osc_output(i, center, left, right);
 }
 
 // Emulation
@@ -193,7 +193,7 @@ blargg_err_t HesEmu::mStartTrack(int track) {
   memset(ram, 0, sizeof ram);  // some HES music relies on zero fill
   memset(sgx, 0, sizeof sgx);
 
-  apu.reset();
+  mApu.reset();
   cpu::reset();
 
   for (unsigned i = 0; i < sizeof header_.banks; i++)
@@ -253,12 +253,12 @@ void HesEmu::cpu_write_vdp(int addr, int data) {
 }
 
 void HesEmu::cpu_write_(hes_addr_t addr, int data) {
-  if (unsigned(addr - apu.START_ADDR) <= apu.END_ADDR - apu.START_ADDR) {
-    GME_APU_HOOK(this, addr - apu.START_ADDR, data);
+  if (unsigned(addr - mApu.START_ADDR) <= mApu.END_ADDR - mApu.START_ADDR) {
+    GME_APU_HOOK(this, addr - mApu.START_ADDR, data);
     // avoid going way past end when a long block xfer is writing to I/O
     // space
     hes_time_t t = min(time(), end_time() + 8);
-    apu.write_data(t, addr, data);
+    mApu.write_data(t, addr, data);
     return;
   }
 
@@ -479,7 +479,7 @@ blargg_err_t HesEmu::mRunClocks(blip_time_t &duration_, int) {
   cpu::end_frame(duration);
   adjTime(irq.timer, duration);
   adjTime(irq.vdp, duration);
-  apu.end_frame(duration);
+  mApu.end_frame(duration);
 
   return 0;
 }

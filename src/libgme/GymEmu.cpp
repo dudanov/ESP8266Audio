@@ -143,9 +143,9 @@ extern gme_type_t const gme_gym_type = &gme_gym_type_;
 
 blargg_err_t GymEmu::mSetSampleRate(long sample_rate) {
   BlipEq eq(-32, 8000, sample_rate);
-  apu.setTrebleEq(eq);
+  mApu.setTrebleEq(eq);
   dac_synth.setTrebleEq(eq);
-  apu.setVolume(0.135 * FM_GAIN * mGetGain());
+  mApu.setVolume(0.135 * FM_GAIN * mGetGain());
   dac_synth.setVolume(0.125 / 256 * FM_GAIN * mGetGain());
   double factor = DualResampler::setup(OVERSAMPLE_FACTOR, 0.990, FM_GAIN * mGetGain());
   fm_sample_rate = sample_rate * factor;
@@ -175,7 +175,7 @@ void GymEmu::mMuteChannel(int mask) {
   MusicEmu::mMuteChannel(mask);
   fm.mute_voices(mask);
   dac_muted = (mask & 0x40) != 0;
-  apu.SetOutput((mask & 0x80) ? 0 : &blip_buf);
+  mApu.SetOutput((mask & 0x80) ? 0 : &blip_buf);
 }
 
 blargg_err_t GymEmu::mLoad(uint8_t const *in, long size) {
@@ -209,7 +209,7 @@ blargg_err_t GymEmu::mStartTrack(int track) {
   dac_amp = -1;
 
   fm.reset();
-  apu.reset();
+  mApu.reset();
   blip_buf.Clear();
   DualResampler::clear();
   return 0;
@@ -283,7 +283,7 @@ void GymEmu::parse_frame() {
     } else if (cmd == 2) {
       fm.write1(data, *pos++);
     } else if (cmd == 3) {
-      apu.writeData(0, data);
+      mApu.writeData(0, data);
     } else {
       // to do: many GYM streams are full of errors, and error count
       // should reflect cases where music is really having problems
@@ -313,7 +313,7 @@ int GymEmu::mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *buf) {
   if (!IsTrackEnded())
     parse_frame();
 
-  apu.EndFrame(blip_time);
+  mApu.EndFrame(blip_time);
 
   memset(buf, 0, sample_count * sizeof *buf);
   fm.run(sample_count >> 1, buf);

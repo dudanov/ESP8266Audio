@@ -231,7 +231,7 @@ void SapEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer
   if (i2 >= 0)
     apu2.osc_output(i2, right);
   else
-    apu.osc_output(i, (info.stereo ? left : center));
+    mApu.osc_output(i, (info.stereo ? left : center));
 }
 
 // Emulation
@@ -303,7 +303,7 @@ blargg_err_t SapEmu::mStartTrack(int track) {
       in += 2;
   }
 
-  apu.reset(&apu_impl);
+  mApu.reset(&apu_impl);
   apu2.reset(&apu_impl);
   cpu::reset(mem.ram);
   time_mask = 0;  // disables sound during init
@@ -322,7 +322,7 @@ blargg_err_t SapEmu::mStartTrack(int track) {
 void SapEmu::cpu_write_(sap_addr_t addr, int data) {
   if ((addr ^ SapApu::start_addr) <= (SapApu::end_addr - SapApu::start_addr)) {
     GME_APU_HOOK(this, addr - SapApu::start_addr, data);
-    apu.write_data(time() & time_mask, addr, data);
+    mApu.write_data(time() & time_mask, addr, data);
     return;
   }
 
@@ -371,7 +371,7 @@ blargg_err_t SapEmu::mRunClocks(blip_time_t &duration, int) {
   check(next_play >= 0);
   if (next_play < 0)
     next_play = 0;
-  apu.end_frame(duration);
+  mApu.end_frame(duration);
   if (info.stereo)
     apu2.end_frame(duration);
 

@@ -93,7 +93,7 @@ class HesEmu : private HesCpu, public ClassicEmu {
   void recalc_timer_load();
 
   // large items
-  HesApu apu;
+  HesApu mApu;
   uint8_t sgx[3 * PAGE_SIZE + cpu_padding];
 
   void irq_changed();

@@ -66,7 +66,7 @@ class GymEmu : public MusicEmu, private DualResampler {
   BlipBuffer blip_buf;
   Ym2612Emu fm;
   BlipSynth<BLIP_MED_QUALITY, 1> dac_synth;
-  gme::emu::sms::SmsApu apu;
+  gme::emu::sms::SmsApu mApu;
   uint8_t dac_buf[1024];
 };
 

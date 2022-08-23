@@ -37,7 +37,7 @@ AyEmu::AyEmu() {
   static const char *const CHANNELS_NAMES[OSCS_NUM] = {"Wave 1", "Wave 2", "Wave 3", "Beeper"};
   static int const CHANNELS_TYPES[OSCS_NUM] = {WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2, MIXED_TYPE | 0};
 
-  beeper_output = 0;
+  mBeeperOutput = 0;
   mSetType(gme_ay_type);
 
   mSetChannelsNames(CHANNELS_NAMES);
@@ -90,7 +90,7 @@ static void copy_ay_fields(AyEmu::file_t const &file, track_info_t *out, int tra
 }
 
 blargg_err_t AyEmu::mGetTrackInfo(track_info_t *out, int track) const {
-  copy_ay_fields(file, out, track);
+  copy_ay_fields(mFile, out, track);
   return 0;
 }
 
@@ -117,55 +117,55 @@ struct AyFile : GmeInfo {
 blargg_err_t AyEmu::mLoad(const uint8_t *in, long size) {
   assert(offsetof(header_t, track_info[2]) == HEADER_SIZE);
 
-  RETURN_ERR(parse_header(in, size, &file));
-  m_setTrackNum(file.header->max_track + 1);
+  RETURN_ERR(parse_header(in, size, &mFile));
+  m_setTrackNum(mFile.header->max_track + 1);
 
-  if (file.header->vers > 2)
+  if (mFile.header->vers > 2)
     m_setWarning("Unknown file version");
 
   mSetChannelsNumber(OSCS_NUM);
-  apu.SetVolume(mGetGain());
+  mApu.SetVolume(mGetGain());
 
   return mSetupBuffer(CLK_SPECTRUM);
 }
 
-void AyEmu::mUpdateEq(BlipEq const &eq) { apu.setTrebleEq(eq); }
+void AyEmu::mUpdateEq(BlipEq const &eq) { mApu.setTrebleEq(eq); }
 
 void AyEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) {
   if (i >= AyApu::OSCS_NUM)
-    beeper_output = center;
+    mBeeperOutput = center;
   else
-    apu.SetOscOutput(i, center);
+    mApu.SetOscOutput(i, center);
 }
 
 // Emulation
 
-void AyEmu::mSetTempo(double t) { play_period = blip_time_t(mGetClockRate() / 50 / t); }
+void AyEmu::mSetTempo(double t) { mPlayPeriod = blip_time_t(mGetClockRate() / 50 / t); }
 
 blargg_err_t AyEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
 
-  std::fill(&mem.ram[0x00000], &mem.ram[0x00100], 0xC9);  // fill RST vectors with RET
-  std::fill(&mem.ram[0x00100], &mem.ram[0x04000], 0xFF);
-  std::fill(&mem.ram[0x04000], &mem.ram[0x10000], 0x00);  // RAM area
-  std::fill(&mem.ram[0x10000], mem.ram.end(), 0xFF);
-  mem.padding1.fill(0xFF);
+  std::fill(&mMem.ram[0x00000], &mMem.ram[0x00100], 0xC9);  // fill RST vectors with RET
+  std::fill(&mMem.ram[0x00100], &mMem.ram[0x04000], 0xFF);
+  std::fill(&mMem.ram[0x04000], &mMem.ram[0x10000], 0x00);  // RAM area
+  std::fill(&mMem.ram[0x10000], mMem.ram.end(), 0xFF);
+  mMem.padding1.fill(0xFF);
 
   // locate data blocks
-  uint8_t const *const data = get_data(file, file.tracks + track * 4 + 2, 14);
+  uint8_t const *const data = get_data(mFile, mFile.tracks + track * 4 + 2, 14);
   if (!data)
     return "File data missing";
 
-  uint8_t const *const more_data = get_data(file, data + 10, 6);
+  uint8_t const *const more_data = get_data(mFile, data + 10, 6);
   if (!more_data)
     return "File data missing";
 
-  uint8_t const *blocks = get_data(file, data + 12, 8);
+  uint8_t const *blocks = get_data(mFile, data + 12, 8);
   if (!blocks)
     return "File data missing";
 
   // initial addresses
-  cpu::Reset(mem.ram.data());
+  cpu::Reset(mMem.ram.data());
   r.sp = get_be16(more_data);
   r.b.a = r.b.b = r.b.d = r.b.h = data[8];
   r.b.flags = r.b.c = r.b.e = r.b.l = data[9];
@@ -190,18 +190,18 @@ blargg_err_t AyEmu::mStartTrack(int track) {
       len = 0x10000 - addr;
     }
     check(len);
-    uint8_t const *in = get_data(file, blocks, 0);
+    uint8_t const *in = get_data(mFile, blocks, 0);
     blocks += 2;
-    if (len > blargg_ulong(file.end - in)) {
+    if (len > blargg_ulong(mFile.end - in)) {
       m_setWarning("Missing file data");
-      len = file.end - in;
+      len = mFile.end - in;
     }
     // debug_printf( "addr: $%04X, len: $%04X\n", addr, len );
     if (addr < RAM_START && addr >= 0x400)  // several tracks use low data
       debug_printf("Block addr in ROM\n");
-    memcpy(&mem.ram[addr], in, len);
+    memcpy(&mMem.ram[addr], in, len);
 
-    if (file.end - blocks < 8) {
+    if (mFile.end - blocks < 8) {
       m_setWarning("Missing file data");
       break;
     }
@@ -225,67 +225,67 @@ blargg_err_t AyEmu::mStartTrack(int track) {
       0xCD, 0x00, 0x00,  // CALL play
       0x18, 0xF7         // JR LOOP
   };
-  memcpy_P(mem.ram.begin(), PLAYER_PASSIVE, sizeof(PLAYER_PASSIVE));
+  memcpy_P(mMem.ram.begin(), PLAYER_PASSIVE, sizeof(PLAYER_PASSIVE));
   uint16_t play_addr = get_be16(more_data + 4);
   if (play_addr) {
-    memcpy_P(mem.ram.begin(), PLAYER_ACTIVE, sizeof(PLAYER_ACTIVE));
-    set_le16(&mem.ram[9], play_addr);
+    memcpy_P(mMem.ram.begin(), PLAYER_ACTIVE, sizeof(PLAYER_ACTIVE));
+    set_le16(&mMem.ram[9], play_addr);
   }
-  set_le16(&mem.ram[2], init);
+  set_le16(&mMem.ram[2], init);
 
-  mem.ram[0x38] = 0xFB;  // Put EI at interrupt vector (followed by RET)
+  mMem.ram[0x38] = 0xFB;  // Put EI at interrupt vector (followed by RET)
 
-  std::copy(&mem.ram[0], &mem.ram[0x80], &mem.ram[0x10000]);  // some code wraps around (ugh)
+  std::copy(&mMem.ram[0], &mMem.ram[0x80], &mMem.ram[0x10000]);  // some code wraps around (ugh)
 
-  beeper_delta = int(apu.AMP_RANGE * 0.65);
-  last_beeper = 0;
-  apu.Reset();
-  next_play = play_period;
+  mBeeperDelta = int(mApu.AMP_RANGE * 0.65);
+  mLastBeeper = 0;
+  mApu.Reset();
+  mNextPlay = mPlayPeriod;
 
   // start at spectrum speed
   mChangeClockRate(CLK_SPECTRUM);
   SetTempo(mGetTempo());
 
-  spectrum_mode = false;
-  cpc_mode = false;
-  cpc_latch = 0;
+  mSpectrumMode = false;
+  mCpcMode = false;
+  mCpcLatch = 0;
 
   return 0;
 }
 
 // Emulation
 
-void AyEmu::cpu_out_misc(cpu_time_t time, unsigned addr, int data) {
-  if (!cpc_mode) {
+void AyEmu::mCpuOutMisc(cpu_time_t time, unsigned addr, int data) {
+  if (!mCpcMode) {
     switch (addr & 0xFEFF) {
       case 0xFEFD:
-        spectrum_mode = true;
+        mSpectrumMode = true;
         mApuReg = data & 0x0F;
         return;
 
       case 0xBEFD:
-        spectrum_mode = true;
-        apu.Write(time, mApuReg, data);
+        mSpectrumMode = true;
+        mApu.Write(time, mApuReg, data);
         return;
     }
   }
 
-  if (!spectrum_mode) {
+  if (!mSpectrumMode) {
     switch (addr >> 8) {
       case 0xF6:
         switch (data & 0xC0) {
           case 0xC0:
-            mApuReg = cpc_latch & 0x0F;
+            mApuReg = mCpcLatch & 0x0F;
             goto enable_cpc;
 
           case 0x80:
-            apu.Write(time, mApuReg, cpc_latch);
+            mApu.Write(time, mApuReg, mCpcLatch);
             goto enable_cpc;
         }
         break;
 
       case 0xF4:
-        cpc_latch = data;
+        mCpcLatch = data;
         goto enable_cpc;
     }
   }
@@ -294,8 +294,8 @@ void AyEmu::cpu_out_misc(cpu_time_t time, unsigned addr, int data) {
   return;
 
 enable_cpc:
-  if (!cpc_mode) {
-    cpc_mode = true;
+  if (!mCpcMode) {
+    mCpcMode = true;
     mChangeClockRate(CLK_CPC);
     SetTempo(mGetTempo());
   }
@@ -304,18 +304,18 @@ enable_cpc:
 void ay_cpu_out(AyCpu *cpu, cpu_time_t time, unsigned addr, int data) {
   AyEmu &emu = STATIC_CAST(AyEmu &, *cpu);
 
-  if ((addr & 0xFF) == 0xFE && !emu.cpc_mode) {
-    int delta = emu.beeper_delta;
+  if ((addr & 0xFF) == 0xFE && !emu.mCpcMode) {
+    int delta = emu.mBeeperDelta;
     data &= 0x10;
-    if (emu.last_beeper != data) {
-      emu.last_beeper = data;
-      emu.beeper_delta = -delta;
-      emu.spectrum_mode = true;
-      if (emu.beeper_output)
-        emu.apu.mSynth.offset(time, delta, emu.beeper_output);
+    if (emu.mLastBeeper != data) {
+      emu.mLastBeeper = data;
+      emu.mBeeperDelta = -delta;
+      emu.mSpectrumMode = true;
+      if (emu.mBeeperOutput)
+        emu.mApu.mSynth.offset(time, delta, emu.mBeeperOutput);
     }
   } else {
-    emu.cpu_out_misc(time, addr, data);
+    emu.mCpuOutMisc(time, addr, data);
   }
 }
 
@@ -330,39 +330,39 @@ int ay_cpu_in(AyCpu *, unsigned addr) {
 
 blargg_err_t AyEmu::mRunClocks(blip_time_t &duration, int) {
   SetTime(0);
-  if (!(spectrum_mode | cpc_mode))
+  if (!(mSpectrumMode | mCpcMode))
     duration /= 2;  // until mode is set, leave room for halved clock rate
 
   while (Time() < duration) {
-    cpu::Run(min(duration, (blip_time_t) next_play));
+    cpu::Run(min(duration, (blip_time_t) mNextPlay));
 
-    if (Time() >= next_play) {
-      next_play += play_period;
+    if (Time() >= mNextPlay) {
+      mNextPlay += mPlayPeriod;
 
       if (r.iff1) {
-        if (mem.ram[r.pc] == 0x76)
+        if (mMem.ram[r.pc] == 0x76)
           r.pc++;
 
         r.iff1 = r.iff2 = 0;
 
-        mem.ram[--r.sp] = uint8_t(r.pc >> 8);
-        mem.ram[--r.sp] = uint8_t(r.pc);
+        mMem.ram[--r.sp] = uint8_t(r.pc >> 8);
+        mMem.ram[--r.sp] = uint8_t(r.pc);
         r.pc = 0x38;
         cpu::AdjustTime(12);
         if (r.im == 2) {
           cpu::AdjustTime(6);
           unsigned addr = r.i * 0x100u + 0xFF;
-          r.pc = mem.ram[(addr + 1) & 0xFFFF] * 0x100u + mem.ram[addr];
+          r.pc = mMem.ram[(addr + 1) & 0xFFFF] * 0x100u + mMem.ram[addr];
         }
       }
     }
   }
   duration = Time();
-  next_play -= duration;
-  check(next_play >= 0);
+  mNextPlay -= duration;
+  check(mNextPlay >= 0);
   AdjustTime(-duration);
 
-  apu.EndFrame(duration);
+  mApu.EndFrame(duration);
 
   return 0;
 }

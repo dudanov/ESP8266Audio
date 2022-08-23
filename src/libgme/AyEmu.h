@@ -51,26 +51,26 @@ class AyEmu : private AyCpu, public ClassicEmu {
   void mUpdateEq(BlipEq const &) override;
 
  private:
-  file_t file;
+  file_t mFile;
 
-  cpu_time_t play_period;
-  cpu_time_t next_play;
-  BlipBuffer *beeper_output;
-  int beeper_delta;
-  int last_beeper;
+  cpu_time_t mPlayPeriod;
+  cpu_time_t mNextPlay;
+  BlipBuffer *mBeeperOutput;
+  int mBeeperDelta;
+  int mLastBeeper;
   unsigned mApuReg;
-  int cpc_latch;
-  bool spectrum_mode;
-  bool cpc_mode;
+  int mCpcLatch;
+  bool mSpectrumMode;
+  bool mCpcMode;
 
   // large items
   struct {
     std::array<uint8_t, 0x100> padding1;
     std::array<uint8_t, 0x10000 + 0x100> ram;
-  } mem;
-  AyApu apu;
+  } mMem;
+  AyApu mApu;
   friend void ay_cpu_out(AyCpu *, cpu_time_t, unsigned addr, int data);
-  void cpu_out_misc(cpu_time_t, unsigned addr, int data);
+  void mCpuOutMisc(cpu_time_t, unsigned addr, int data);
 };
 
 }  // namespace ay

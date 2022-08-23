@@ -59,7 +59,7 @@ class SapEmu : private SapCpu, public ClassicEmu {
   sap_time_t scanline_period;
   sap_time_t next_play;
   sap_time_t time_mask;
-  SapApu apu;
+  SapApu mApu;
   SapApu apu2;
 
   // large items
