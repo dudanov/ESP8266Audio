@@ -78,7 +78,7 @@ void AyApu::mWriteRegister(unsigned addr, uint8_t data) {
 
   // envelope mode
   if (addr == R13)
-    return mEnvelope.Update(data);
+    return mEnvelope.SetMode(data & 0b1111);
 }
 
 inline void AyApu::mPeriodUpdate(unsigned channel) {
@@ -93,7 +93,7 @@ inline void AyApu::mPeriodUpdate(unsigned channel) {
   osc.mPeriod = period;
 }
 
-inline void AyApu::Envelope::Update(uint8_t data) {
+inline void AyApu::Envelope::SetMode(uint8_t mode) {
   // Full table of the upper 8 envelope waveforms. Values already passed through volume table.
   static const uint8_t MODES[8][48] PROGMEM = {
       {0xFF, 0xB4, 0x80, 0x5A, 0x40, 0x2D, 0x20, 0x17, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03, 0x02, 0x00,
@@ -121,9 +121,9 @@ inline void AyApu::Envelope::Update(uint8_t data) {
        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
   };
-  if (!(data & CONTINUE))  // convert modes 0-7 to proper equivalents
-    data = (data & ATTACK) ? 15 : 9;
-  mWave = MODES[data - 7];
+  if (!(mode & CONTINUE))  // convert modes 0-7 to proper equivalents
+    mode = (mode & ATTACK) ? 15 : 9;
+  mWave = MODES[mode - 7];
   mPos = -48;
   mDelay = 0;  // will get set to envelope period in mRunUntil()
 }

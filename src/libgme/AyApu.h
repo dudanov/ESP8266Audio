@@ -85,7 +85,7 @@ class AyApu {
     blip_time_t mDelay;
     const uint8_t *mWave;
     int mPos;
-    void Update(uint8_t data);
+    void SetMode(uint8_t mode);
   };
 
   blip_time_t mLastTime;
