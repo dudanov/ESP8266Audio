@@ -50,7 +50,7 @@ void AyApu::Reset() {
   mNoise.mDelay = 0;
   mNoise.mLfsr = 0b1;
   for (auto &osc : mSquare) {
-    osc.mPeriod = CLK_PSC;
+    osc.mPeriod = CLOCK_PSC;
     osc.mDelay = 0;
     osc.mLastAmp = 0;
     osc.mPhase = 0;
@@ -77,9 +77,9 @@ void AyApu::mWriteRegister(unsigned addr, uint8_t data) {
 }
 
 inline void AyApu::mPeriodUpdate(unsigned channel) {
-  blip_time_t period = get_le16(&mRegs[R0 + channel * 2]) % 4096 * CLK_PSC;
+  blip_time_t period = get_le16(&mRegs[R0 + channel * 2]) % 4096 * CLOCK_PSC;
   if (!period)
-    period = CLK_PSC;
+    period = CLOCK_PSC;
 
   // adjust time of next timer expiration based on change in period
   Square &osc = mSquare[channel];
@@ -130,18 +130,18 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   require(final_end_time >= mLastTime);
 
   // noise period and initial values
-  const blip_time_t noise_period_factor = CLK_PSC * 2;  // verified
-  blip_time_t noise_period = (mRegs[R6] & 0x1F) * noise_period_factor;
+  const blip_time_t NOISE_PSC = CLOCK_PSC * 2;  // verified
+  blip_time_t noise_period = (mRegs[R6] & 0b11111) * NOISE_PSC;
   if (!noise_period)
-    noise_period = noise_period_factor;
+    noise_period = NOISE_PSC;
   blip_time_t const old_noise_delay = mNoise.mDelay;
   blargg_ulong const old_noise_lfsr = mNoise.mLfsr;
 
   // envelope period
-  const blip_time_t env_period_factor = CLK_PSC * 2;  // verified
-  blip_time_t env_period = (mRegs[R12] * 256 + mRegs[R11]) * env_period_factor;
+  const blip_time_t ENVELOPE_PSC = CLOCK_PSC * 2;  // verified
+  blip_time_t env_period = get_le16(&mRegs[R11]) * ENVELOPE_PSC;
   if (!env_period)
-    env_period = env_period_factor;  // same as period 1 on my AY chip
+    env_period = ENVELOPE_PSC;  // same as period 1 on my AY chip
   if (!mEnvelope.mDelay)
     mEnvelope.mDelay = env_period;
 
@@ -251,8 +251,8 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
           if (end_time > time)
             end = time;
           if (phase & delta_non_zero) {
-            while (ntime <= end)  // must advance *past* time to avoid hang
-            {
+            // must advance *past* time to avoid hang
+            while (ntime <= end) {
               int changed = noise_lfsr + 1;
               noise_lfsr = (-(noise_lfsr & 1) & 0x12000) ^ (noise_lfsr >> 1);
               if (changed & 2) {

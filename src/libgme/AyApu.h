@@ -14,9 +14,9 @@ namespace ay {
 class AyApu {
  public:
   AyApu();
-  static const unsigned CLK_PSC = 16;
-  static const uint8_t OSCS_NUM = 3;
-  static const uint8_t AMP_RANGE = 255;
+  static const unsigned CLOCK_PSC = 16;
+  static const unsigned OSCS_NUM = 3;
+  static const unsigned AMP_RANGE = 255;
   // Set buffer to generate all sound into, or disable sound if NULL
   void SetOutput(BlipBuffer *out) {
     SetOscOutput(0, out);
