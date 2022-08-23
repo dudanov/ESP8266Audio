@@ -30,18 +30,13 @@ namespace ay {
 
 static const unsigned INAUDIBLE_FREQ = 16384;
 
+// With channels tied together and 1K resistor to ground (as datasheet recommends),
+// output nearly matches logarithmic curve as claimed. Approx. 1.5 dB per step.
 inline uint8_t AyApu::sGetAmp(size_t volume) {
-#define ENTRY(v) static_cast<uint8_t>(AyApu::AMP_RANGE * (v) + 0.5)
   static const uint8_t TABLE[] PROGMEM = {
-      // With channels tied together and 1K resistor to ground (as datasheet
-      // recommends), output nearly matches logarithmic curve as claimed.
-      // Approx. 1.5 dB per step.
-      ENTRY(0.000000), ENTRY(0.007813), ENTRY(0.011049), ENTRY(0.015625), ENTRY(0.022097), ENTRY(0.031250),
-      ENTRY(0.044194), ENTRY(0.062500), ENTRY(0.088388), ENTRY(0.125000), ENTRY(0.176777), ENTRY(0.250000),
-      ENTRY(0.353553), ENTRY(0.500000), ENTRY(0.707107), ENTRY(1.000000),
+      0x00, 0x02, 0x03, 0x04, 0x06, 0x08, 0x0B, 0x10, 0x17, 0x20, 0x2D, 0x40, 0x5A, 0x80, 0xB4, 0xFF,
   };
   return pgm_read_byte(&TABLE[volume]);
-#undef ENTRY
 }
 
 AyApu::AyApu() {
