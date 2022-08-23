@@ -208,28 +208,29 @@ blargg_err_t AyEmu::mStartTrack(int track) {
   } while ((addr = get_be16(blocks)) != 0);
 
   // copy and configure driver
-  static const uint8_t PLAYER_PASSIVE[] PROGMEM = {
-      0xF3,              // DI
-      0xCD, 0x00, 0x00,  // CALL init
-      0xED, 0x5E,        // LOOP: IM 2
-      0xFB,              // EI
-      0x76,              // HALT
-      0x18, 0xFA         // JR LOOP
-  };
-  static const uint8_t PLAYER_ACTIVE[] PROGMEM = {
-      0xF3,              // DI
-      0xCD, 0x00, 0x00,  // CALL init
-      0xED, 0x56,        // LOOP: IM 1
-      0xFB,              // EI
-      0x76,              // HALT
-      0xCD, 0x00, 0x00,  // CALL play
-      0x18, 0xF7         // JR LOOP
-  };
-  memcpy_P(mMem.ram.begin(), PLAYER_PASSIVE, sizeof(PLAYER_PASSIVE));
   uint16_t play_addr = get_be16(more_data + 4);
   if (play_addr) {
+    static const uint8_t PLAYER_ACTIVE[] PROGMEM = {
+        0xF3,              // DI
+        0xCD, 0x00, 0x00,  // CALL init
+        0xED, 0x56,        // LOOP: IM 1
+        0xFB,              // EI
+        0x76,              // HALT
+        0xCD, 0x00, 0x00,  // CALL play
+        0x18, 0xF7         // JR LOOP
+    };
     memcpy_P(mMem.ram.begin(), PLAYER_ACTIVE, sizeof(PLAYER_ACTIVE));
     set_le16(&mMem.ram[9], play_addr);
+  } else {
+    static const uint8_t PLAYER_PASSIVE[] PROGMEM = {
+        0xF3,              // DI
+        0xCD, 0x00, 0x00,  // CALL init
+        0xED, 0x5E,        // LOOP: IM 2
+        0xFB,              // EI
+        0x76,              // HALT
+        0x18, 0xFA         // JR LOOP
+    };
+    memcpy_P(mMem.ram.begin(), PLAYER_PASSIVE, sizeof(PLAYER_PASSIVE));
   }
   set_le16(&mMem.ram[2], init);
 
