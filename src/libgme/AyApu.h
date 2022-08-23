@@ -62,8 +62,9 @@ class AyApu {
  private:
   std::array<uint8_t, RNUM> mRegs;
   void mWriteRegister(unsigned address, uint8_t data);
+  void mPeriodUpdate(unsigned channel);
 
-  static uint8_t mGetAmp(size_t idx);
+  static uint8_t sGetAmp(size_t idx);
   void mRunUntil(blip_time_t);
 
   struct Square {
@@ -81,15 +82,12 @@ class AyApu {
 
   struct Envelope {
     enum { HOLD = 0b0001, ALTERNATE = 0b0010, ATTACK = 0b0100, CONTINUE = 0b1000 };
-    Envelope();
-    void Write(uint8_t data);
     blip_time_t mDelay;
     const uint8_t *mWave;
     int mPos;
-    // uint8_t mModes[8][48];  // values already passed through volume table
+    void Update(uint8_t data);
   };
 
-  unsigned mGetPeriod(unsigned idx) { return get_le16(&mRegs[idx * 2]) % 4096 * CLK_PSC; }
   blip_time_t mLastTime;
   // EN: 3 square generators
   // RU: 3 генератора прямоугольных сигналов

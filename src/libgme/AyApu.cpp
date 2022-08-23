@@ -29,9 +29,8 @@ namespace emu {
 namespace ay {
 
 static const unsigned INAUDIBLE_FREQ = 16384;
-// static const int PERIOD_FACTOR = 16;
 
-inline uint8_t AyApu::mGetAmp(size_t volume) {
+inline uint8_t AyApu::sGetAmp(size_t volume) {
 #define ENTRY(v) static_cast<uint8_t>(AyApu::AMP_RANGE * (v) + 0.5)
   static const uint8_t TABLE[] PROGMEM = {
       // With channels tied together and 1K resistor to ground (as datasheet
@@ -43,33 +42,6 @@ inline uint8_t AyApu::mGetAmp(size_t volume) {
   };
   return pgm_read_byte(&TABLE[volume]);
 #undef ENTRY
-}
-
-// static const uint8_t MODES[8] = {
-//#define MODE(a0, a1, b0, b1, c0, c1) (a0 << 0 | a1 << 1 | b0 << 2 | b1 << 3 | c0 << 4 | c1 << 5)
-//     MODE(1, 0, 1, 0, 1, 0), MODE(1, 0, 0, 0, 0, 0), MODE(1, 0, 0, 1, 1, 0), MODE(1, 0, 1, 1, 1, 1),
-//     MODE(0, 1, 0, 1, 0, 1), MODE(0, 1, 1, 1, 1, 1), MODE(0, 1, 1, 0, 0, 1), MODE(0, 1, 0, 0, 0, 0),
-//#undef MODE
-// };
-
-AyApu::Envelope::Envelope() {
-  /*
-    // build full table of the upper 8 envelope waveforms
-    for (auto m = 8; m--;) {
-      auto it = mModes[m];
-      auto flags = MODES[m];
-      for (auto x = 0; x < 3; x++) {
-        int amp = (flags & 0b01);
-        int e = (flags & 0b10) >> 1;
-        int step = e - amp;
-        if (amp)
-          amp = 15;
-        for (auto end = it + 16; it != end; amp += step)
-          *it++ = AyApu::mGetAmp(amp);
-        flags >>= 2;
-      }
-    }
-  */
 }
 
 AyApu::AyApu() {
@@ -95,37 +67,34 @@ void AyApu::Reset() {
 
 void AyApu::mWriteRegister(unsigned addr, uint8_t data) {
   assert(addr < RNUM);
-  if (addr >= R14) {
-#ifdef debug_printf
-    debug_printf("Wrote to I/O port %02X\n", (int) addr);
-#endif
-  }
 
-  mRegs[addr] = data;
+  mRegs[R0 + addr] = data;
+
+  // handle period changes accurately
+  if (addr <= R5)
+    return mPeriodUpdate(addr / 2);
+
+  // TODO: same as above for envelope timer, and it also has a divide by two after it
 
   // envelope mode
   if (addr == R13)
-    return mEnvelope.Write(data);
-
-  // handle period changes accurately
-  unsigned idx = addr / 2;
-  if (idx < OSCS_NUM) {
-    blip_time_t period = mGetPeriod(idx);
-    if (!period)
-      period = CLK_PSC;
-
-    // adjust time of next timer expiration based on change in period
-    Square &osc = mSquare[idx];
-    if ((osc.mDelay += period - osc.mPeriod) < 0)
-      osc.mDelay = 0;
-    osc.mPeriod = period;
-  }
-
-  // TODO: same as above for envelope timer, and it also has a divide by two after it
+    return mEnvelope.Update(data);
 }
 
-inline void AyApu::Envelope::Write(uint8_t data) {
-  // Full table of the upper 8 envelope waveforms
+inline void AyApu::mPeriodUpdate(unsigned channel) {
+  blip_time_t period = get_le16(&mRegs[R0 + channel * 2]) % 4096 * CLK_PSC;
+  if (!period)
+    period = CLK_PSC;
+
+  // adjust time of next timer expiration based on change in period
+  Square &osc = mSquare[channel];
+  if ((osc.mDelay += period - osc.mPeriod) < 0)
+    osc.mDelay = 0;
+  osc.mPeriod = period;
+}
+
+inline void AyApu::Envelope::Update(uint8_t data) {
+  // Full table of the upper 8 envelope waveforms. Values already passed through volume table.
   static const uint8_t MODES[8][48] PROGMEM = {
       {0xFF, 0xB4, 0x80, 0x5A, 0x40, 0x2D, 0x20, 0x17, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03, 0x02, 0x00,
        0xFF, 0xB4, 0x80, 0x5A, 0x40, 0x2D, 0x20, 0x17, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03, 0x02, 0x00,
@@ -159,15 +128,15 @@ inline void AyApu::Envelope::Write(uint8_t data) {
   mDelay = 0;  // will get set to envelope period in mRunUntil()
 }
 
-const unsigned NOISE_OFF = 0b1000;
-const unsigned TONE_OFF = 0b0001;
+static const unsigned NOISE_OFF = 0b1000;
+static const unsigned TONE_OFF = 0b0001;
 
 void AyApu::mRunUntil(blip_time_t final_end_time) {
   require(final_end_time >= mLastTime);
 
   // noise period and initial values
   const blip_time_t noise_period_factor = CLK_PSC * 2;  // verified
-  blip_time_t noise_period = (mRegs[6] & 0x1F) * noise_period_factor;
+  blip_time_t noise_period = (mRegs[R6] & 0x1F) * noise_period_factor;
   if (!noise_period)
     noise_period = noise_period_factor;
   blip_time_t const old_noise_delay = mNoise.mDelay;
@@ -175,7 +144,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
 
   // envelope period
   const blip_time_t env_period_factor = CLK_PSC * 2;  // verified
-  blip_time_t env_period = (mRegs[12] * 256 + mRegs[11]) * env_period_factor;
+  blip_time_t env_period = (mRegs[R12] * 256 + mRegs[R11]) * env_period_factor;
   if (!env_period)
     env_period = env_period_factor;  // same as period 1 on my AY chip
   if (!mEnvelope.mDelay)
@@ -184,7 +153,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   // run each osc separately
   for (int idx = 0; idx < OSCS_NUM; idx++) {
     Square &osc = mSquare[idx];
-    uint8_t mode = mRegs[7] >> idx;
+    uint8_t mode = mRegs[R7] >> idx;
 
     // output
     BlipBuffer *const osc_output = osc.mOutput;
@@ -203,14 +172,14 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     // envelope
     blip_time_t start_time = mLastTime;
     blip_time_t end_time = final_end_time;
-    const int vol_mode = mRegs[idx + 8];
-    int volume = AyApu::mGetAmp(vol_mode & 15) >> half_vol;
+    const uint8_t amp_ctrl = mRegs[R8 + idx];
+    int volume = AyApu::sGetAmp(amp_ctrl & 0b1111) >> half_vol;
     int osc_env_pos = mEnvelope.mPos;
-    if (vol_mode & 0x10) {
+    if (amp_ctrl & 0x10) {
       volume = pgm_read_byte(&mEnvelope.mWave[osc_env_pos]) >> half_vol;
       // use envelope only if it's a repeating wave or a ramp that hasn't
       // finished
-      if (!(mRegs[13] & 1) || osc_env_pos < -32) {
+      if (!(mRegs[R13] & 1) || osc_env_pos < -32) {
         end_time = start_time + mEnvelope.mDelay;
         if (end_time >= final_end_time)
           end_time = final_end_time;
