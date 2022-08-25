@@ -3,7 +3,6 @@
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #pragma once
 #include <array>
-#include <pgmspace.h>
 #include "BlipBuffer.h"
 #include "blargg_common.h"
 #include "blargg_endian.h"
