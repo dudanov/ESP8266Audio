@@ -82,9 +82,6 @@ class AyApu {
   };
 
   struct Envelope {
-    const uint8_t *mIt;
-    const uint8_t *mLoop;
-    const uint8_t *mEnd;
     blip_time_t mDelay;
     bool InRampPhase() const { return mIt < mLoop; }
     uint8_t GetAmp(bool half) const { return pgm_read_byte(mIt) >> half; }
@@ -94,6 +91,11 @@ class AyApu {
         mIt = mLoop;
       return *this;
     }
+
+   private:
+    const uint8_t *mIt;
+    const uint8_t *mLoop;
+    const uint8_t *mEnd;
   };
 
   blip_time_t mLastTime;
