@@ -60,7 +60,7 @@ static const uint8_t MODES[8][48] PROGMEM = {
 
 // With channels tied together and 1K resistor to ground (as datasheet recommends),
 // output nearly matches logarithmic curve as claimed. Approx. 1.5 dB per step.
-inline uint8_t AyApu::sGetAmp(size_t volume) { return pgm_read_byte(&MODES[5][volume]); }
+inline uint8_t AyApu::GetAmp(size_t volume) { return pgm_read_byte(&MODES[5][volume]); }
 
 AyApu::AyApu() {
   SetOutput(nullptr);
@@ -112,10 +112,9 @@ inline void AyApu::mPeriodUpdate(unsigned channel) {
 }
 
 inline void AyApu::Envelope::SetMode(uint8_t mode) {
-  if (!(mode & CONTINUE))  // convert modes 0-7 to proper equivalents
-    mode = (mode & ATTACK) ? 15 : 9;
-  mWave = MODES[mode - 7];
-  mPos = -48;
+  mIt = (mode & 0b1000) ? MODES[mode & 0b0111] : (mode & 0b0100) ? MODES[7] : MODES[1];
+  mLoop = mIt + 16;
+  mEnd = mIt + 48;
   mDelay = 0;  // will get set to envelope period in mRunUntil()
 }
 
@@ -136,7 +135,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   // envelope period
   const blip_time_t ENVELOPE_PSC = CLOCK_PSC * 2;  // verified
   blip_time_t env_period = get_le16(&mRegs[R11]) * ENVELOPE_PSC;
-  if (!env_period)
+  if (env_period == 0)
     env_period = ENVELOPE_PSC;  // same as period 1 on my AY chip
   if (!mEnvelope.mDelay)
     mEnvelope.mDelay = env_period;
@@ -154,7 +153,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
 
     // period
     bool half_vol = false;
-    blip_time_t inaudible_period = (blargg_ulong)(osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
+    blip_time_t inaudible_period = (blargg_ulong) (osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
     if (osc.mPeriod <= inaudible_period && !(mode & TONE_OFF)) {
       half_vol = true;  // Actually around 60%, but 50% is close enough
       mode |= TONE_OFF;
@@ -164,13 +163,12 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     blip_time_t start_time = mLastTime;
     blip_time_t end_time = final_end_time;
     const uint8_t amp_ctrl = mRegs[R8 + idx];
-    int volume = AyApu::sGetAmp(amp_ctrl & 0b1111) >> half_vol;
-    int osc_env_pos = mEnvelope.mPos;
+    int volume = AyApu::GetAmp(amp_ctrl & 0b1111) >> half_vol;
+    // int osc_env_pos = mEnvelope.mPos;
     if (amp_ctrl & 0x10) {
-      volume = pgm_read_byte(&mEnvelope.mWave[osc_env_pos]) >> half_vol;
-      // use envelope only if it's a repeating wave or a ramp that hasn't
-      // finished
-      if (!(mRegs[R13] & 1) || osc_env_pos < -32) {
+      volume = mEnvelope.GetAmp(half_vol);
+      // use envelope only if it's a repeating wave or a ramp that hasn't finished
+      if (!(mRegs[R13] & 1) || mEnvelope.IsRamp()) {
         end_time = start_time + mEnvelope.mDelay;
         if (end_time >= final_end_time)
           end_time = final_end_time;
@@ -300,9 +298,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
         break;  // breaks first time when envelope is disabled
 
       // next envelope step
-      if (++osc_env_pos >= 0)
-        osc_env_pos -= 32;
-      volume = pgm_read_byte(&mEnvelope.mWave[osc_env_pos]) >> half_vol;
+      volume = mEnvelope.Advance().GetAmp(half_vol);
 
       start_time = end_time;
       end_time += env_period;
@@ -323,15 +319,15 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   blip_time_t remain = final_end_time - mLastTime - mEnvelope.mDelay;
   if (remain >= 0) {
     blargg_long count = (remain + env_period) / env_period;
-    mEnvelope.mPos += count;
-    if (mEnvelope.mPos >= 0)
-      mEnvelope.mPos = (mEnvelope.mPos & 31) - 32;
+    // mEnvelope.mPos += count;
+    // if (mEnvelope.mPos >= 0)
+    //   mEnvelope.mPos = (mEnvelope.mPos & 31) - 32;
     remain -= count * env_period;
     assert(-remain <= env_period);
   }
   mEnvelope.mDelay = -remain;
   assert(mEnvelope.mDelay > 0);
-  assert(mEnvelope.mPos < 0);
+  //assert(mEnvelope.mPos < 0);
 
   mLastTime = final_end_time;
 }

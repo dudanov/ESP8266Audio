@@ -3,6 +3,7 @@
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #pragma once
 #include <array>
+#include <pgmspace.h>
 #include "BlipBuffer.h"
 #include "blargg_common.h"
 #include "blargg_endian.h"
@@ -64,7 +65,7 @@ class AyApu {
   void mWriteRegister(unsigned address, uint8_t data);
   void mPeriodUpdate(unsigned channel);
 
-  static uint8_t sGetAmp(size_t idx);
+  static uint8_t GetAmp(size_t idx);
   void mRunUntil(blip_time_t);
 
   struct Square {
@@ -81,11 +82,18 @@ class AyApu {
   };
 
   struct Envelope {
-    enum { HOLD = 0b0001, ALTERNATE = 0b0010, ATTACK = 0b0100, CONTINUE = 0b1000 };
+    const uint8_t *mIt;
+    const uint8_t *mLoop;
+    const uint8_t *mEnd;
     blip_time_t mDelay;
-    const uint8_t *mWave;
-    int mPos;
+    bool IsRamp() const { return mIt < mLoop; }
+    uint8_t GetAmp(bool half) const { return pgm_read_byte(mIt) >> half; }
     void SetMode(uint8_t mode);
+    Envelope &Advance() {
+      if (++mIt == mEnd)
+        mIt = mLoop;
+      return *this;
+    }
   };
 
   blip_time_t mLastTime;
