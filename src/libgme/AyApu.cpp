@@ -31,7 +31,9 @@ namespace ay {
 static const unsigned INAUDIBLE_FREQ = 16384;
 
 // Full table of the upper 8 envelope waveforms. Values already passed through volume table.
-static const uint8_t MODES[8][48] PROGMEM = {
+// With channels tied together and 1K resistor to ground (as datasheet recommends),
+// output nearly matches logarithmic curve as claimed. Approx. 1.5 dB per step.
+const uint8_t AyApu::Envelope::MODES[8][48] PROGMEM = {
     {0xFF, 0xB4, 0x80, 0x5A, 0x40, 0x2D, 0x20, 0x17, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03, 0x02, 0x00,
      0xFF, 0xB4, 0x80, 0x5A, 0x40, 0x2D, 0x20, 0x17, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03, 0x02, 0x00,
      0xFF, 0xB4, 0x80, 0x5A, 0x40, 0x2D, 0x20, 0x17, 0x10, 0x0B, 0x08, 0x06, 0x04, 0x03, 0x02, 0x00},
@@ -57,10 +59,6 @@ static const uint8_t MODES[8][48] PROGMEM = {
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 };
-
-// With channels tied together and 1K resistor to ground (as datasheet recommends),
-// output nearly matches logarithmic curve as claimed. Approx. 1.5 dB per step.
-inline uint8_t AyApu::GetAmp(size_t volume) { return pgm_read_byte(&MODES[5][volume]); }
 
 AyApu::AyApu() {
   SetOutput(nullptr);
@@ -163,7 +161,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     blip_time_t start_time = mLastTime;
     blip_time_t end_time = final_end_time;
     const uint8_t amp_ctrl = mRegs[R8 + idx];
-    int volume = AyApu::GetAmp(amp_ctrl & 0b1111) >> half_vol;
+    int volume = Envelope::GetAmp(amp_ctrl & 0b1111, half_vol);
     // int osc_env_pos = mEnvelope.mPos;
     if (amp_ctrl & 0x10) {
       volume = mEnvelope.GetAmp(half_vol);
@@ -327,7 +325,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
   }
   mEnvelope.mDelay = -remain;
   assert(mEnvelope.mDelay > 0);
-  //assert(mEnvelope.mPos < 0);
+  // assert(mEnvelope.mPos < 0);
 
   mLastTime = final_end_time;
 }
