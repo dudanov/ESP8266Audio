@@ -168,7 +168,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
     if (amp_ctrl & 0x10) {
       volume = mEnvelope.GetAmp(half_vol);
       // use envelope only if it's a repeating wave or a ramp that hasn't finished
-      if (!(mRegs[R13] & 1) || mEnvelope.IsRampPhase()) {
+      if (!(mRegs[R13] & 1) || mEnvelope.InRampPhase()) {
         end_time = start_time + mEnvelope.mDelay;
         if (end_time >= final_end_time)
           end_time = final_end_time;
