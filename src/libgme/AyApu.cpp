@@ -118,9 +118,8 @@ void AyApu::mWriteRegister(unsigned addr, uint8_t data) {
 
 inline void AyApu::mPeriodUpdate(unsigned channel) {
   blip_time_t period = get_le16(&mRegs[R0 + channel * 2]) % 4096 * CLOCK_PSC;
-  if (!period)
+  if (period == 0)
     period = CLOCK_PSC;
-
   // adjust time of next timer expiration based on change in period
   Square &osc = mSquare[channel];
   if ((osc.mDelay += period - osc.mPeriod) < 0)
@@ -128,23 +127,23 @@ inline void AyApu::mPeriodUpdate(unsigned channel) {
   osc.mPeriod = period;
 }
 
-void AyApu::mRunUntil(blip_time_t final_end_time) {
+void AyApu::mRunUntil(const blip_time_t final_end_time) {
   require(final_end_time >= mLastTime);
 
   // noise period and initial values
   const blip_time_t NOISE_PSC = CLOCK_PSC * 2;  // verified
-  blip_time_t noise_period = (mRegs[R6] & 0b11111) * NOISE_PSC;
-  if (!noise_period)
+  blip_time_t noise_period = mRegs[R6] % 32 * NOISE_PSC;
+  if (noise_period == 0)
     noise_period = NOISE_PSC;
-  blip_time_t const old_noise_delay = mNoise.mDelay;
-  blargg_ulong const old_noise_lfsr = mNoise.mLfsr;
+  const blip_time_t old_noise_delay = mNoise.mDelay;
+  const blargg_ulong old_noise_lfsr = mNoise.mLfsr;
 
   // envelope period
   const blip_time_t ENVELOPE_PSC = CLOCK_PSC * 2;  // verified
   blip_time_t env_period = get_le16(&mRegs[R11]) * ENVELOPE_PSC;
   if (env_period == 0)
     env_period = ENVELOPE_PSC;  // same as period 1 on my AY chip
-  if (!mEnvelope.mDelay)
+  if (mEnvelope.mDelay == 0)
     mEnvelope.mDelay = env_period;
 
   // run each osc separately
@@ -160,7 +159,7 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
 
     // period
     bool half_vol = false;
-    blip_time_t inaudible_period = (blargg_ulong) (osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
+    blip_time_t inaudible_period = (blargg_ulong)(osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
     if (osc.mPeriod <= inaudible_period && !(mode & TONE_OFF)) {
       half_vol = true;  // Actually around 60%, but 50% is close enough
       mode |= TONE_OFF;
@@ -182,10 +181,10 @@ void AyApu::mRunUntil(blip_time_t final_end_time) {
 
         // if ( !(mRegs [12] | mRegs [11]) )
         //  debug_printf( "Used envelope period 0\n" );
-      } else if (!volume) {
+      } else if (volume == 0) {
         mode = NOISE_OFF | TONE_OFF;
       }
-    } else if (!volume) {
+    } else if (volume == 0) {
       mode = NOISE_OFF | TONE_OFF;
     }
 
