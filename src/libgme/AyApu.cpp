@@ -29,6 +29,8 @@ namespace emu {
 namespace ay {
 
 static const unsigned INAUDIBLE_FREQ = 16384;
+static const unsigned NOISE_OFF = 0b1000;
+static const unsigned TONE_OFF = 0b0001;
 
 // Full table of the upper 8 envelope waveforms. Values already passed through volume table.
 // With channels tied together and 1K resistor to ground (as datasheet recommends),
@@ -59,6 +61,23 @@ const uint8_t AyApu::Envelope::MODES[8][48] PROGMEM = {
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 };
+
+inline uint8_t AyApu::Envelope::GetAmp(uint8_t volume, bool half) { return pgm_read_byte(&MODES[5][volume]) >> half; }
+
+inline uint8_t AyApu::Envelope::GetAmp(bool half) const { return pgm_read_byte(mIt) >> half; }
+
+inline void AyApu::Envelope::SetMode(uint8_t mode) {
+  mIt = (mode & 0b1000) ? MODES[mode & 0b0111] : (mode & 0b0100) ? MODES[7] : MODES[1];
+  mLoop = mIt + 16;
+  mEnd = mIt + 48;
+  mDelay = 0;  // will get set to envelope period in mRunUntil()
+}
+
+inline AyApu::Envelope &AyApu::Envelope::Advance() {
+  if (++mIt == mEnd)
+    mIt = mLoop;
+  return *this;
+}
 
 AyApu::AyApu() {
   SetOutput(nullptr);
@@ -94,7 +113,7 @@ void AyApu::mWriteRegister(unsigned addr, uint8_t data) {
 
   // envelope mode
   if (addr == R13)
-    return mEnvelope.SetMode(data & 0b1111);
+    return mEnvelope.SetMode(data);
 }
 
 inline void AyApu::mPeriodUpdate(unsigned channel) {
@@ -108,16 +127,6 @@ inline void AyApu::mPeriodUpdate(unsigned channel) {
     osc.mDelay = 0;
   osc.mPeriod = period;
 }
-
-inline void AyApu::Envelope::SetMode(uint8_t mode) {
-  mIt = (mode & 0b1000) ? MODES[mode & 0b0111] : (mode & 0b0100) ? MODES[7] : MODES[1];
-  mLoop = mIt + 16;
-  mEnd = mIt + 48;
-  mDelay = 0;  // will get set to envelope period in mRunUntil()
-}
-
-static const unsigned NOISE_OFF = 0b1000;
-static const unsigned TONE_OFF = 0b0001;
 
 void AyApu::mRunUntil(blip_time_t final_end_time) {
   require(final_end_time >= mLastTime);

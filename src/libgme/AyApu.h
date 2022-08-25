@@ -81,16 +81,13 @@ class AyApu {
   };
 
   struct Envelope {
-    static uint8_t GetAmp(uint8_t volume, bool half) { return pgm_read_byte(&MODES[5][volume]) >> half; }
-    uint8_t GetAmp(bool half) const { return pgm_read_byte(mIt) >> half; }
-    bool InRampPhase() const { return mIt < mLoop; }
-    void SetMode(uint8_t mode);
-    Envelope &Advance() {
-      if (++mIt == mEnd)
-        mIt = mLoop;
-      return *this;
-    }
     blip_time_t mDelay;
+
+    void SetMode(uint8_t mode);
+    Envelope &Advance();
+    bool InRampPhase() const { return mIt < mLoop; }
+    uint8_t GetAmp(bool half) const;
+    static uint8_t GetAmp(uint8_t volume, bool half);
 
    private:
     static const uint8_t MODES[8][48];
