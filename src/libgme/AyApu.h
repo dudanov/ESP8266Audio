@@ -86,7 +86,7 @@ class AyApu {
     const uint8_t *mLoop;
     const uint8_t *mEnd;
     blip_time_t mDelay;
-    bool IsRamp() const { return mIt < mLoop; }
+    bool IsRampPhase() const { return mIt < mLoop; }
     uint8_t GetAmp(bool half) const { return pgm_read_byte(mIt) >> half; }
     void SetMode(uint8_t mode);
     Envelope &Advance() {
