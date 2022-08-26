@@ -34,20 +34,20 @@ NesApu::NesApu() : mTriangle(this), mNoise(this), mDmc(this) {
 }
 
 void NesApu::SetTrebleEq(const BlipEq &eq) {
-  mSquareSynth.setTrebleEq(eq);
-  mTriangle.mSynth.setTrebleEq(eq);
-  mNoise.mSynth.setTrebleEq(eq);
-  mDmc.mSynth.setTrebleEq(eq);
+  mSquareSynth.SetTrebleEq(eq);
+  mTriangle.mSynth.SetTrebleEq(eq);
+  mNoise.mSynth.SetTrebleEq(eq);
+  mDmc.mSynth.SetTrebleEq(eq);
 }
 
 void NesApu::mEnableNonlinear(double v) {
   mDmc.mNonlinear = true;
-  mSquareSynth.setVolume(1.3 * 0.25751258 / 0.742467605 * 0.25 / AMP_RANGE * v);
+  mSquareSynth.SetVolume(1.3 * 0.25751258 / 0.742467605 * 0.25 / AMP_RANGE * v);
 
   const double tnd = 0.48 / 202 * mNonlinearTndGain();
-  mTriangle.mSynth.setVolume(3.0 * tnd);
-  mNoise.mSynth.setVolume(2.0 * tnd);
-  mDmc.mSynth.setVolume(tnd);
+  mTriangle.mSynth.SetVolume(3.0 * tnd);
+  mNoise.mSynth.SetVolume(2.0 * tnd);
+  mDmc.mSynth.SetVolume(tnd);
 
   mSquare1.mLastAmp = 0;
   mSquare2.mLastAmp = 0;
@@ -58,10 +58,10 @@ void NesApu::mEnableNonlinear(double v) {
 
 void NesApu::SetVolume(double v) {
   mDmc.mNonlinear = false;
-  mSquareSynth.setVolume(0.1128 / AMP_RANGE * v);
-  mTriangle.mSynth.setVolume(0.12765 / AMP_RANGE * v);
-  mNoise.mSynth.setVolume(0.0741 / AMP_RANGE * v);
-  mDmc.mSynth.setVolume(0.42545 / 127 * v);
+  mSquareSynth.SetVolume(0.1128 / AMP_RANGE * v);
+  mTriangle.mSynth.SetVolume(0.12765 / AMP_RANGE * v);
+  mNoise.mSynth.SetVolume(0.0741 / AMP_RANGE * v);
+  mDmc.mSynth.SetVolume(0.42545 / 127 * v);
 }
 
 void NesApu::SetOutput(BlipBuffer *buffer) {

@@ -50,7 +50,7 @@ void NesFme7Apu::run_until(blip_time_t end_time) {
     BlipBuffer *const osc_output = oscs[index].output;
     if (!osc_output)
       continue;
-    osc_output->setModified();
+    osc_output->SetModified();
 
 // check for unsupported mode
 #ifndef NDEBUG
@@ -80,7 +80,7 @@ void NesFme7Apu::run_until(blip_time_t end_time) {
       int delta = amp - oscs[index].last_amp;
       if (delta) {
         oscs[index].last_amp = amp;
-        synth.offset(last_time, delta, osc_output);
+        synth.Offset(last_time, delta, osc_output);
       }
     }
 
@@ -90,7 +90,7 @@ void NesFme7Apu::run_until(blip_time_t end_time) {
       if (volume) {
         do {
           delta = -delta;
-          synth.offset(time, delta, osc_output);
+          synth.Offset(time, delta, osc_output);
           time += period;
         } while (time < end_time);
 

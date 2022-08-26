@@ -61,7 +61,7 @@ class SapApuImpl {
   BlipSynth<BLIP_GOOD_QUALITY, 1> synth;
 
   SapApuImpl();
-  void volume(double d) { synth.setVolume(1.0 / SapApu::OSCS_NUM / 30 * d); }
+  void volume(double d) { synth.SetVolume(1.0 / SapApu::OSCS_NUM / 30 * d); }
 
  private:
   uint8_t poly4[SapApu::poly4_len / 8 + 1];

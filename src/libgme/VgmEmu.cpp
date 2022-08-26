@@ -235,7 +235,7 @@ void VgmEmu::mUpdateEq(BlipEq const &eq) {
   psg[0].setTrebleEq(eq);
   if (psg_dual)
     psg[1].setTrebleEq(eq);
-  dac_synth.setTrebleEq(eq);
+  dac_synth.SetTrebleEq(eq);
 }
 
 void VgmEmu::mSetChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) {
@@ -267,7 +267,7 @@ void VgmEmu::mMuteChannel(int mask) {
     if (psg_dual)
       psg[1].SetOutput((mask & 0x80) ? 0 : &blip_buf);
     if (ym2612[0].enabled()) {
-      dac_synth.setVolume((mask & 0x40) ? 0.0 : 0.1115 / 256 * FM_GAIN * mGetGain());
+      dac_synth.SetVolume((mask & 0x40) ? 0.0 : 0.1115 / 256 * FM_GAIN * mGetGain());
       ym2612[0].mute_voices(mask);
       if (ym2612[1].enabled())
         ym2612[1].mute_voices(mask);

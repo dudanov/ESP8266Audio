@@ -81,10 +81,10 @@ void NesNamcoApu::run_until(blip_time_t nes_end_time) {
     BlipBuffer *output = osc.output;
     if (!output)
       continue;
-    output->setModified();
+    output->SetModified();
 
-    blip_resampled_time_t time = output->resampledTime(last_time) + osc.mDelay;
-    blip_resampled_time_t end_time = output->resampledTime(nes_end_time);
+    blip_resampled_time_t time = output->ResampledTime(last_time) + osc.mDelay;
+    blip_resampled_time_t end_time = output->ResampledTime(nes_end_time);
     osc.mDelay = 0;
     if (time < end_time) {
       const uint8_t *osc_reg = &m_regs[i * 8 + 0x40];
@@ -99,7 +99,7 @@ void NesNamcoApu::run_until(blip_time_t nes_end_time) {
       if (freq < 64 * active_oscs)
         continue;  // prevent low frequencies from excessively delaying
                    // freq changes
-      blip_resampled_time_t period = output->resampledDuration(983040) / freq * active_oscs;
+      blip_resampled_time_t period = output->ResampledDuration(983040) / freq * active_oscs;
 
       int wave_size = 32 - (osc_reg[4] >> 2 & 7) * 4;
       if (!wave_size)
@@ -119,7 +119,7 @@ void NesNamcoApu::run_until(blip_time_t nes_end_time) {
         int delta = sample - last_amp;
         if (delta) {
           last_amp = sample;
-          m_synth.offsetResampled(time, delta, output);
+          m_synth.OffsetResampled(time, delta, output);
         }
 
         // next sample

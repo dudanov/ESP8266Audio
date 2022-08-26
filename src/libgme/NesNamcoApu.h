@@ -15,8 +15,8 @@ struct namco_state_t;
 class NesNamcoApu {
  public:
   // See NesApu.h for reference.
-  void volume(double v) { m_synth.setVolume(0.10 / OSCS_NUM * v); }
-  void treble_eq(const BlipEq &eq) { m_synth.setTrebleEq(eq); }
+  void volume(double v) { m_synth.SetVolume(0.10 / OSCS_NUM * v); }
+  void treble_eq(const BlipEq &eq) { m_synth.SetTrebleEq(eq); }
   void output(BlipBuffer *);
   static const int OSCS_NUM = 8;
   void osc_output(int i, BlipBuffer *buf) {

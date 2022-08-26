@@ -64,10 +64,10 @@ class NesFme7Apu : private fme7_apu_state_t {
 };
 
 inline void NesFme7Apu::volume(double v) {
-  synth.setVolume(0.38 / amp_range * v);  // to do: fine-tune
+  synth.SetVolume(0.38 / amp_range * v);  // to do: fine-tune
 }
 
-inline void NesFme7Apu::treble_eq(BlipEq const &eq) { synth.setTrebleEq(eq); }
+inline void NesFme7Apu::treble_eq(BlipEq const &eq) { synth.SetTrebleEq(eq); }
 
 inline void NesFme7Apu::osc_output(int i, BlipBuffer *buf) {
   assert((unsigned) i < OSCS_NUM);

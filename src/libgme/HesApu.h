@@ -34,8 +34,8 @@ struct HesOsc {
 
 class HesApu {
  public:
-  void treble_eq(BlipEq const &eq) { synth.setTrebleEq(eq); }
-  void volume(double v) { synth.setVolume(1.8 / OSCS_NUM / HesOsc::amp_range * v); }
+  void treble_eq(BlipEq const &eq) { synth.SetTrebleEq(eq); }
+  void volume(double v) { synth.SetVolume(1.8 / OSCS_NUM / HesOsc::amp_range * v); }
 
   enum { OSCS_NUM = 6 };
   void osc_output(int index, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right);

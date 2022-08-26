@@ -55,7 +55,7 @@ void StereoBuffer::EndFrame(blip_time_t clock_count) {
   this->m_stereoAdded = 0;
   unsigned mask = 1;
   for (auto &buf : this->m_bufs) {
-    if (buf.clearModified())
+    if (buf.ClearModified())
       this->m_stereoAdded |= mask;
     buf.EndFrame(clock_count);
     mask <<= 1;
@@ -75,8 +75,8 @@ long StereoBuffer::readSamples(blip_sample_t *out, long count) {
     if (bufs_used <= 1) {
       this->m_mixMono(out, count);
       this->m_bufs[0].RemoveSamples(count);
-      this->m_bufs[1].removeSilence(count);
-      this->m_bufs[2].removeSilence(count);
+      this->m_bufs[1].RemoveSilence(count);
+      this->m_bufs[2].RemoveSilence(count);
     } else if (bufs_used & 1) {
       this->m_mixStereo(out, count);
       this->m_bufs[0].RemoveSamples(count);
@@ -84,7 +84,7 @@ long StereoBuffer::readSamples(blip_sample_t *out, long count) {
       this->m_bufs[2].RemoveSamples(count);
     } else {
       this->m_mixStereoNoCenter(out, count);
-      this->m_bufs[0].removeSilence(count);
+      this->m_bufs[0].RemoveSilence(count);
       this->m_bufs[1].RemoveSamples(count);
       this->m_bufs[2].RemoveSamples(count);
     }

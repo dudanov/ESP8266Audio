@@ -50,7 +50,7 @@ void SmsSquare::run(blip_time_t time, blip_time_t end_time) {
   if (!this->volume || this->period <= 128) {
     // ignore 16kHz and higher
     if (this->last_amp) {
-      this->synth->offset(time, -this->last_amp, this->output);
+      this->synth->Offset(time, -this->last_amp, this->output);
       this->last_amp = 0;
     }
     time += this->mDelay;
@@ -68,7 +68,7 @@ void SmsSquare::run(blip_time_t time, blip_time_t end_time) {
       int delta = amp - this->last_amp;
       if (delta) {
         this->last_amp = amp;
-        this->synth->offset(time, delta, this->output);
+        this->synth->Offset(time, delta, this->output);
       }
     }
 
@@ -77,7 +77,7 @@ void SmsSquare::run(blip_time_t time, blip_time_t end_time) {
       int delta = amp * 2;
       do {
         delta = -delta;
-        this->synth->offset(time, delta, this->output);
+        this->synth->Offset(time, delta, this->output);
         time += this->period;
         this->phase ^= 1;
       } while (time < end_time);
@@ -106,7 +106,7 @@ void SmsNoise::run(blip_time_t time, blip_time_t end_time) {
     int delta = amp - this->last_amp;
     if (delta) {
       this->last_amp = amp;
-      this->synth.offset(time, delta, this->output);
+      this->synth.Offset(time, delta, this->output);
     }
   }
 
@@ -126,7 +126,7 @@ void SmsNoise::run(blip_time_t time, blip_time_t end_time) {
       if (changed & 2)  // true if bits 0 and 1 differ
       {
         delta = -delta;
-        synth.offset(time, delta, output);
+        synth.Offset(time, delta, output);
       }
       time += period;
     } while (time < end_time);
@@ -153,13 +153,13 @@ SmsApu::~SmsApu() {}
 
 void SmsApu::setVolume(double vol) {
   vol *= 0.85 / (OSCS_NUM * 64 * 2);
-  m_squareSynth.setVolume(vol);
-  m_noise.synth.setVolume(vol);
+  m_squareSynth.SetVolume(vol);
+  m_noise.synth.SetVolume(vol);
 }
 
 void SmsApu::setTrebleEq(const BlipEq &eq) {
-  m_squareSynth.setTrebleEq(eq);
-  m_noise.synth.setTrebleEq(eq);
+  m_squareSynth.SetTrebleEq(eq);
+  m_noise.synth.SetTrebleEq(eq);
 }
 
 void SmsApu::setOscOutput(int index, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
@@ -207,7 +207,7 @@ void SmsApu::run_until(blip_time_t end_time) {
     for (int i = 0; i < OSCS_NUM; ++i) {
       SmsOsc &osc = *m_oscs[i];
       if (osc.output) {
-        osc.output->setModified();
+        osc.output->SetModified();
         if (i < 3)
           m_squares[i].run(m_lastTime, end_time);
         else
@@ -240,8 +240,8 @@ void SmsApu::writeGGStereo(blip_time_t time, int data) {
     osc.output = osc.outputs[osc.output_select];
     if (osc.output != old_output && osc.last_amp) {
       if (old_output) {
-        old_output->setModified();
-        m_squareSynth.offset(time, -osc.last_amp, old_output);
+        old_output->SetModified();
+        m_squareSynth.Offset(time, -osc.last_amp, old_output);
       }
       osc.last_amp = 0;
     }

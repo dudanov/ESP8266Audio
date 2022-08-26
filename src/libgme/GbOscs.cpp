@@ -120,7 +120,7 @@ void GbSquare::run(blip_time_t time, blip_time_t end_time) {
     int delta = amp - this->m_lastAmp;
     if (delta) {
       this->m_lastAmp = amp;
-      this->synth->offset(time, delta, this->mOutput);
+      this->synth->Offset(time, delta, this->mOutput);
     }
   }
 
@@ -135,7 +135,7 @@ void GbSquare::run(blip_time_t time, blip_time_t end_time) {
       this->m_phase = (this->m_phase + 1) & 7;
       if (this->m_phase == 0 || this->m_phase == duty) {
         delta = -delta;
-        this->synth->offset(time, delta, this->mOutput);
+        this->synth->Offset(time, delta, this->mOutput);
       }
       time += period;
     } while (time < end_time);
@@ -158,7 +158,7 @@ void GbNoise::run(blip_time_t time, blip_time_t end_time) {
     int delta = amp - this->m_lastAmp;
     if (delta) {
       this->m_lastAmp = amp;
-      this->synth->offset(time, delta, this->mOutput);
+      this->synth->Offset(time, delta, this->mOutput);
     }
   }
 
@@ -171,8 +171,8 @@ void GbNoise::run(blip_time_t time, blip_time_t end_time) {
     int period = DIVISOR_TABLE[this->m_regs[3] & 7] << (this->m_regs[3] >> 4);
 
     // keep parallel resampled time to eliminate time conversion in the loop
-    const blip_resampled_time_t resampled_period = this->mOutput->resampledDuration(period);
-    blip_resampled_time_t resampled_time = this->mOutput->resampledTime(time);
+    const blip_resampled_time_t resampled_period = this->mOutput->ResampledDuration(period);
+    blip_resampled_time_t resampled_time = this->mOutput->ResampledTime(time);
     int delta = amp * 2;
 
     do {
@@ -182,7 +182,7 @@ void GbNoise::run(blip_time_t time, blip_time_t end_time) {
       if (changed & 2) {
         delta = -delta;
         this->m_lfsr |= 1;
-        this->synth->offsetResampled(resampled_time, delta, this->mOutput);
+        this->synth->OffsetResampled(resampled_time, delta, this->mOutput);
       }
       resampled_time += resampled_period;
     } while (time < end_time);
@@ -211,7 +211,7 @@ void GbWave::run(blip_time_t time, blip_time_t end_time) {
     int delta = amp - this->m_lastAmp;
     if (delta) {
       this->m_lastAmp = amp;
-      synth->offset(time, delta, this->mOutput);
+      synth->Offset(time, delta, this->mOutput);
     }
   }
 
@@ -226,7 +226,7 @@ void GbWave::run(blip_time_t time, blip_time_t end_time) {
       int delta = amp - this->m_lastAmp;
       if (delta) {
         this->m_lastAmp = amp;
-        this->synth->offset(time, delta, this->mOutput);
+        this->synth->Offset(time, delta, this->mOutput);
       }
       time += period;
     } while (time < end_time);

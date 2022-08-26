@@ -131,7 +131,7 @@ void SapApu::run_until(blip_time_t end_time) {
     // output
     BlipBuffer *output = osc->output;
     if (output) {
-      output->setModified();
+      output->SetModified();
 
       int const osc_control = osc->mRegs[1];  // cache
       int volume = (osc_control & 0x0F) * 2;
@@ -143,7 +143,7 @@ void SapApu::run_until(blip_time_t end_time) {
         int delta = volume - osc->last_amp;
         if (delta) {
           osc->last_amp = volume;
-          impl->synth.offset(last_time, delta, output);
+          impl->synth.Offset(last_time, delta, output);
         }
 
         // TODO: doesn't maintain high pass flip-flop (very minor issue)
@@ -206,7 +206,7 @@ void SapApu::run_until(blip_time_t end_time) {
               if (delta) {
                 osc_last_amp += delta - volume;
                 volume = -volume;
-                impl->synth.offset(time2, delta, output);
+                impl->synth.Offset(time2, delta, output);
               }
             }
             while (time2 <= time)  // must advance *past* time to avoid hang
@@ -224,7 +224,7 @@ void SapApu::run_until(blip_time_t end_time) {
                 int delta = amp - osc_last_amp;
                 if (delta) {
                   osc_last_amp = amp;
-                  impl->synth.offset(time, delta, output);
+                  impl->synth.Offset(time, delta, output);
                 }
               }
               wave = run_poly5(wave, poly5_inc);

@@ -1500,17 +1500,17 @@ void OPN2_SetMute(ym3438_t *chip, Bit32u mute) {
 
 Ym2612NukedEmu::Ym2612NukedEmu() {
   Ym2612_NukedImpl::OPN2_SetChipType(Ym2612_NukedImpl::ym3438_type_asic);
-  m_impl = new Ym2612_NukedImpl::ym3438_t;
+  mImpl = new Ym2612_NukedImpl::ym3438_t;
 }
 
 Ym2612NukedEmu::~Ym2612NukedEmu() {
-  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(m_impl);
+  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(mImpl);
   if (chip_r)
     delete chip_r;
 }
 
 const char *Ym2612NukedEmu::set_rate(double sample_rate, double clock_rate) {
-  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(m_impl);
+  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(mImpl);
   if (!chip_r)
     return "Out of memory";
   m_prevSampleRate = sample_rate;
@@ -1520,19 +1520,19 @@ const char *Ym2612NukedEmu::set_rate(double sample_rate, double clock_rate) {
 }
 
 void Ym2612NukedEmu::reset() {
-  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(m_impl);
+  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(mImpl);
   if (!chip_r)
     Ym2612_NukedImpl::OPN2_Reset(chip_r, static_cast<Bit32u>(m_prevSampleRate), static_cast<Bit32u>(m_prevClockRate));
 }
 
 void Ym2612NukedEmu::mute_voices(int mask) {
-  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(m_impl);
+  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(mImpl);
   if (chip_r)
     Ym2612_NukedImpl::OPN2_SetMute(chip_r, mask);
 }
 
 void Ym2612NukedEmu::write0(int addr, int data) {
-  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(m_impl);
+  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(mImpl);
   if (!chip_r)
     return;
   Ym2612_NukedImpl::OPN2_WriteBuffered(chip_r, 0, static_cast<Bit8u>(addr));
@@ -1540,7 +1540,7 @@ void Ym2612NukedEmu::write0(int addr, int data) {
 }
 
 void Ym2612NukedEmu::write1(int addr, int data) {
-  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(m_impl);
+  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(mImpl);
   if (!chip_r)
     return;
   Ym2612_NukedImpl::OPN2_WriteBuffered(chip_r, 0 + 2, static_cast<Bit8u>(addr));
@@ -1548,7 +1548,7 @@ void Ym2612NukedEmu::write1(int addr, int data) {
 }
 
 void Ym2612NukedEmu::run(int pair_count, Ym2612NukedEmu::sample_t *out) {
-  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(m_impl);
+  Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t *>(mImpl);
   if (!chip_r)
     return;
   Ym2612_NukedImpl::OPN2_GenerateStreamMix(chip_r, out, pair_count);

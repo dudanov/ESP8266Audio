@@ -98,7 +98,7 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
     return;
   }
 
-  mOutput->setModified();
+  mOutput->SetModified();
 
   int offset = period >> (mRegs[1] & SHIFT_MASK);
   if (mRegs[1] & NEGATE_FLAG)
@@ -107,7 +107,7 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
   const int volume = this->volume();
   if (volume == 0 || period < 8 || (period + offset) >= 0x800) {
     if (mLastAmp) {
-      mSynth.offset(time, -mLastAmp, mOutput);
+      mSynth.Offset(time, -mLastAmp, mOutput);
       mLastAmp = 0;
     }
 
@@ -128,7 +128,7 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
     {
       int delta = mUpdateAmp(amp);
       if (delta)
-        mSynth.offset(time, delta, mOutput);
+        mSynth.Offset(time, delta, mOutput);
     }
 
     time += mDelay;
@@ -142,7 +142,7 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
         phase = (phase + 1) & (PHASE_RANGE - 1);
         if (phase == 0 || phase == duty) {
           delta = -delta;
-          synth.offset(time, delta, output);
+          synth.Offset(time, delta, output);
         }
         time += timer_period;
       } while (time < end_time);
@@ -195,7 +195,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
     return;
   }
 
-  mOutput->setModified();
+  mOutput->SetModified();
 
   // to do: track phase when period < 3
   // to do: Output 7.5 on dac when period < 2? More accurate, but results in
@@ -203,7 +203,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
 
   int delta = mUpdateAmp(this->calc_amp());
   if (delta)
-    mSynth.offset(time, delta, mOutput);
+    mSynth.Offset(time, delta, mOutput);
 
   time += mDelay;
   if (mLengthCounter == 0 || this->linear_counter == 0 || timer_period < 3) {
@@ -223,7 +223,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
         phase = PHASE_RANGE;
         volume = -volume;
       } else {
-        mSynth.offset(time, volume, output);
+        mSynth.Offset(time, volume, output);
       }
 
       time += timer_period;
@@ -375,9 +375,9 @@ void NesDmc::mRun(nes_time_t time, nes_time_t end_time) {
   if (mOutput == nullptr) {
     this->silence = true;
   } else {
-    mOutput->setModified();
+    mOutput->SetModified();
     if (delta)
-      mSynth.offset(time, delta, mOutput);
+      mSynth.Offset(time, delta, mOutput);
   }
 
   time += mDelay;
@@ -393,7 +393,7 @@ void NesDmc::mRun(nes_time_t time, nes_time_t end_time) {
           this->bits >>= 1;
           if (unsigned(mDac + step) <= 0x7F) {
             mDac += step;
-            mSynth.offset(time, step, mOutput);
+            mSynth.Offset(time, step, mOutput);
           }
         }
 
@@ -437,14 +437,14 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
     return;
   }
 
-  mOutput->setModified();
+  mOutput->SetModified();
 
   const int volume = this->volume();
   int amp = (this->noise & 1) ? volume : 0;
   {
     int delta = mUpdateAmp(amp);
     if (delta)
-      mSynth.offset(time, delta, mOutput);
+      mSynth.Offset(time, delta, mOutput);
   }
 
   time += mDelay;
@@ -463,8 +463,8 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
       }
     } else {
       // using resampled time avoids conversion in synth.offset()
-      blip_resampled_time_t rperiod = mOutput->resampledDuration(period);
-      blip_resampled_time_t rtime = mOutput->resampledTime(time);
+      blip_resampled_time_t rperiod = mOutput->ResampledDuration(period);
+      blip_resampled_time_t rtime = mOutput->ResampledTime(time);
 
       int delta = amp * 2 - volume;
       const int tap = (mRegs[2] & mode_flag ? 8 : 13);
@@ -476,7 +476,7 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
         if ((this->noise + 1) & 2) {
           // bits 0 and 1 of noise differ
           delta = -delta;
-          mSynth.offsetResampled(rtime, delta, mOutput);
+          mSynth.OffsetResampled(rtime, delta, mOutput);
         }
 
         rtime += rperiod;

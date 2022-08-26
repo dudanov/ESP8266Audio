@@ -45,8 +45,8 @@ GbApu::GbApu() {
 }
 
 void GbApu::setTrebleEq(const BlipEq &eq) {
-  this->m_squareSynth.setTrebleEq(eq);
-  this->m_otherSynth.setTrebleEq(eq);
+  this->m_squareSynth.SetTrebleEq(eq);
+  this->m_otherSynth.SetTrebleEq(eq);
 }
 
 void GbApu::setOscOutput(int idx, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
@@ -65,8 +65,8 @@ void GbApu::m_updateVolume() {
   // require modification to all oscillator code)
   uint8_t data = this->m_getRegister(NR50);
   double vol = (std::max(data & 7, data >> 4 & 7) + 1) * this->m_volumeUnit;
-  this->m_squareSynth.setVolume(vol);
-  this->m_otherSynth.setVolume(vol);
+  this->m_squareSynth.SetVolume(vol);
+  this->m_otherSynth.SetVolume(vol);
 }
 
 void GbApu::SetTempo(double t) {
@@ -108,7 +108,7 @@ void GbApu::m_runUntil(blip_time_t end_time) {
     // run oscillators
     for (auto osc : this->m_oscs) {
       if (osc->m_enabled) {
-        osc->mOutput->setModified();  // TODO: misses optimization opportunities?
+        osc->mOutput->SetModified();  // TODO: misses optimization opportunities?
         osc->run(this->m_lastTime, time);
       }
     }
@@ -158,16 +158,16 @@ void GbApu::m_writeNR50(blip_time_t time) {
     int amp = osc->m_lastAmp;
     osc->m_lastAmp = 0;
     if (amp && osc->m_enabled && osc->mOutput != nullptr)
-      this->m_otherSynth.offset(time, -amp, osc->mOutput);
+      this->m_otherSynth.Offset(time, -amp, osc->mOutput);
   }
 
   if (this->m_wave.m_outputs[3])
-    this->m_otherSynth.offset(time, 30, this->m_wave.m_outputs[3]);
+    this->m_otherSynth.Offset(time, 30, this->m_wave.m_outputs[3]);
 
   this->m_updateVolume();
 
   if (this->m_wave.m_outputs[3])
-    this->m_otherSynth.offset(time, -30, this->m_wave.m_outputs[3]);
+    this->m_otherSynth.Offset(time, -30, this->m_wave.m_outputs[3]);
 
   // oscs will update with new amplitude when next run
 }
@@ -191,7 +191,7 @@ void GbApu::m_writeNR5152(blip_time_t time) {
     int amp = osc->m_lastAmp;
     osc->m_lastAmp = 0;
     if (amp && oldOutput != nullptr)
-      this->m_otherSynth.offset(time, -amp, oldOutput);
+      this->m_otherSynth.Offset(time, -amp, oldOutput);
   }
 }
 

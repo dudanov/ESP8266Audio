@@ -224,7 +224,7 @@ blargg_err_t SapEmu::mLoad(uint8_t const *in, long size) {
   return mSetupBuffer(1773447);
 }
 
-void SapEmu::mUpdateEq(BlipEq const &eq) { apu_impl.synth.setTrebleEq(eq); }
+void SapEmu::mUpdateEq(BlipEq const &eq) { apu_impl.synth.SetTrebleEq(eq); }
 
 void SapEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
   int i2 = i - SapApu::OSCS_NUM;

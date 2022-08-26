@@ -72,8 +72,8 @@ void HesOsc::run_until(synth_t &synth_, blip_time_t end_time) {
     {
       int delta = dac * volume_0 - last_amp[0];
       if (delta)
-        synth_.offset(last_time, delta, osc_outputs_0);
-      osc_outputs_0->setModified();
+        synth_.Offset(last_time, delta, osc_outputs_0);
+      osc_outputs_0->SetModified();
     }
 
     BlipBuffer *const osc_outputs_1 = outputs[1];
@@ -81,8 +81,8 @@ void HesOsc::run_until(synth_t &synth_, blip_time_t end_time) {
     if (osc_outputs_1) {
       int delta = dac * volume_1 - last_amp[1];
       if (delta)
-        synth_.offset(last_time, delta, osc_outputs_1);
-      osc_outputs_1->setModified();
+        synth_.Offset(last_time, delta, osc_outputs_1);
+      osc_outputs_1->SetModified();
     }
 
     blip_time_t time = last_time + mDelay;
@@ -102,9 +102,9 @@ void HesOsc::run_until(synth_t &synth_, blip_time_t end_time) {
             int delta = new_dac - dac;
             if (delta) {
               dac = new_dac;
-              synth_.offset(time, delta * volume_0, osc_outputs_0);
+              synth_.Offset(time, delta * volume_0, osc_outputs_0);
               if (osc_outputs_1)
-                synth_.offset(time, delta * volume_1, osc_outputs_1);
+                synth_.Offset(time, delta * volume_1, osc_outputs_1);
             }
             time += period;
           } while (time < end_time);
@@ -123,9 +123,9 @@ void HesOsc::run_until(synth_t &synth_, blip_time_t end_time) {
             int delta = new_dac - dac;
             if (delta) {
               dac = new_dac;
-              synth_.offset(time, delta * volume_0, osc_outputs_0);
+              synth_.Offset(time, delta * volume_0, osc_outputs_0);
               if (osc_outputs_1)
-                synth_.offset(time, delta * volume_1, osc_outputs_1);
+                synth_.Offset(time, delta * volume_1, osc_outputs_1);
             }
             time += period;
           } while (time < end_time);

@@ -10,10 +10,10 @@ namespace vgm {
 struct Ym2612_GENS_Impl;
 
 class Ym2612GensEmu {
-  Ym2612_GENS_Impl *m_impl;
+  Ym2612_GENS_Impl *mImpl;
 
  public:
-  Ym2612GensEmu() : m_impl(0) {}
+  Ym2612GensEmu() : mImpl(0) {}
   ~Ym2612GensEmu();
 
   // Set output sample rate and chip clock rates, in Hz. Returns non-zero

@@ -77,13 +77,13 @@ inline void NesVrc6Apu::osc_output(int i, BlipBuffer *buf) {
 
 inline void NesVrc6Apu::volume(double v) {
   double const factor = 0.0967 * 2;
-  saw_synth.setVolume(factor / 31 * v);
-  square_synth.setVolume(factor * 0.5 / 15 * v);
+  saw_synth.SetVolume(factor / 31 * v);
+  square_synth.SetVolume(factor * 0.5 / 15 * v);
 }
 
 inline void NesVrc6Apu::treble_eq(BlipEq const &eq) {
-  saw_synth.setTrebleEq(eq);
-  square_synth.setTrebleEq(eq);
+  saw_synth.SetTrebleEq(eq);
+  square_synth.SetTrebleEq(eq);
 }
 
 }  // namespace nes

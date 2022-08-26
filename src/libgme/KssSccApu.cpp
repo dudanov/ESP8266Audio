@@ -32,7 +32,7 @@ void SccApu::run_until(blip_time_t end_time) {
     BlipBuffer *const output = osc.output;
     if (!output)
       continue;
-    output->setModified();
+    output->SetModified();
 
     blip_time_t period = (m_regs[0x80 + index * 2 + 1] & 0x0F) * 0x100 + m_regs[0x80 + index * 2] + 1;
     int volume = 0;
@@ -51,7 +51,7 @@ void SccApu::run_until(blip_time_t end_time) {
       int delta = amp - osc.mLastAmp;
       if (delta) {
         osc.mLastAmp = amp;
-        m_synth.offset(m_lastTime, delta, output);
+        m_synth.Offset(m_lastTime, delta, output);
       }
     }
 
@@ -73,7 +73,7 @@ void SccApu::run_until(blip_time_t end_time) {
           int delta = amp - last_wave;
           if (delta) {
             last_wave = amp;
-            m_synth.offset(time, delta * volume, output);
+            m_synth.Offset(time, delta * volume, output);
           }
           time += period;
         } while (time < end_time);

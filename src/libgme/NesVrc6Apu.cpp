@@ -99,7 +99,7 @@ void NesVrc6Apu::run_square(Vrc6Osc &osc, blip_time_t end_time) {
   BlipBuffer *output = osc.output;
   if (!output)
     return;
-  output->setModified();
+  output->SetModified();
 
   int volume = osc.mRegs[0] & 15;
   if (!(osc.mRegs[2] & 0x80))
@@ -111,7 +111,7 @@ void NesVrc6Apu::run_square(Vrc6Osc &osc, blip_time_t end_time) {
   blip_time_t time = last_time;
   if (delta) {
     osc.last_amp += delta;
-    square_synth.offset(time, delta, output);
+    square_synth.Offset(time, delta, output);
   }
 
   time += osc.mDelay;
@@ -126,11 +126,11 @@ void NesVrc6Apu::run_square(Vrc6Osc &osc, blip_time_t end_time) {
         if (phase == 16) {
           phase = 0;
           osc.last_amp = volume;
-          square_synth.offset(time, volume, output);
+          square_synth.Offset(time, volume, output);
         }
         if (phase == duty) {
           osc.last_amp = 0;
-          square_synth.offset(time, -volume, output);
+          square_synth.Offset(time, -volume, output);
         }
         time += period;
       } while (time < end_time);
@@ -146,7 +146,7 @@ void NesVrc6Apu::run_saw(blip_time_t end_time) {
   BlipBuffer *output = osc.output;
   if (!output)
     return;
-  output->setModified();
+  output->SetModified();
 
   int amp = osc.amp;
   int amp_step = osc.mRegs[0] & 0x3F;
@@ -156,7 +156,7 @@ void NesVrc6Apu::run_saw(blip_time_t end_time) {
     osc.mDelay = 0;
     int delta = (amp >> 3) - last_amp;
     last_amp = amp >> 3;
-    saw_synth.offset(time, delta, output);
+    saw_synth.Offset(time, delta, output);
   } else {
     time += osc.mDelay;
     if (time < end_time) {
@@ -172,7 +172,7 @@ void NesVrc6Apu::run_saw(blip_time_t end_time) {
         int delta = (amp >> 3) - last_amp;
         if (delta) {
           last_amp = amp >> 3;
-          saw_synth.offset(time, delta, output);
+          saw_synth.Offset(time, delta, output);
         }
 
         time += period;

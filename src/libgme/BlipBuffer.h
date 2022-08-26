@@ -54,6 +54,11 @@ class BlipEq;
 
 class BlipBuffer {
  public:
+  BlipBuffer();
+  ~BlipBuffer();
+  BlipBuffer(const BlipBuffer &) = delete;
+  BlipBuffer &operator=(const BlipBuffer &) = delete;
+
   typedef const char *blargg_err_t;
 
   // Set output sample rate and buffer length in milliseconds (1/1000 sec,
@@ -63,7 +68,7 @@ class BlipBuffer {
   blargg_err_t SetSampleRate(long samples_per_sec, int msec_length = 1000 / 4);
 
   // Set number of source time units per second
-  void SetClockRate(long cps) { this->mFactor = this->clockRateFactor(this->mClockRate = cps); }
+  void SetClockRate(long cps) { mFactor = this->ClockRateFactor(mClockRate = cps); }
 
   // End current time frame of specified duration and make its samples
   // available (along with any still-unread samples) for reading with
@@ -80,13 +85,13 @@ class BlipBuffer {
   // Additional optional features
 
   // Current output sample rate
-  long GetSampleRate() const { return this->mSampleRate; }
+  long GetSampleRate() const { return mSampleRate; }
 
   // Length of buffer, in milliseconds
-  int GetLength() const { return this->mLength; }
+  int GetLength() const { return mLength; }
 
   // Number of source time units per second
-  long GetClockRate() const { return this->mClockRate; }
+  long GetClockRate() const { return mClockRate; }
 
   // Set frequency high-pass filter frequency, where higher values reduce bass
   // more
@@ -101,7 +106,7 @@ class BlipBuffer {
   void Clear(bool entire_buffer = true);
 
   // Number of samples available for reading with ReadSamples()
-  long SamplesAvailable() const { return (long) (this->mOffset >> BLIP_BUFFER_ACCURACY); }
+  long SamplesAvailable() const { return (long) (mOffset >> BLIP_BUFFER_ACCURACY); }
 
   // Remove 'count' samples from those waiting to be read
   void RemoveSamples(long count);
@@ -115,32 +120,23 @@ class BlipBuffer {
 
   // Number of raw samples that can be mixed within frame of specified
   // duration.
-  long countSamples(blip_time_t duration) const;
+  long CountSamples(blip_time_t duration) const;
 
   // Mix 'count' samples from 'buf' into buffer.
-  void mixSamples(const blip_sample_t *buf, long count);
+  void MixSamples(const blip_sample_t *buf, long count);
 
   // not documented yet
-  void setModified() { this->mModified = true; }
-  bool clearModified() {
-    bool b = this->mModified;
-    this->mModified = false;
+  void SetModified() { mModified = true; }
+  bool ClearModified() {
+    bool b = mModified;
+    mModified = false;
     return b;
   }
   typedef blip_ulong_t blip_resampled_time_t;
-  void removeSilence(long count);
-  blip_resampled_time_t resampledDuration(int t) const { return t * this->mFactor; }
-  blip_resampled_time_t resampledTime(blip_time_t t) const { return t * this->mFactor + this->mOffset; }
-  blip_resampled_time_t clockRateFactor(long clock_rate) const;
-
- public:
-  BlipBuffer();
-  ~BlipBuffer();
-
- private:
-  // noncopyable
-  BlipBuffer(const BlipBuffer &) = delete;
-  BlipBuffer &operator=(const BlipBuffer &) = delete;
+  void RemoveSilence(long count);
+  blip_resampled_time_t ResampledDuration(int t) const { return t * mFactor; }
+  blip_resampled_time_t ResampledTime(blip_time_t t) const { return t * mFactor + mOffset; }
+  blip_resampled_time_t ClockRateFactor(long clock_rate) const;
 
  public:
   typedef blip_time_t buf_t_;
@@ -160,41 +156,45 @@ class BlipBuffer {
   bool mModified{false};
 };
 
-class BlipSynthFastImpl {
+class BlipSynthImpl {
  public:
-  void setVolumeUnit(double);
-  void setTrebleEq(const BlipEq &) {}
+  void SetVolumeUnit(double);
+  void SetTrebleEq(const BlipEq &) {}
 
-  BlipBuffer *pBuf{nullptr};
+  BlipBuffer *mBuf{nullptr};
   int mLastAmp{0};
-  int deltaFactor{0};
+  int32_t mDeltaFactor{0};
 };
 
-// RU: range: максимальное ожидаемое изменение амплитуды. Разница между максимальной и минимальной амплитудой.
+// RU: range - максимальная амплитуда сигнала. Разница между максимальной и минимальной амплитудой.
 // EN: Range specifies the greatest expected change in amplitude. Calculate it by finding the difference between the
 // maximum and minimum expected amplitudes (max - min).
 template<int quality, int range> class BlipSynth {
  public:
   BlipSynth() {}
+  BlipSynth<quality, range>(const BlipSynth<quality, range> &) = delete;
+  BlipSynth<quality, range>(BlipSynth<quality, range> &&) = delete;
+  BlipSynth<quality, range> &operator=(const BlipSynth<quality, range> &) = delete;
+
   // Set overall volume of waveform
-  void setVolume(double v) { this->m_impl.setVolumeUnit(v * (1.0 / (range < 0 ? -range : range))); }
+  void SetVolume(double v) { mImpl.SetVolumeUnit(v * (1.0 / (range < 0 ? -range : range))); }
 
   // Configure low-pass filter (see blip_buffer.txt)
-  void setTrebleEq(const BlipEq &eq) { this->m_impl.setTrebleEq(eq); }
+  void SetTrebleEq(const BlipEq &eq) { mImpl.SetTrebleEq(eq); }
 
   // Get/set BlipBuffer used for output
-  BlipBuffer *getOutput() const { return this->m_impl.pBuf; }
+  BlipBuffer *GetOutput() const { return mImpl.mBuf; }
   void SetOutput(BlipBuffer *buf) {
-    this->m_impl.pBuf = buf;
-    this->m_impl.mLastAmp = 0;
+    mImpl.mBuf = buf;
+    mImpl.mLastAmp = 0;
   }
 
   // Update amplitude of waveform at given time. Using this requires a separate BlipSynth for each
   // waveform.
-  void update(blip_time_t tm, int amp) {
-    int delta = amp - this->m_impl.mLastAmp;
-    this->m_impl.mLastAmp = amp;
-    this->offset(tm, delta);
+  void Update(blip_time_t tm, int amp) {
+    int delta = amp - mImpl.mLastAmp;
+    mImpl.mLastAmp = amp;
+    this->Offset(tm, delta);
   }
 
   // Low-level interface
@@ -202,21 +202,17 @@ template<int quality, int range> class BlipSynth {
   // Add an amplitude transition of specified delta, optionally into specified
   // buffer rather than the one set with output(). Delta can be positive or
   // negative. The actual change in amplitude is delta * (volume / range)
-  void offset(blip_time_t t, int delta, BlipBuffer *buf) const {
-    offsetResampled(t * buf->mFactor + buf->mOffset, delta, buf);
+  void Offset(blip_time_t t, int delta, BlipBuffer *buf) const {
+    OffsetResampled(t * buf->mFactor + buf->mOffset, delta, buf);
   }
-  void offset(blip_time_t t, int delta) const { this->offset(t, delta, this->m_impl.pBuf); }
+  void Offset(blip_time_t t, int delta) const { this->Offset(t, delta, mImpl.mBuf); }
 
   // Works directly in terms of fractional output samples. Contact author for
   // more info.
-  void offsetResampled(blip_resampled_time_t, int delta, BlipBuffer *) const;
+  void OffsetResampled(blip_resampled_time_t, int delta, BlipBuffer *) const;
 
  private:
-  // disable broken defaulted constructors, BlipSynthImpl isn't safe to move/copy
-  BlipSynth<quality, range>(const BlipSynth<quality, range> &) = delete;
-  BlipSynth<quality, range>(BlipSynth<quality, range> &&) = delete;
-  BlipSynth<quality, range> &operator=(const BlipSynth<quality, range> &) = delete;
-  BlipSynthFastImpl m_impl;
+  BlipSynthImpl mImpl;
 };
 
 // Low-pass equalization parameters
@@ -224,18 +220,18 @@ class BlipEq {
  public:
   // Logarithmic rolloff to treble dB at half sampling rate. Negative values
   // reduce treble, small positive values (0 to 5.0) increase treble.
-  BlipEq(double treble_db = 0) : m_treble(treble_db), m_rolloffFreq(0), mSampleRate(44100), m_cutoffFreq(0) {}
+  BlipEq(double treble_db = 0) : mTreble(treble_db), mRolloffFreq(0), mSampleRate(44100), mCutoffFreq(0) {}
   // See blip_buffer.txt
   BlipEq(double treble, long rolloff_freq, long sample_rate, long cutoff_freq = 0)
-      : m_treble(treble), m_rolloffFreq(rolloff_freq), mSampleRate(sample_rate), m_cutoffFreq(cutoff_freq) {}
+      : mTreble(treble), mRolloffFreq(rolloff_freq), mSampleRate(sample_rate), mCutoffFreq(cutoff_freq) {}
 
  private:
   friend class BlipSynthImpl;
-  void m_generate(float *out, int count) const;
-  double m_treble;
-  long m_rolloffFreq;
+  void mGenerate(float *out, int count) const;
+  double mTreble;
+  long mCutoffFreq;
+  long mRolloffFreq;
   long mSampleRate;
-  long m_cutoffFreq;
 };
 
 // Dummy BlipBuffer to direct sound output to, for easy muting without
@@ -296,16 +292,16 @@ const int BLIP_READER_DEFAULT_BASS = 9;
 class BlipReader {
   public:
     int begin(BlipBuffer &buf) {
-        this->m_buf = buf.mBuffer;
-        this->m_accum = buf.mReaderAccum;
+        m_buf = buf.mBuffer;
+        m_accum = buf.mReaderAccum;
         return buf.mBassShift;
     }
-    blip_long_t read() const { return this->m_accum >> (BLIP_SAMPLE_BITS - 16); }
-    blip_long_t read_raw() const { return this->m_accum; }
+    blip_long_t read() const { return m_accum >> (BLIP_SAMPLE_BITS - 16); }
+    blip_long_t read_raw() const { return m_accum; }
     void next(int bass_shift = 9) {
-        this->m_accum += *this->m_buf++ - (this->m_accum >> bass_shift);
+        m_accum += *m_buf++ - (m_accum >> bass_shift);
     }
-    void end(BlipBuffer &b) { b.mReaderAccum = this->m_accum; }
+    void end(BlipBuffer &b) { b.mReaderAccum = m_accum; }
 
   private:
     const BlipBuffer::buf_t_ *m_buf;
@@ -318,18 +314,18 @@ class BlipReader {
 #include <assert.h>
 
 template<int quality, int range>
-void BlipSynth<quality, range>::offsetResampled(blip_resampled_time_t time, int delta, BlipBuffer *blip_buf) const {
+void BlipSynth<quality, range>::OffsetResampled(blip_resampled_time_t time, int delta, BlipBuffer *blip_buf) const {
   // Fails if time is beyond end of BlipBuffer, due to a bug in caller code
   // or the need for a longer buffer as set by SetSampleRate().
-  assert((blip_long_t)(time >> BLIP_BUFFER_ACCURACY) < blip_buf->mBufferSize);
-  delta *= this->m_impl.deltaFactor;
+  assert((blip_long_t) (time >> BLIP_BUFFER_ACCURACY) < blip_buf->mBufferSize);
+  delta *= mImpl.mDeltaFactor;
   blip_long_t *buf = blip_buf->mBuffer + (time >> BLIP_BUFFER_ACCURACY);
   int phase = (int) (time >> (BLIP_BUFFER_ACCURACY - BLIP_PHASE_BITS) & (BLIP_RES - 1));
 
   blip_long_t left = buf[0] + delta;
 
   // Kind of crappy, but doing shift after multiply results in overflow.
-  // Alternate way of delaying multiply by deltaFactor results in worse
+  // Alternate way of delaying multiply by mDeltaFactor results in worse
   // sub-sample resolution.
   blip_long_t right = (delta >> BLIP_PHASE_BITS) * phase;
   left -= right;

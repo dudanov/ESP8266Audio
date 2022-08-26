@@ -54,10 +54,10 @@ class AyApu {
     mSquare[idx].mOutput = out;
   }
   // Set overall volume (default is 1.0)
-  void SetVolume(double v) { mSynth.setVolume(0.7 / OSCS_NUM / AMP_RANGE * v); }
+  void SetVolume(double v) { mSynth.SetVolume(0.7 / OSCS_NUM / AMP_RANGE * v); }
 
   // Set treble equalization (see documentation)
-  void setTrebleEq(BlipEq const &eq) { mSynth.setTrebleEq(eq); }
+  void setTrebleEq(BlipEq const &eq) { mSynth.SetTrebleEq(eq); }
 
  private:
   std::array<uint8_t, RNUM> mRegs;

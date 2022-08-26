@@ -144,9 +144,9 @@ extern gme_type_t const gme_gym_type = &gme_gym_type_;
 blargg_err_t GymEmu::mSetSampleRate(long sample_rate) {
   BlipEq eq(-32, 8000, sample_rate);
   mApu.setTrebleEq(eq);
-  dac_synth.setTrebleEq(eq);
+  dac_synth.SetTrebleEq(eq);
   mApu.setVolume(0.135 * FM_GAIN * mGetGain());
-  dac_synth.setVolume(0.125 / 256 * FM_GAIN * mGetGain());
+  dac_synth.SetVolume(0.125 / 256 * FM_GAIN * mGetGain());
   double factor = DualResampler::setup(OVERSAMPLE_FACTOR, 0.990, FM_GAIN * mGetGain());
   fm_sample_rate = sample_rate * factor;
 
@@ -242,9 +242,9 @@ void GymEmu::run_dac(int dac_count) {
   }
 
   // Evenly space samples within buffer section being used
-  blip_resampled_time_t period = blip_buf.resampledDuration(clocks_per_frame) / rate_count;
+  blip_resampled_time_t period = blip_buf.ResampledDuration(clocks_per_frame) / rate_count;
 
-  blip_resampled_time_t time = blip_buf.resampledTime(0) + period * start + (period >> 1);
+  blip_resampled_time_t time = blip_buf.ResampledTime(0) + period * start + (period >> 1);
 
   int dac_amp = this->dac_amp;
   if (dac_amp < 0)
@@ -253,7 +253,7 @@ void GymEmu::run_dac(int dac_count) {
   for (int i = 0; i < dac_count; i++) {
     int delta = dac_buf[i] - dac_amp;
     dac_amp += delta;
-    dac_synth.offsetResampled(time, delta, &blip_buf);
+    dac_synth.OffsetResampled(time, delta, &blip_buf);
     time += period;
   }
   this->dac_amp = dac_amp;

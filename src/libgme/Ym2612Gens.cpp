@@ -805,20 +805,20 @@ void Ym2612_GENS_Impl::set_rate(double sample_rate, double clock_rate) {
 }
 
 const char *Ym2612GensEmu::set_rate(double sample_rate, double clock_rate) {
-  if (!m_impl) {
-    m_impl = (Ym2612_GENS_Impl *) malloc(sizeof *m_impl);
-    if (!m_impl)
+  if (!mImpl) {
+    mImpl = (Ym2612_GENS_Impl *) malloc(sizeof *mImpl);
+    if (!mImpl)
       return "Out of memory";
-    m_impl->mute_mask = 0;
+    mImpl->mute_mask = 0;
   }
-  memset(&m_impl->YM2612, 0, sizeof m_impl->YM2612);
+  memset(&mImpl->YM2612, 0, sizeof mImpl->YM2612);
 
-  m_impl->set_rate(sample_rate, clock_rate);
+  mImpl->set_rate(sample_rate, clock_rate);
 
   return 0;
 }
 
-Ym2612GensEmu::~Ym2612GensEmu() { free(m_impl); }
+Ym2612GensEmu::~Ym2612GensEmu() { free(mImpl); }
 
 inline void Ym2612_GENS_Impl::write0(int opn_addr, int data) {
   assert((unsigned) data <= 0xFF);
@@ -849,7 +849,7 @@ inline void Ym2612_GENS_Impl::write1(int opn_addr, int data) {
   }
 }
 
-void Ym2612GensEmu::reset() { m_impl->reset(); }
+void Ym2612GensEmu::reset() { mImpl->reset(); }
 
 void Ym2612_GENS_Impl::reset() {
   g.LFOcnt = 0;
@@ -909,11 +909,11 @@ void Ym2612_GENS_Impl::reset() {
   write0(0x2A, 0x80);
 }
 
-void Ym2612GensEmu::write0(int addr, int data) { m_impl->write0(addr, data); }
+void Ym2612GensEmu::write0(int addr, int data) { mImpl->write0(addr, data); }
 
-void Ym2612GensEmu::write1(int addr, int data) { m_impl->write1(addr, data); }
+void Ym2612GensEmu::write1(int addr, int data) { mImpl->write1(addr, data); }
 
-void Ym2612GensEmu::mute_voices(int mask) { m_impl->mute_mask = mask; }
+void Ym2612GensEmu::mute_voices(int mask) { mImpl->mute_mask = mask; }
 
 static void update_envelope_(slot_t *sl) {
   switch (sl->Ecurp) {
@@ -1222,7 +1222,7 @@ void Ym2612_GENS_Impl::run(int pair_count, Ym2612GensEmu::sample_t *out) {
   g.LFOcnt += g.LFOinc * pair_count;
 }
 
-void Ym2612GensEmu::run(int pair_count, sample_t *out) { m_impl->run(pair_count, out); }
+void Ym2612GensEmu::run(int pair_count, sample_t *out) { mImpl->run(pair_count, out); }
 
 }  // namespace vgm
 }  // namespace emu

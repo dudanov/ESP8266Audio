@@ -37,7 +37,7 @@ class Ym2612NukedEmu {
   void run(int pair_count, sample_t *out);
 
  private:
-  Ym2612_Nuked_Impl *m_impl;
+  Ym2612_Nuked_Impl *mImpl;
   double m_prevSampleRate;
   double m_prevClockRate;
 };

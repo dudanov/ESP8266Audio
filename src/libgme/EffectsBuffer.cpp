@@ -222,7 +222,7 @@ void EffectsBuffer::EndFrame(blip_time_t clock_count) {
   {
     for (int i = 0; i < buf_count_per_voice; i++)  // foreach buffer of that voice
     {
-      bufs_used |= m_bufs[v * buf_count_per_voice + i].clearModified() << i;
+      bufs_used |= m_bufs[v * buf_count_per_voice + i].ClearModified() << i;
       m_bufs[v * buf_count_per_voice + i].EndFrame(clock_count);
 
       if ((bufs_used & stereo_mask) && m_bufNum == m_maxChannels * MAX_BUFS_NUM)
@@ -293,7 +293,7 @@ long EffectsBuffer::readSamples(blip_sample_t *out, long total_samples) {
         if (i < active_bufs)
           m_bufs[v * buf_count_per_voice + i].RemoveSamples(count);
         else  // keep time synchronized
-          m_bufs[v * buf_count_per_voice + i].removeSilence(count);
+          m_bufs[v * buf_count_per_voice + i].RemoveSilence(count);
       }
     }
   }

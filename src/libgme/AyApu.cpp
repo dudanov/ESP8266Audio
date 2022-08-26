@@ -155,7 +155,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
     BlipBuffer *const osc_output = osc.mOutput;
     if (osc_output == nullptr)
       continue;
-    osc_output->setModified();
+    osc_output->SetModified();
 
     // period
     bool half_vol = false;
@@ -230,7 +230,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
         int delta = amp - osc.mLastAmp;
         if (delta) {
           osc.mLastAmp = amp;
-          mSynth.offset(start_time, delta, osc_output);
+          mSynth.Offset(start_time, delta, osc_output);
         }
       }
 
@@ -257,7 +257,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
               noise_lfsr = (-(noise_lfsr & 1) & 0x12000) ^ (noise_lfsr >> 1);
               if (changed & 2) {
                 delta = -delta;
-                mSynth.offset(ntime, delta, osc_output);
+                mSynth.Offset(ntime, delta, osc_output);
               }
               ntime += noise_period;
             }
@@ -276,7 +276,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
           if (noise_lfsr & delta_non_zero) {
             while (time < end) {
               delta = -delta;
-              mSynth.offset(time, delta, osc_output);
+              mSynth.Offset(time, delta, osc_output);
               time += period;
               // phase ^= 1;
             }

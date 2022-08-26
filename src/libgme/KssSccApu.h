@@ -56,10 +56,10 @@ class SccApu {
   }
 
   // Set overall volume (default is 1.0)
-  void setVolume(double v) { m_synth.setVolume(0.43 / OSCS_NUM / AMP_RANGE * v); }
+  void setVolume(double v) { m_synth.SetVolume(0.43 / OSCS_NUM / AMP_RANGE * v); }
 
   // Set treble equalization (see documentation)
-  void treble_eq(BlipEq const &eq) { m_synth.setTrebleEq(eq); }
+  void treble_eq(BlipEq const &eq) { m_synth.SetTrebleEq(eq); }
 
  public:
   SccApu() { SetOutput(0); }
