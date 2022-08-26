@@ -19,9 +19,9 @@ typedef int16_t blip_sample_t;
 #include "config.h"
 #endif
 
-// RU: Количество бит в доле передискретизации. Более высокие значения дают более точное
-// соотношение, но уменьшают максимальный размер буфера. EN: Number of bits in resample ratio
-// fraction. Higher values give a more accurate ratio but reduce maximum buffer
+// RU: Количество бит в доле передискретизации. Более высокие значения дают более точное соотношение, но уменьшают
+//     максимальный размер буфера.
+// EN: Number of bits in resample ratio fraction. Higher values give a more accurate ratio but reduce maximum buffer
 //     size.
 #ifndef BLIP_BUFFER_ACCURACY
 #define BLIP_BUFFER_ACCURACY 16
@@ -140,7 +140,8 @@ class BlipBuffer {
 
  public:
   typedef blip_time_t buf_t_;
-  blip_ulong_t mFactor;
+  // samples per clock * 65536
+  blip_resampled_time_t mFactor;
   blip_resampled_time_t mOffset;
   buf_t_ *mBuffer;
   blip_long_t mBufferSize;

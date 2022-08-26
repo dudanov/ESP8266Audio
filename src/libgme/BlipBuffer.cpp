@@ -112,10 +112,10 @@ BlipBuffer::blargg_err_t BlipBuffer::SetSampleRate(long rate, int ms) {
 }
 
 blip_resampled_time_t BlipBuffer::ClockRateFactor(long rate) const {
-  double ratio = (double) mSampleRate / rate;
-  blip_long_t factor = (blip_long_t) floor(ratio * (1L << BLIP_BUFFER_ACCURACY) + 0.5);
+  auto ratio = static_cast<double>(mSampleRate) / static_cast<double>(rate);
+  auto factor = static_cast<blip_resampled_time_t>(floor(ratio * (1L << BLIP_BUFFER_ACCURACY) + 0.5));
   assert(factor > 0 || !mSampleRate);  // fails if clock/output ratio is too large
-  return (blip_resampled_time_t) factor;
+  return factor;
 }
 
 void BlipBuffer::SetBassFrequency(int freq) {
