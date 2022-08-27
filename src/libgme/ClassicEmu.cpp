@@ -36,7 +36,7 @@ void ClassicEmu::mSetEqualizer(equalizer_t const &eq) {
 blargg_err_t ClassicEmu::mSetSampleRate(long rate) {
   if (mBuf == nullptr) {
     if (mStereoBuf == nullptr)
-      CHECK_ALLOC(mStereoBuf = BLARGG_NEW StereoBuffer);
+      CHECK_ALLOC(mStereoBuf = BLARGG_NEW MonoBuffer);
     mBuf = mStereoBuf;
   }
   return mBuf->SetSampleRate(rate, 1000 / 20);
