@@ -15,14 +15,14 @@ namespace vgm {
 
 template<class Emu> class YmEmu : public Emu {
  protected:
-  int last_time;
-  short *out;
-  enum { disabled_time = -1 };
+  int mLastTime;
+  short *mOut;
+  enum { DISABLED_TIME = -1 };
 
  public:
-  YmEmu() : last_time(disabled_time), out(NULL) {}
-  void enable(bool b) { last_time = b ? 0 : disabled_time; }
-  bool enabled() const { return last_time != disabled_time; }
+  YmEmu() : mLastTime(DISABLED_TIME), mOut(NULL) {}
+  void enable(bool b) { mLastTime = b ? 0 : DISABLED_TIME; }
+  bool enabled() const { return mLastTime != DISABLED_TIME; }
   void begin_frame(short *p);
   int run_until(int time);
 };
@@ -46,9 +46,9 @@ class VgmEmuImpl : public ClassicEmu, private DualResampler {
   int mBlipTimeFactor;
   blip_time_t mToBlipTime(vgm_time_t) const;
 
-  uint8_t const *data;
-  uint8_t const *loop_begin;
-  uint8_t const *data_end;
+  uint8_t const *mData;
+  uint8_t const *mLoopBegin;
+  uint8_t const *mDataEnd;
   void mUpdateFmRates(long *ym2413_rate, long *ym2612_rate) const;
 
   vgm_time_t mVgmTime;

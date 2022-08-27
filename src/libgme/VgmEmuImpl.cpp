@@ -76,18 +76,18 @@ inline int command_len(int command) {
 
 template<class Emu> inline void YmEmu<Emu>::begin_frame(short *p) {
   require(enabled());
-  out = p;
-  last_time = 0;
+  mOut = p;
+  mLastTime = 0;
 }
 
 template<class Emu> inline int YmEmu<Emu>::run_until(int time) {
-  int count = time - last_time;
+  int count = time - mLastTime;
   if (count > 0) {
-    if (last_time < 0)
+    if (mLastTime < 0)
       return false;
-    last_time = time;
-    short *p = out;
-    out += count * Emu::OUT_CHANNELS_NUM;
+    mLastTime = time;
+    short *p = mOut;
+    mOut += count * Emu::OUT_CHANNELS_NUM;
     Emu::run(count, p);
   }
   return true;
@@ -113,18 +113,18 @@ void VgmEmuImpl::mWritePcm(vgm_time_t vgm_time, int amp) {
 blip_time_t VgmEmuImpl::mRunCommands(vgm_time_t end_time) {
   vgm_time_t vgm_time = this->mVgmTime;
   uint8_t const *pos = this->mPos;
-  if (pos >= data_end) {
+  if (pos >= mDataEnd) {
     mSetTrackEnded();
-    if (pos > data_end)
+    if (pos > mDataEnd)
       m_setWarning("Stream lacked end event");
   }
 
-  while (vgm_time < end_time && pos < data_end) {
+  while (vgm_time < end_time && pos < mDataEnd) {
     // TODO: be sure there are enough bytes left in stream for particular
     // command so we don't read past end
     switch (*pos++) {
       case cmd_end:
-        pos = loop_begin;  // if not looped, loop_begin == data_end
+        pos = mLoopBegin;  // if not looped, mLoopBegin == mDataEnd
         break;
 
       case cmd_delay_735:
@@ -301,8 +301,8 @@ int VgmEmuImpl::mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *bu
 
 // Update pre-1.10 header FM rates by scanning commands
 void VgmEmuImpl::mUpdateFmRates(long *ym2413_rate, long *ym2612_rate) const {
-  uint8_t const *p = data + 0x40;
-  while (p < data_end) {
+  uint8_t const *p = mData + 0x40;
+  while (p < mDataEnd) {
     switch (*p) {
       case cmd_end:
         return;

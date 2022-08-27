@@ -108,8 +108,8 @@ uint8_t const *VgmEmu::gd3_data(int *size) const {
   if (gd3_offset < 0)
     return 0;
 
-  uint8_t const *gd3 = data + HEADER_SIZE + gd3_offset;
-  long gd3_size = check_gd3_header(gd3, data_end - gd3);
+  uint8_t const *gd3 = mData + HEADER_SIZE + gd3_offset;
+  long gd3_size = check_gd3_header(gd3, mDataEnd - gd3);
   if (!gd3_size)
     return 0;
 
@@ -306,13 +306,13 @@ blargg_err_t VgmEmu::mLoad(uint8_t const *new_data, long new_size) {
   m_psgRate &= 0x0FFFFFFF;
   mBlipBuf.SetClockRate(m_psgRate);
 
-  data = new_data;
-  data_end = new_data + new_size;
+  mData = new_data;
+  mDataEnd = new_data + new_size;
 
   // get loop
-  loop_begin = data_end;
+  mLoopBegin = mDataEnd;
   if (get_le32(h.loop_offset))
-    loop_begin = &data[get_le32(h.loop_offset) + offsetof(header_t, loop_offset)];
+    mLoopBegin = &mData[get_le32(h.loop_offset) + offsetof(header_t, loop_offset)];
 
   mSetChannelsNumber(mPsg[0].OSCS_NUM);
 
@@ -394,7 +394,7 @@ blargg_err_t VgmEmu::mStartTrack(int track) {
     mPsg[1].reset(get_le16(header().noise_feedback), header().noise_width);
 
   mDacDisabled = -1;
-  mPos = data + HEADER_SIZE;
+  mPos = mData + HEADER_SIZE;
   mPcmData = mPos;
   mPcmPos = mPos;
   mDacAmp = -1;

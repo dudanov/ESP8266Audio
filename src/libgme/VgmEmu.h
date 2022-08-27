@@ -54,7 +54,7 @@ class VgmEmu : public VgmEmuImpl {
   };
 
   // Header for currently loaded file
-  header_t const &header() const { return *(header_t const *) data; }
+  header_t const &header() const { return *(header_t const *) mData; }
 
   static gme_type_t static_type() { return gme_vgm_type; }
 
