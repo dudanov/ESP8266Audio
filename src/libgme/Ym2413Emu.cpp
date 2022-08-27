@@ -13,7 +13,7 @@ Ym2413Emu::Ym2413Emu() {}
 
 Ym2413Emu::~Ym2413Emu() {}
 
-int Ym2413Emu::set_rate(double, double) { return 2; }
+const char *Ym2413Emu::set_rate(double, double) { return "YM2413 FM sound isn't supported"; }
 
 void Ym2413Emu::reset() {}
 

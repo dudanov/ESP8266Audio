@@ -16,7 +16,7 @@ class Ym2413Emu {
 
   // Set output sample rate and chip clock rates, in Hz. Returns non-zero
   // if error.
-  int set_rate(double sample_rate, double clock_rate);
+  const char *set_rate(double sample_rate, double clock_rate);
 
   // Reset to power-up state
   void reset();

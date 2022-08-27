@@ -53,7 +53,7 @@ static inline void blargg_dprintf_(const char *fmt_str, ...) { (void) fmt_str; }
 #define RETURN_ERR(expr) \
   do { \
     blargg_err_t blargg_return_err_ = (expr); \
-    if (blargg_return_err_) \
+    if (blargg_return_err_ != nullptr) \
       return blargg_return_err_; \
   } while (0)
 

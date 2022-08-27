@@ -359,17 +359,11 @@ blargg_err_t VgmEmu::setup_fm() {
     if (disable_oversampling_)
       m_fmRate = ym2413_rate / 72.0;
     DualResampler::setup(m_fmRate / blip_buf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
-    int result = ym2413[0].set_rate(m_fmRate, ym2413_rate);
-    if (result == 2)
-      return "YM2413 FM sound isn't supported";
-    CHECK_ALLOC(!result);
+    RETURN_ERR(ym2413[0].set_rate(m_fmRate, ym2413_rate));
     ym2413[0].enable(true);
     if (ym2413_dual) {
+      RETURN_ERR(ym2413[1].set_rate(m_fmRate, ym2413_rate));
       ym2413[1].enable(true);
-      int result = ym2413[1].set_rate(m_fmRate, ym2413_rate);
-      if (result == 2)
-        return "YM2413 FM sound isn't supported";
-      CHECK_ALLOC(!result);
     }
     mSetChannelsNumber(8);
   }
