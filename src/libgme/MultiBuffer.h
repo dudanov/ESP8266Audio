@@ -5,44 +5,43 @@
 #include "BlipBuffer.h"
 #include "blargg_common.h"
 
-// Interface to one or more Blip_Buffers mapped to one or more channels
+// Interface to one or more BlipBuffers mapped to one or more channels
 // consisting of left, center, and right buffers.
 class MultiBuffer {
  public:
-  MultiBuffer(int samplesPerFrame) : mSamplesPerFrame(samplesPerFrame) {}
+  // Construct buffer with specified number of output samples per frame (number of channels)
+  MultiBuffer(unsigned nChannels) : mSamplesPerFrame(nChannels) {}
   MultiBuffer(const MultiBuffer &) = delete;
   MultiBuffer &operator=(const MultiBuffer &) = delete;
   virtual ~MultiBuffer() {}
 
-  // Set the number of channels available
-  virtual blargg_err_t SetChannelCount(int) { return nullptr; }
-
-  // Get indexed channel, from 0 to channel count - 1
   struct Channel {
     BlipBuffer *center{nullptr};
     BlipBuffer *left{nullptr};
     BlipBuffer *right{nullptr};
   };
+
   enum { TYPE_INDEX_MASK = 0xFF };
   enum { WAVE_TYPE = 0x100, NOISE_TYPE = 0x200, MIXED_TYPE = WAVE_TYPE | NOISE_TYPE };
+
+  // Set the number of channels available
+  virtual blargg_err_t SetChannelCount(int) { return nullptr; }
   virtual const Channel &GetChannelBuffers(int index, int type) const = 0;
 
   // See Blip_Buffer.h
   virtual blargg_err_t SetSampleRate(long rate, int msec) {
     mSampleRate = rate;
     mLength = msec;
-    return 0;
+    return nullptr;
   }
+  blip_ms_time_t GetLength() const { return mLength; }
+  virtual void EndFrame(blip_time_t) = 0;
   virtual void SetClockRate(long) = 0;
   virtual void SetBassFreq(int) = 0;
   virtual void Clear() = 0;
   long GetSampleRate() const { return mSampleRate; }
-
-  // Length of buffer, in milliseconds
-  int GetLength() const { return mLength; }
-
-  // See Blip_Buffer.h
-  virtual void EndFrame(blip_time_t) = 0;
+  virtual long ReadSamples(blip_sample_t *, long) = 0;
+  virtual long SamplesAvailable() const = 0;
 
   // Number of samples per output frame (1 = mono, 2 = stereo)
   int GetSamplesPerFrame() const { return mSamplesPerFrame; }
@@ -51,26 +50,18 @@ class MultiBuffer {
   // a change is made to any of the Blip_Buffers for any channel.
   unsigned GetChangedChannelsNumber() { return mChangedChannelsNumber; }
 
-  // See Blip_Buffer.h
-  virtual long ReadSamples(blip_sample_t *, long) = 0;
-  virtual long SamplesAvailable() const = 0;
-
  protected:
   void mChannelChanged() { mChangedChannelsNumber++; }
 
  private:
-  const int mSamplesPerFrame;
+  const unsigned mSamplesPerFrame;
   unsigned mChangedChannelsNumber{1};
   long mSampleRate{0};
-  int mLength{0};
+  blip_ms_time_t mLength{0};
 };
 
 // Uses a single buffer and outputs mono samples.
 class MonoBuffer : public MultiBuffer {
- public:
-  // Buffer used for all channels
-  BlipBuffer *Center() { return &mBuf; }
-
  public:
   MonoBuffer() : MultiBuffer(1) {
     mChan.center = &mBuf;
@@ -78,6 +69,10 @@ class MonoBuffer : public MultiBuffer {
     mChan.right = &mBuf;
   }
   ~MonoBuffer() {}
+
+  // Buffer used for all channels
+  BlipBuffer *Center() { return &mBuf; }
+
   blargg_err_t SetSampleRate(long rate, int msec = BLIP_DEFAULT_LENGTH) override;
   void SetClockRate(long rate) override { mBuf.SetClockRate(rate); }
   void SetBassFreq(int freq) override { mBuf.SetBassFrequency(freq); }
@@ -95,18 +90,18 @@ class MonoBuffer : public MultiBuffer {
 // Uses three buffers (one for center) and outputs stereo sample pairs.
 class StereoBuffer : public MultiBuffer {
  public:
-  // Buffers used for all channels
-  BlipBuffer *Center() { return &mBufs[0]; }
-  BlipBuffer *Left() { return &mBufs[1]; }
-  BlipBuffer *Right() { return &mBufs[2]; }
-
- public:
   StereoBuffer() : MultiBuffer(2) {
     mChan.center = &mBufs[0];
     mChan.left = &mBufs[1];
     mChan.right = &mBufs[2];
   }
   ~StereoBuffer() {}
+
+  // Buffers used for all channels
+  BlipBuffer *Center() { return &mBufs[0]; }
+  BlipBuffer *Left() { return &mBufs[1]; }
+  BlipBuffer *Right() { return &mBufs[2]; }
+
   blargg_err_t SetSampleRate(long, int msec = BLIP_DEFAULT_LENGTH) override;
   void SetClockRate(long) override;
   void SetBassFreq(int) override;
