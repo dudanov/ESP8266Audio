@@ -212,7 +212,7 @@ template<class T> inline void zero_apu_osc(T *osc, nes_time_t time) {
   int last_amp = osc->mLastAmp;
   osc->mLastAmp = 0;
   if (output && last_amp)
-    osc->mSynth.Offset(time, -last_amp, output);
+    osc->mSynth.Offset(output, time, -last_amp);
 }
 
 void NesApu::EndFrame(nes_time_t end_time) {
