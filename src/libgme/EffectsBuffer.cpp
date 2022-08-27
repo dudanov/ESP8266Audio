@@ -87,22 +87,22 @@ blargg_err_t EffectsBuffer::SetSampleRate(long rate, int msec) {
     RETURN_ERR(buf.SetSampleRate(rate, msec));
 
   config(m_config);
-  clear();
+  Clear();
 
   return MultiBuffer::SetSampleRate(m_bufs[0].GetSampleRate(), m_bufs[0].GetLength());
 }
 
-void EffectsBuffer::setClockRate(long rate) {
+void EffectsBuffer::SetClockRate(long rate) {
   for (auto &buf : this->m_bufs)
     buf.SetClockRate(rate);
 }
 
-void EffectsBuffer::setBassFreq(int freq) {
+void EffectsBuffer::SetBassFreq(int freq) {
   for (auto &buf : this->m_bufs)
     buf.SetBassFrequency(freq);
 }
 
-void EffectsBuffer::clear() {
+void EffectsBuffer::Clear() {
   m_stereoRemain = 0;
   m_effectRemain = 0;
 
@@ -127,7 +127,7 @@ inline int pin_range(int n, int max, int min = 0) {
 }
 
 void EffectsBuffer::config(const config_t &cfg) {
-  m_channelChanged();
+  mChannelChanged();
 
   // clear echo and reverb buffers
   // ensure the echo/reverb buffers have already been allocated, so this
@@ -201,7 +201,7 @@ void EffectsBuffer::config(const config_t &cfg) {
   }
 }
 
-const EffectsBuffer::Channel &EffectsBuffer::getChannelBuffers(int i, int type) const {
+const EffectsBuffer::Channel &EffectsBuffer::GetChannelBuffers(int i, int type) const {
   int out = CHAN_TYPES_NUM - 1;
   if (!type) {
     out = i % 5;
@@ -238,9 +238,9 @@ void EffectsBuffer::EndFrame(blip_time_t clock_count) {
   m_effectsEnabled = m_config.effects_enabled;
 }
 
-long EffectsBuffer::samplesAvailable() const { return m_bufs[0].SamplesAvailable() * 2; }
+long EffectsBuffer::SamplesAvailable() const { return m_bufs[0].SamplesAvailable() * 2; }
 
-long EffectsBuffer::readSamples(blip_sample_t *out, long total_samples) {
+long EffectsBuffer::ReadSamples(blip_sample_t *out, long total_samples) {
   const int n_channels = m_maxChannels * 2;
   const int buf_count_per_voice = m_bufNum / m_maxChannels;
 

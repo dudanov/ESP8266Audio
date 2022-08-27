@@ -30,7 +30,7 @@ void ClassicEmu::mSetEqualizer(equalizer_t const &eq) {
   MusicEmu::mSetEqualizer(eq);
   mUpdateEq(eq.treble);
   if (mBuf)
-    mBuf->setBassFreq((int) GetEqualizer().bass);
+    mBuf->SetBassFreq((int) GetEqualizer().bass);
 }
 
 blargg_err_t ClassicEmu::mSetSampleRate(long rate) {
@@ -53,7 +53,7 @@ void ClassicEmu::mMuteChannel(int mask) {
     if (mask & 1) {
       mSetChannel(i, nullptr, nullptr, nullptr);
     } else {
-      auto &ch = mBuf->getChannelBuffers(i, mGetChannelType(i));
+      auto &ch = mBuf->GetChannelBuffers(i, mGetChannelType(i));
       assert((ch.center && ch.left && ch.right) || (!ch.center && !ch.left && !ch.right));  // all or nothing
       mSetChannel(i, ch.center, ch.left, ch.right);
     }
@@ -62,33 +62,33 @@ void ClassicEmu::mMuteChannel(int mask) {
 
 void ClassicEmu::mChangeClockRate(long rate) {
   mClockRate = rate;
-  mBuf->setClockRate(rate);
+  mBuf->SetClockRate(rate);
 }
 
 blargg_err_t ClassicEmu::mSetupBuffer(long rate) {
   mChangeClockRate(rate);
-  RETURN_ERR(mBuf->setChannelCount(GetChannelsNum()));
+  RETURN_ERR(mBuf->SetChannelCount(GetChannelsNum()));
   SetEqualizer(GetEqualizer());
-  mBufChangedNum = mBuf->getChangedChannelsNumber();
+  mBufChangedNum = mBuf->GetChangedChannelsNumber();
   return 0;
 }
 
 blargg_err_t ClassicEmu::mStartTrack(int track) {
   RETURN_ERR(MusicEmu::mStartTrack(track));
-  mBuf->clear();
+  mBuf->Clear();
   return 0;
 }
 
 blargg_err_t ClassicEmu::mPlay(long count, sample_t *out) {
   long remain = count;
   while (remain) {
-    remain -= mBuf->readSamples(&out[count - remain], remain);
+    remain -= mBuf->ReadSamples(&out[count - remain], remain);
     if (remain) {
-      if (mBufChangedNum != mBuf->getChangedChannelsNumber()) {
-        mBufChangedNum = mBuf->getChangedChannelsNumber();
+      if (mBufChangedNum != mBuf->GetChangedChannelsNumber()) {
+        mBufChangedNum = mBuf->GetChangedChannelsNumber();
         mRemuteChannels();
       }
-      int msec = mBuf->getLength();
+      int msec = mBuf->GetLength();
       blip_time_t clocks_emulated = (blargg_long) msec * mClockRate / 1000;
       RETURN_ERR(mRunClocks(clocks_emulated, msec));
       assert(clocks_emulated);

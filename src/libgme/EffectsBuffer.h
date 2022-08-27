@@ -41,13 +41,13 @@ class EffectsBuffer : public MultiBuffer {
  public:
   ~EffectsBuffer();
   blargg_err_t SetSampleRate(long samples_per_sec, int msec = BLIP_DEFAULT_LENGTH) override;
-  void setClockRate(long) override;
-  void setBassFreq(int) override;
-  void clear() override;
-  const Channel &getChannelBuffers(int, int) const override;
+  void SetClockRate(long) override;
+  void SetBassFreq(int) override;
+  void Clear() override;
+  const Channel &GetChannelBuffers(int, int) const override;
   void EndFrame(blip_time_t) override;
-  long readSamples(blip_sample_t *, long) override;
-  long samplesAvailable() const override;
+  long ReadSamples(blip_sample_t *, long) override;
+  long SamplesAvailable() const override;
 
  private:
   typedef long fixed_t;

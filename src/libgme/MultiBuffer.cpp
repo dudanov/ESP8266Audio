@@ -34,17 +34,17 @@ blargg_err_t StereoBuffer::SetSampleRate(long rate, int msec) {
   return MultiBuffer::SetSampleRate(mBufs[0].GetSampleRate(), mBufs[0].GetLength());
 }
 
-void StereoBuffer::setClockRate(long rate) {
+void StereoBuffer::SetClockRate(long rate) {
   for (auto &buf : mBufs)
     buf.SetClockRate(rate);
 }
 
-void StereoBuffer::setBassFreq(int bass) {
+void StereoBuffer::SetBassFreq(int bass) {
   for (auto &buf : mBufs)
     buf.SetBassFrequency(bass);
 }
 
-void StereoBuffer::clear() {
+void StereoBuffer::Clear() {
   mStereoAdded = 0;
   mWasStereo = false;
   for (auto &buf : mBufs)
@@ -62,7 +62,7 @@ void StereoBuffer::EndFrame(blip_time_t clock_count) {
   }
 }
 
-long StereoBuffer::readSamples(blip_sample_t *out, long count) {
+long StereoBuffer::ReadSamples(blip_sample_t *out, long count) {
   require(!(count & 1));  // count must be even
   count = (unsigned) count / 2;
 
@@ -101,76 +101,76 @@ long StereoBuffer::readSamples(blip_sample_t *out, long count) {
 void StereoBuffer::mMixStereo(blip_sample_t *out_, blargg_long count) {
   blip_sample_t *out = out_;
   int const bass = BLIP_READER_BASS(mBufs[1]);
-  BLIP_READER_BEGIN(center, mBufs[0]);
-  BLIP_READER_BEGIN(left, mBufs[1]);
-  BLIP_READER_BEGIN(right, mBufs[2]);
+  BLIP_READER_BEGIN(Center, mBufs[0]);
+  BLIP_READER_BEGIN(Left, mBufs[1]);
+  BLIP_READER_BEGIN(Right, mBufs[2]);
 
   for (; count; --count) {
-    int c = BLIP_READER_READ(center);
-    blargg_long l = c + BLIP_READER_READ(left);
-    blargg_long r = c + BLIP_READER_READ(right);
+    int c = BLIP_READER_READ(Center);
+    blargg_long l = c + BLIP_READER_READ(Left);
+    blargg_long r = c + BLIP_READER_READ(Right);
     if ((int16_t) l != l)
       l = 0x7FFF - (l >> 24);
 
-    BLIP_READER_NEXT(center, bass);
+    BLIP_READER_NEXT(Center, bass);
     if ((int16_t) r != r)
       r = 0x7FFF - (r >> 24);
 
-    BLIP_READER_NEXT(left, bass);
-    BLIP_READER_NEXT(right, bass);
+    BLIP_READER_NEXT(Left, bass);
+    BLIP_READER_NEXT(Right, bass);
 
     out[0] = l;
     out[1] = r;
     out += 2;
   }
 
-  BLIP_READER_END(center, mBufs[0]);
-  BLIP_READER_END(left, mBufs[1]);
-  BLIP_READER_END(right, mBufs[2]);
+  BLIP_READER_END(Center, mBufs[0]);
+  BLIP_READER_END(Left, mBufs[1]);
+  BLIP_READER_END(Right, mBufs[2]);
 }
 
 void StereoBuffer::mMixStereoNoCenter(blip_sample_t *out_, blargg_long count) {
   blip_sample_t *out = out_;
   int const bass = BLIP_READER_BASS(mBufs[1]);
-  BLIP_READER_BEGIN(left, mBufs[1]);
-  BLIP_READER_BEGIN(right, mBufs[2]);
+  BLIP_READER_BEGIN(Left, mBufs[1]);
+  BLIP_READER_BEGIN(Right, mBufs[2]);
 
   for (; count; --count) {
-    blargg_long l = BLIP_READER_READ(left);
+    blargg_long l = BLIP_READER_READ(Left);
     if ((int16_t) l != l)
       l = 0x7FFF - (l >> 24);
 
-    blargg_long r = BLIP_READER_READ(right);
+    blargg_long r = BLIP_READER_READ(Right);
     if ((int16_t) r != r)
       r = 0x7FFF - (r >> 24);
 
-    BLIP_READER_NEXT(left, bass);
-    BLIP_READER_NEXT(right, bass);
+    BLIP_READER_NEXT(Left, bass);
+    BLIP_READER_NEXT(Right, bass);
 
     out[0] = l;
     out[1] = r;
     out += 2;
   }
 
-  BLIP_READER_END(left, mBufs[1]);
-  BLIP_READER_END(right, mBufs[2]);
+  BLIP_READER_END(Left, mBufs[1]);
+  BLIP_READER_END(Right, mBufs[2]);
 }
 
 void StereoBuffer::mMixMono(blip_sample_t *out_, blargg_long count) {
   blip_sample_t *out = out_;
   const int bass = BLIP_READER_BASS(mBufs[0]);
-  BLIP_READER_BEGIN(center, mBufs[0]);
+  BLIP_READER_BEGIN(Center, mBufs[0]);
 
   for (; count; --count) {
-    blargg_long s = BLIP_READER_READ(center);
+    blargg_long s = BLIP_READER_READ(Center);
     if ((int16_t) s != s)
       s = 0x7FFF - (s >> 24);
 
-    BLIP_READER_NEXT(center, bass);
+    BLIP_READER_NEXT(Center, bass);
     out[0] = s;
     out[1] = s;
     out += 2;
   }
 
-  BLIP_READER_END(center, mBufs[0]);
+  BLIP_READER_END(Center, mBufs[0]);
 }
