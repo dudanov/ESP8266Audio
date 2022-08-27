@@ -22,41 +22,41 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 // MonoBuffer
 
 blargg_err_t MonoBuffer::SetSampleRate(long rate, int msec) {
-  RETURN_ERR(m_buf.SetSampleRate(rate, msec));
-  return MultiBuffer::SetSampleRate(m_buf.GetSampleRate(), m_buf.GetLength());
+  RETURN_ERR(mBuf.SetSampleRate(rate, msec));
+  return MultiBuffer::SetSampleRate(mBuf.GetSampleRate(), mBuf.GetLength());
 }
 
 // StereoBuffer
 
 blargg_err_t StereoBuffer::SetSampleRate(long rate, int msec) {
-  for (auto &buf : this->m_bufs)
+  for (auto &buf : mBufs)
     RETURN_ERR(buf.SetSampleRate(rate, msec));
-  return MultiBuffer::SetSampleRate(m_bufs[0].GetSampleRate(), m_bufs[0].GetLength());
+  return MultiBuffer::SetSampleRate(mBufs[0].GetSampleRate(), mBufs[0].GetLength());
 }
 
 void StereoBuffer::setClockRate(long rate) {
-  for (auto &buf : this->m_bufs)
+  for (auto &buf : mBufs)
     buf.SetClockRate(rate);
 }
 
 void StereoBuffer::setBassFreq(int bass) {
-  for (auto &buf : this->m_bufs)
+  for (auto &buf : mBufs)
     buf.SetBassFrequency(bass);
 }
 
 void StereoBuffer::clear() {
-  this->m_stereoAdded = 0;
-  this->m_wasStereo = false;
-  for (auto &buf : this->m_bufs)
+  mStereoAdded = 0;
+  mWasStereo = false;
+  for (auto &buf : mBufs)
     buf.Clear();
 }
 
 void StereoBuffer::EndFrame(blip_time_t clock_count) {
-  this->m_stereoAdded = 0;
+  mStereoAdded = 0;
   unsigned mask = 1;
-  for (auto &buf : this->m_bufs) {
+  for (auto &buf : mBufs) {
     if (buf.ClearModified())
-      this->m_stereoAdded |= mask;
+      mStereoAdded |= mask;
     buf.EndFrame(clock_count);
     mask <<= 1;
   }
@@ -66,44 +66,44 @@ long StereoBuffer::readSamples(blip_sample_t *out, long count) {
   require(!(count & 1));  // count must be even
   count = (unsigned) count / 2;
 
-  long avail = this->m_bufs[0].SamplesAvailable();
+  long avail = mBufs[0].SamplesAvailable();
   if (count > avail)
     count = avail;
   if (count) {
-    int bufs_used = this->m_stereoAdded | this->m_wasStereo;
+    int bufs_used = mStereoAdded | mWasStereo;
     // debug_printf( "%X\n", bufs_used );
     if (bufs_used <= 1) {
-      this->m_mixMono(out, count);
-      this->m_bufs[0].RemoveSamples(count);
-      this->m_bufs[1].RemoveSilence(count);
-      this->m_bufs[2].RemoveSilence(count);
+      mMixMono(out, count);
+      mBufs[0].RemoveSamples(count);
+      mBufs[1].RemoveSilence(count);
+      mBufs[2].RemoveSilence(count);
     } else if (bufs_used & 1) {
-      this->m_mixStereo(out, count);
-      this->m_bufs[0].RemoveSamples(count);
-      this->m_bufs[1].RemoveSamples(count);
-      this->m_bufs[2].RemoveSamples(count);
+      mMixStereo(out, count);
+      mBufs[0].RemoveSamples(count);
+      mBufs[1].RemoveSamples(count);
+      mBufs[2].RemoveSamples(count);
     } else {
-      this->m_mixStereoNoCenter(out, count);
-      this->m_bufs[0].RemoveSilence(count);
-      this->m_bufs[1].RemoveSamples(count);
-      this->m_bufs[2].RemoveSamples(count);
+      mMixStereoNoCenter(out, count);
+      mBufs[0].RemoveSilence(count);
+      mBufs[1].RemoveSamples(count);
+      mBufs[2].RemoveSamples(count);
     }
 
     // to do: this might miss opportunities for optimization
-    if (!this->m_bufs[0].SamplesAvailable()) {
-      this->m_wasStereo = this->m_stereoAdded;
-      this->m_stereoAdded = 0;
+    if (!mBufs[0].SamplesAvailable()) {
+      mWasStereo = mStereoAdded;
+      mStereoAdded = 0;
     }
   }
   return count * 2;
 }
 
-void StereoBuffer::m_mixStereo(blip_sample_t *out_, blargg_long count) {
+void StereoBuffer::mMixStereo(blip_sample_t *out_, blargg_long count) {
   blip_sample_t *out = out_;
-  int const bass = BLIP_READER_BASS(this->m_bufs[1]);
-  BLIP_READER_BEGIN(center, this->m_bufs[0]);
-  BLIP_READER_BEGIN(left, this->m_bufs[1]);
-  BLIP_READER_BEGIN(right, this->m_bufs[2]);
+  int const bass = BLIP_READER_BASS(mBufs[1]);
+  BLIP_READER_BEGIN(center, mBufs[0]);
+  BLIP_READER_BEGIN(left, mBufs[1]);
+  BLIP_READER_BEGIN(right, mBufs[2]);
 
   for (; count; --count) {
     int c = BLIP_READER_READ(center);
@@ -124,16 +124,16 @@ void StereoBuffer::m_mixStereo(blip_sample_t *out_, blargg_long count) {
     out += 2;
   }
 
-  BLIP_READER_END(center, m_bufs[0]);
-  BLIP_READER_END(left, m_bufs[1]);
-  BLIP_READER_END(right, m_bufs[2]);
+  BLIP_READER_END(center, mBufs[0]);
+  BLIP_READER_END(left, mBufs[1]);
+  BLIP_READER_END(right, mBufs[2]);
 }
 
-void StereoBuffer::m_mixStereoNoCenter(blip_sample_t *out_, blargg_long count) {
+void StereoBuffer::mMixStereoNoCenter(blip_sample_t *out_, blargg_long count) {
   blip_sample_t *out = out_;
-  int const bass = BLIP_READER_BASS(m_bufs[1]);
-  BLIP_READER_BEGIN(left, m_bufs[1]);
-  BLIP_READER_BEGIN(right, m_bufs[2]);
+  int const bass = BLIP_READER_BASS(mBufs[1]);
+  BLIP_READER_BEGIN(left, mBufs[1]);
+  BLIP_READER_BEGIN(right, mBufs[2]);
 
   for (; count; --count) {
     blargg_long l = BLIP_READER_READ(left);
@@ -152,14 +152,14 @@ void StereoBuffer::m_mixStereoNoCenter(blip_sample_t *out_, blargg_long count) {
     out += 2;
   }
 
-  BLIP_READER_END(left, m_bufs[1]);
-  BLIP_READER_END(right, m_bufs[2]);
+  BLIP_READER_END(left, mBufs[1]);
+  BLIP_READER_END(right, mBufs[2]);
 }
 
-void StereoBuffer::m_mixMono(blip_sample_t *out_, blargg_long count) {
+void StereoBuffer::mMixMono(blip_sample_t *out_, blargg_long count) {
   blip_sample_t *out = out_;
-  const int bass = BLIP_READER_BASS(this->m_bufs[0]);
-  BLIP_READER_BEGIN(center, this->m_bufs[0]);
+  const int bass = BLIP_READER_BASS(mBufs[0]);
+  BLIP_READER_BEGIN(center, mBufs[0]);
 
   for (; count; --count) {
     blargg_long s = BLIP_READER_READ(center);
@@ -172,5 +172,5 @@ void StereoBuffer::m_mixMono(blip_sample_t *out_, blargg_long count) {
     out += 2;
   }
 
-  BLIP_READER_END(center, this->m_bufs[0]);
+  BLIP_READER_END(center, mBufs[0]);
 }

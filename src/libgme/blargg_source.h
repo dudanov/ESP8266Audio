@@ -61,7 +61,7 @@ static inline void blargg_dprintf_(const char *fmt_str, ...) { (void) fmt_str; }
 #undef CHECK_ALLOC
 #define CHECK_ALLOC(ptr) \
   do { \
-    if ((ptr) == 0) \
+    if ((ptr) == nullptr) \
       return "Out of memory"; \
   } while (0)
 

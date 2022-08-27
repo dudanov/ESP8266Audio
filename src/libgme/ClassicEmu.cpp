@@ -100,38 +100,42 @@ blargg_err_t ClassicEmu::mPlay(long count, sample_t *out) {
 
 // RomData
 
-blargg_err_t RomDataImpl::m_loadRomData(DataReader &src, int header_size, void *header_out, int fill, long pad_size) {
+blargg_err_t RomDataImpl::mLoadRomData(DataReader &src, int header_size, void *header_out, int fill, long pad_size) {
   long file_offset = pad_size - header_size;
 
-  m_romAddr = 0;
-  m_mask = 0;
-  m_size = 0;
-  this->rom.clear();
+  mRomAddr = 0;
+  mMask = 0;
+  mSize = 0;
+  mRom.clear();
 
-  m_fileSize = src.remain();
-  if (m_fileSize <= header_size)  // <= because there must be data after header
-    return "asdas";               // gme_wrong_file_type;
-  blargg_err_t err = this->rom.resize(file_offset + m_fileSize + pad_size);
-  if (!err)
-    err = src.read(this->rom.begin() + file_offset, m_fileSize);
-  if (err) {
-    this->rom.clear();
+  mFileSize = src.remain();
+
+  if (mFileSize <= header_size)  // <= because there must be data after header
+    return gme_wrong_file_type;
+
+  blargg_err_t err = mRom.resize(file_offset + mFileSize + pad_size);
+
+  if (err == nullptr)
+    err = src.read(mRom.begin() + file_offset, mFileSize);
+
+  if (err != nullptr) {
+    mRom.clear();
     return err;
   }
 
-  m_fileSize -= header_size;
-  memcpy(header_out, &this->rom[file_offset], header_size);
+  mFileSize -= header_size;
 
-  memset(this->rom.begin(), fill, pad_size);
-  memset(this->rom.end() - pad_size, fill, pad_size);
+  memcpy(header_out, &mRom[file_offset], header_size);
+  memset(mRom.begin(), fill, pad_size);
+  memset(mRom.end() - pad_size, fill, pad_size);
 
-  return 0;
+  return nullptr;
 }
 
-void RomDataImpl::m_setAddr(long addr, int unit) {
-  m_romAddr = addr - unit - PAD_EXTRA;
+void RomDataImpl::mSetAddr(long addr, int unit) {
+  mRomAddr = addr - unit - PAD_EXTRA;
 
-  long rounded = (addr + m_fileSize + unit - 1) / unit * unit;
+  long rounded = (addr + mFileSize + unit - 1) / unit * unit;
   if (rounded <= 0) {
     rounded = 0;
   } else {
@@ -139,19 +143,19 @@ void RomDataImpl::m_setAddr(long addr, int unit) {
     unsigned long max_addr = (unsigned long) (rounded - 1);
     while (max_addr >> shift)
       shift++;
-    m_mask = (1L << shift) - 1;
+    mMask = (1L << shift) - 1;
   }
 
   if (addr < 0)
     addr = 0;
-  m_size = rounded;
-  if (this->rom.resize(rounded - m_romAddr + PAD_EXTRA)) {
+  mSize = rounded;
+  if (mRom.resize(rounded - mRomAddr + PAD_EXTRA)) {
   }  // OK if shrink fails
 
   if (0) {
     debug_printf("addr: %X\n", addr);
-    debug_printf("file_size: %d\n", m_fileSize);
+    debug_printf("file_size: %d\n", mFileSize);
     debug_printf("rounded: %d\n", rounded);
-    debug_printf("mask: $%X\n", m_mask);
+    debug_printf("mask: $%X\n", mMask);
   }
 }

@@ -53,13 +53,13 @@ class ClassicEmu : public MusicEmu {
 class RomDataImpl {
  protected:
   enum { PAD_EXTRA = 8 };
-  blargg_vector<uint8_t> rom;
-  long m_fileSize;
-  blargg_long m_romAddr;
-  blargg_long m_mask;
-  blargg_long m_size;  // TODO: eliminate
-  blargg_err_t m_loadRomData(DataReader &in, int header_size, void *header_out, int fill, long pad_size);
-  void m_setAddr(long addr, int unit);
+  blargg_vector<uint8_t> mRom;
+  long mFileSize;
+  blargg_long mRomAddr;
+  blargg_long mMask;
+  blargg_long mSize;  // TODO: eliminate
+  blargg_err_t mLoadRomData(DataReader &in, int header_size, void *header_out, int fill, long pad_size);
+  void mSetAddr(long addr, int unit);
 };
 
 template<int unit> class RomData : public RomDataImpl {
@@ -69,41 +69,36 @@ template<int unit> class RomData : public RomDataImpl {
   // Load file data, using already-loaded header 'h' if not NULL. Copy header
   // from loaded file data into *out and fill unmapped bytes with 'fill'.
   blargg_err_t load(DataReader &in, int header_size, void *header_out, int fill) {
-    return m_loadRomData(in, header_size, header_out, fill, PAD_SIZE);
+    return mLoadRomData(in, header_size, header_out, fill, PAD_SIZE);
   }
 
   // Size of file data read in (excluding header)
-  long fileSize() const { return m_fileSize; }
+  long fileSize() const { return mFileSize; }
 
   // Pointer to beginning of file data
-  uint8_t *begin() const { return this->rom.begin() + PAD_SIZE; }
+  uint8_t *begin() const { return mRom.begin() + PAD_SIZE; }
 
   // Set address that file data should start at
-  void setAddr(long addr) { m_setAddr(addr, unit); }
+  void setAddr(long addr) { mSetAddr(addr, unit); }
 
   // Free data
-  void clear() { this->rom.clear(); }
+  void clear() { mRom.clear(); }
 
   // Size of data + start addr, rounded to a multiple of unit
-  long size() const { return m_size; }
+  long size() const { return mSize; }
 
   // Pointer to unmapped page filled with same value
-  uint8_t *unmapped() { return this->rom.begin(); }
+  uint8_t *unmapped() { return mRom.begin(); }
 
   // Mask address to nearest power of two greater than size()
-  blargg_long maskAddr(blargg_long addr) const {
-#ifdef check
-    check(addr <= m_mask);
-#endif
-    return addr & m_mask;
-  }
+  blargg_long maskAddr(blargg_long addr) const { return addr & mMask; }
 
   // Pointer to page starting at addr. Returns unmapped() if outside data.
   uint8_t *atAddr(blargg_long addr) {
-    blargg_ulong offset = maskAddr(addr) - m_romAddr;
-    if (offset > blargg_ulong(this->rom.size() - PAD_SIZE))
+    blargg_ulong offset = maskAddr(addr) - mRomAddr;
+    if (offset > blargg_ulong(mRom.size() - PAD_SIZE))
       offset = 0;  // unmapped
-    return &this->rom[offset];
+    return &mRom[offset];
   }
 };
 
