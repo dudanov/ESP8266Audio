@@ -56,10 +56,10 @@ BlipBuffer::~BlipBuffer() {
 
 SilentBlipBuffer::SilentBlipBuffer() {
   mFactor = 0;
-  mBuffer = m_buf;
+  mBuffer = mBuf;
   mBufferSize = SILENT_BUF_SIZE;
-  memset(m_buf, 0,
-         sizeof(m_buf));  // in case machine takes exception for signed overflow
+  memset(mBuf, 0,
+         sizeof(mBuf));  // in case machine takes exception for signed overflow
 }
 
 void BlipBuffer::Clear(bool entire) {
@@ -68,7 +68,7 @@ void BlipBuffer::Clear(bool entire) {
   // m_modified = 0;
   if (mBuffer) {
     long count = entire ? mBufferSize : this->SamplesAvailable();
-    memset(mBuffer, 0, (count + BLIP_BUFFER_EXTRA) * sizeof(buf_t_));
+    memset(mBuffer, 0, (count + BLIP_BUFFER_EXTRA) * sizeof(*mBuffer));
   }
 }
 

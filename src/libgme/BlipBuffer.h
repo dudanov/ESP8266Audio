@@ -246,7 +246,7 @@ class SilentBlipBuffer : public BlipBuffer {
   void MixSamples(const blip_sample_t *buf, long count);
 
  private:
-  int32_t m_buf[BLIP_BUFFER_EXTRA + 1];
+  int32_t mBuf[BLIP_BUFFER_EXTRA + 1];
 };
 
 // Optimized reading from BlipBuffer, for use in custom sample output
@@ -293,19 +293,19 @@ const int BLIP_READER_DEFAULT_BASS = 9;
 class BlipReader {
   public:
     int begin(BlipBuffer &buf) {
-        m_buf = buf.mBuffer;
+        mBuf = buf.mBuffer;
         m_accum = buf.mReaderAccum;
         return buf.mBassShift;
     }
     blip_long_t read() const { return m_accum >> (BLIP_SAMPLE_BITS - 16); }
     blip_long_t read_raw() const { return m_accum; }
     void next(int bass_shift = 9) {
-        m_accum += *m_buf++ - (m_accum >> bass_shift);
+        m_accum += *mBuf++ - (m_accum >> bass_shift);
     }
     void end(BlipBuffer &b) { b.mReaderAccum = m_accum; }
 
   private:
-    const BlipBuffer::int32_t *m_buf;
+    const BlipBuffer::int32_t *mBuf;
     blip_long_t m_accum;
 };
 #endif
