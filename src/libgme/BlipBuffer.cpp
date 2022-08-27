@@ -40,7 +40,7 @@ BlipBuffer::BlipBuffer() {
 // assumptions code makes about implementation-defined features
 #ifndef NDEBUG
   // right shift of negative value preserves sign
-  buf_t_ i = -0x7FFFFFFE;
+  int32_t i = -0x7FFFFFFE;
   assert((i >> 1) == -0x3FFFFFFF);
 
   // casting to short truncates to 16 bits and sign-extends
@@ -92,7 +92,7 @@ BlipBuffer::blargg_err_t BlipBuffer::SetSampleRate(long rate, blip_ms_time_t ms)
     void *p = realloc(mBuffer, (new_size + BLIP_BUFFER_EXTRA) * sizeof(*mBuffer));
     if (!p)
       return "Out of memory";
-    mBuffer = (buf_t_ *) p;
+    mBuffer = (int32_t *) p;
   }
 
   mBufferSize = new_size;
@@ -200,7 +200,7 @@ void BlipBuffer::MixSamples(const blip_sample_t *in, long num) {
     return;
   }
 
-  buf_t_ *out = mBuffer + (mOffset >> BLIP_BUFFER_ACCURACY) + BLIP_WIDEST_IMPULSE / 2;
+  int32_t *out = mBuffer + (mOffset >> BLIP_BUFFER_ACCURACY) + BLIP_WIDEST_IMPULSE / 2;
 
   constexpr int SAMPLE_SHIFT = BLIP_SAMPLE_BITS - 16;
   blip_long_t prev = 0;
