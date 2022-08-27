@@ -51,9 +51,12 @@ AudioGeneratorGme::~AudioGeneratorGme() {
 
 bool AudioGeneratorGme::loop() {
   while (this->running) {
-    for (; mPos != mBuf.end(); mPos += 2)
-      if (!this->output->ConsumeSample(mPos))
+    for (; mPos != mBuf.end(); mPos++) { // += 2)
+      int16_t b[2];
+      b[0] = b[1] = *mPos;
+      if (!this->output->ConsumeSample(b))
         break;
+    }
     if (mPos != mBuf.end())
       break;
     if (mEmu->IsTrackEnded()) {
