@@ -27,20 +27,20 @@ typedef int16_t blip_sample_t;
 #define BLIP_BUFFER_ACCURACY 16
 #endif
 
-// EN: Number bits in phase offset. Fewer than 6 bits (64 phase offsets) results in noticeable
-// broadband noise when
-//     synthesizing high frequency square waves. Affects size of BlipSynth objects since they store
-//     the waveform directly.
 // RU: Число бит смещения фазы. Менее 6 бит (64 сдвига фазы) приводит к заметному широкополосному
-// шуму при синтезе
-//     высокочастотных прямоугольных волн. Влияет на размер объектов BlipSynth, поскольку они
-//     напрямую хранят форму сигнала.
+//     шуму при синтезе высокочастотных прямоугольных волн. Влияет на размер объектов BlipSynth,
+//     поскольку они напрямую хранят форму сигнала.
+// EN: Number bits in phase offset. Fewer than 6 bits (64 phase offsets) results in noticeable
+//     broadband noise when synthesizing high frequency square waves. Affects size of BlipSynth
+//     objects since they store the waveform directly.
 #ifndef BLIP_PHASE_BITS
 #define BLIP_PHASE_BITS 8
 #endif
 
 // Internal
-typedef blip_ulong_t blip_resampled_time_t;
+typedef uint32_t blip_resampled_time_t;
+typedef uint32_t blip_sample_time_t;
+typedef uint32_t blip_clk_time_t;
 static const int BLIP_WIDEST_IMPULSE = 16;
 static const int BLIP_BUFFER_EXTRA = BLIP_WIDEST_IMPULSE + 2;
 static const int BLIP_RES = 1 << BLIP_PHASE_BITS;
@@ -73,14 +73,14 @@ class BlipBuffer {
   // End current time frame of specified duration and make its samples
   // available (along with any still-unread samples) for reading with
   // ReadSamples(). Begins a new time frame at the end of the current frame.
-  void EndFrame(blip_time_t time);
+  void EndFrame(blip_clk_time_t time);
 
   // Read at most 'max_samples' out of buffer into 'dest', removing them from
   // from the buffer. Returns number of samples actually read and removed. If
   // stereo is true, increments 'dest' one extra time after writing each
   // sample, to allow easy interleving of two channels into a stereo output
   // buffer.
-  long ReadSamples(blip_sample_t *dest, long max_samples, int stereo = 0);
+  long ReadSamples(blip_sample_t *dest, long max_samples, bool stereo = false);
 
   // Additional optional features
 
@@ -116,11 +116,7 @@ class BlipBuffer {
   // Count number of clocks needed until 'count' samples will be available.
   // If buffer can't even hold 'count' samples, returns number of clocks until
   // buffer becomes full.
-  blip_time_t CountClocks(long count) const;
-
-  // Number of raw samples that can be mixed within frame of specified
-  // duration.
-  long CountSamples(blip_time_t duration) const;
+  blip_clk_time_t CountClocks(blip_sample_time_t count) const;
 
   // Mix 'count' samples from 'buf' into buffer.
   void MixSamples(const blip_sample_t *buf, long count);
@@ -132,16 +128,21 @@ class BlipBuffer {
     mModified = false;
     return b;
   }
-  typedef blip_ulong_t blip_resampled_time_t;
   void RemoveSilence(long count);
-  blip_resampled_time_t ResampledDuration(int t) const { return t * mFactor; }
-  blip_resampled_time_t ResampledTime(blip_time_t t) const { return t * mFactor + mOffset; }
+  // SampleDuration
+  blip_resampled_time_t ResampledDuration(blip_clk_time_t clk_time) const { return clk_time * mFactor; }
+  // Number of raw samples that can be mixed within frame of specified duration.
+  long ClocksToSamples(blip_clk_time_t clk_time) const { return ResampledDuration(clk_time) >> BLIP_BUFFER_ACCURACY; }
+  // SampleTime * 65536
+  blip_resampled_time_t ResampledTime(blip_clk_time_t clk_time) const { return ResampledDuration(clk_time) + mOffset; }
+  // SamplesPerClock * 65536
   blip_resampled_time_t ClockRateFactor(long clock_rate) const;
 
  public:
   typedef blip_time_t buf_t_;
   // samples per clock * 65536
   blip_resampled_time_t mFactor;
+  // current_samples * 65536 in buffer
   blip_resampled_time_t mOffset;
   buf_t_ *mBuffer;
   blip_long_t mBufferSize;

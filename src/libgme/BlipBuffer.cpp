@@ -130,8 +130,8 @@ void BlipBuffer::SetBassFrequency(int freq) {
   mBassShift = shift;
 }
 
-void BlipBuffer::EndFrame(blip_time_t t) {
-  mOffset += t * mFactor;
+void BlipBuffer::EndFrame(blip_clk_time_t clk_time) {
+  mOffset += clk_time * mFactor;
   assert(this->SamplesAvailable() <= (long) mBufferSize);  // time outside buffer length
 }
 
@@ -140,26 +140,17 @@ void BlipBuffer::RemoveSilence(long count) {
   mOffset -= (blip_resampled_time_t) count << BLIP_BUFFER_ACCURACY;
 }
 
-long BlipBuffer::CountSamples(blip_time_t t) const {
-  unsigned long last_sample = this->ResampledTime(t) >> BLIP_BUFFER_ACCURACY;
-  unsigned long first_sample = mOffset >> BLIP_BUFFER_ACCURACY;
-  return (long) (last_sample - first_sample);
-}
-
-blip_time_t BlipBuffer::CountClocks(long count) const {
-  if (!mFactor) {
-    assert(0);  // sample rate and clock rates must be set first
+blip_clk_time_t BlipBuffer::CountClocks(blip_sample_time_t n) const {
+  if (mFactor == 0)
     return 0;
-  }
-
-  if (count > mBufferSize)
-    count = mBufferSize;
-  blip_resampled_time_t time = (blip_resampled_time_t) count << BLIP_BUFFER_ACCURACY;
-  return (blip_time_t) ((time - mOffset + mFactor - 1) / mFactor);
+  if (n > mBufferSize)
+    n = mBufferSize;
+  blip_resampled_time_t time = n << BLIP_BUFFER_ACCURACY;
+  return (blip_time_t)((time - mOffset + mFactor - 1) / mFactor);
 }
 
 void BlipBuffer::RemoveSamples(long count) {
-  if (!count)
+  if (count == 0)
     return;
   this->RemoveSilence(count);
   // copy remaining samples to beginning and clear old samples
@@ -174,15 +165,12 @@ void BlipSynthImpl::SetVolumeUnit(double new_unit) {
   mDeltaFactor = static_cast<int32_t>(new_unit * (1L << BLIP_SAMPLE_BITS) + 0.5);
 }
 
-long BlipBuffer::ReadSamples(blip_sample_t *out, long max_samples, int stereo) {
-  long count = this->SamplesAvailable();
-  if (count > max_samples)
-    count = max_samples;
-  if (!count)
+long BlipBuffer::ReadSamples(blip_sample_t *out, long max_samples, bool stereo) {
+  const long count = std::min(SamplesAvailable(), max_samples);
+  if (count == 0)
     return 0;
   const int bass = BLIP_READER_BASS(*this);
   BLIP_READER_BEGIN(reader, *this);
-
   if (stereo) {
     for (blip_long_t n = count; n; --n) {
       blip_long_t s = BLIP_READER_READ(reader);
