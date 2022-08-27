@@ -44,7 +44,7 @@ class HesEmu : private HesCpu, public ClassicEmu {
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
   blargg_err_t mLoad(DataReader &) override;
   blargg_err_t mStartTrack(int) override;
-  blargg_err_t mRunClocks(blip_time_t &, int) override;
+  blargg_err_t mRunClocks(blip_clk_time_t &, int) override;
   void mSetTempo(double) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
@@ -97,7 +97,7 @@ class HesEmu : private HesCpu, public ClassicEmu {
   uint8_t sgx[3 * PAGE_SIZE + cpu_padding];
 
   void irq_changed();
-  void run_until(hes_time_t);
+  void mRunUntil(hes_time_t);
 };
 
 }  // namespace hes

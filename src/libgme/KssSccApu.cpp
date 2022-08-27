@@ -25,7 +25,7 @@ unsigned const INAUDIBLE_FREQ = 16384;
 
 int const wave_size = 0x20;
 
-void SccApu::run_until(blip_time_t end_time) {
+void SccApu::mRunUntil(blip_time_t end_time) {
   for (int index = 0; index < OSCS_NUM; index++) {
     osc_t &osc = m_oscs[index];
 

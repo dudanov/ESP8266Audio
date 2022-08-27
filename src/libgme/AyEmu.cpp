@@ -329,13 +329,13 @@ int ay_cpu_in(AyCpu *, unsigned addr) {
   return 0xFF;
 }
 
-blargg_err_t AyEmu::mRunClocks(blip_time_t &duration, int) {
+blargg_err_t AyEmu::mRunClocks(blip_clk_time_t &duration, int) {
   SetTime(0);
   if (!(mSpectrumMode | mCpcMode))
     duration /= 2;  // until mode is set, leave room for halved clock rate
 
   while (Time() < duration) {
-    cpu::Run(min(duration, (blip_time_t) mNextPlay));
+    cpu::Run(min(duration, (blip_clk_time_t) mNextPlay));
 
     if (Time() >= mNextPlay) {
       mNextPlay += mPlayPeriod;

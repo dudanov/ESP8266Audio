@@ -40,7 +40,7 @@ class SapEmu : private SapCpu, public ClassicEmu {
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
   blargg_err_t mLoad(uint8_t const *, long) override;
   blargg_err_t mStartTrack(int) override;
-  blargg_err_t mRunClocks(blip_time_t &, int) override;
+  blargg_err_t mRunClocks(blip_clk_time_t &, int) override;
   void mSetTempo(double) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
@@ -53,12 +53,11 @@ class SapEmu : private SapCpu, public ClassicEmu {
   void cpu_write_(sap_addr_t, int);
 
  private:
-  info_t info;
-
-  uint8_t const *file_end;
-  sap_time_t scanline_period;
-  sap_time_t next_play;
-  sap_time_t time_mask;
+  info_t mInfo;
+  const uint8_t *mFileEnd;
+  blip_clk_time_t mScanlinePeriod;
+  blip_clk_time_t mNextPlay;
+  blip_clk_time_t mTimeMask;
   SapApu mApu;
   SapApu apu2;
 

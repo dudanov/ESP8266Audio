@@ -43,7 +43,7 @@ void NesVrc6Apu::output(BlipBuffer *buf) {
     osc_output(i, buf);
 }
 
-void NesVrc6Apu::run_until(blip_time_t time) {
+void NesVrc6Apu::mRunUntil(blip_time_t time) {
   require(time >= last_time);
   run_square(oscs[0], time);
   run_square(oscs[1], time);
@@ -55,13 +55,13 @@ void NesVrc6Apu::write_osc(blip_time_t time, int osc_index, int reg, int data) {
   require((unsigned) osc_index < OSCS_NUM);
   require((unsigned) reg < REGS_NUM);
 
-  run_until(time);
+  mRunUntil(time);
   oscs[osc_index].mRegs[reg] = data;
 }
 
 void NesVrc6Apu::end_frame(blip_time_t time) {
   if (time > last_time)
-    run_until(time);
+    mRunUntil(time);
 
   assert(last_time >= time);
   last_time -= time;

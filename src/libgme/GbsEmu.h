@@ -50,7 +50,7 @@ class GbsEmu : private GbCpu, public ClassicEmu {
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
   blargg_err_t mLoad(DataReader &) override;
   blargg_err_t mStartTrack(int) override;
-  blargg_err_t mRunClocks(blip_time_t &, int) override;
+  blargg_err_t mRunClocks(blip_clk_time_t &, int) override;
   void mSetTempo(double) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
@@ -63,9 +63,9 @@ class GbsEmu : private GbCpu, public ClassicEmu {
   void m_setBank(int);
 
   // timer
-  blip_time_t m_cpuTime;
-  blip_time_t m_playPeriod;
-  blip_time_t m_nextPlay;
+  blip_clk_time_t mCpuTime;
+  blip_clk_time_t mPlayPeriod;
+  blip_clk_time_t mNextPlay;
   void m_updateTimer();
 
   Header m_header;
@@ -73,7 +73,7 @@ class GbsEmu : private GbCpu, public ClassicEmu {
 
  private:
   friend class GbCpu;
-  blip_time_t clock() const { return this->m_cpuTime - cpu::remain(); }
+  blip_time_t clock() const { return this->mCpuTime - cpu::remain(); }
 
   enum { JOYPAD_ADDR = 0xFF00 };
   enum { RAM_ADDR = 0xA000 };

@@ -54,7 +54,7 @@ void GbsEmu::cpu_write(gb_addr_t addr, int data) {
   { \
     out = READ_PROG(addr); \
     if (unsigned(addr - GbApu::START_ADDR) < GbApu::REGS_NUM) \
-      out = emu->mApu.readRegister(emu->m_cpuTime - time * CLOCKS_PER_INSTRUCTION, addr); \
+      out = emu->mApu.readRegister(emu->mCpuTime - time * CLOCKS_PER_INSTRUCTION, addr); \
     else \
       check(out == emu->cpu_read(addr)); \
   }

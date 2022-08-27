@@ -39,7 +39,7 @@ const uint8_t NesFme7Apu::amp_table[16] = {
 #undef ENTRY
 };
 
-void NesFme7Apu::run_until(blip_time_t end_time) {
+void NesFme7Apu::mRunUntil(blip_time_t end_time) {
   require(end_time >= last_time);
 
   for (int index = 0; index < OSCS_NUM; index++) {

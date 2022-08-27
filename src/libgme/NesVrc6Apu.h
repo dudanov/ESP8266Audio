@@ -57,7 +57,7 @@ class NesVrc6Apu {
   BlipSynth<BLIP_MED_QUALITY, 1> saw_synth;
   BlipSynth<BLIP_GOOD_QUALITY, 1> square_synth;
 
-  void run_until(blip_time_t);
+  void mRunUntil(blip_time_t);
   void run_square(Vrc6Osc &osc, blip_time_t);
   void run_saw(blip_time_t);
 };

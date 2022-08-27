@@ -140,12 +140,12 @@ void GbsEmu::m_updateTimer() {
   if (m_header.timer_mode & 0x04) {
     static uint8_t const rates[4] = {10, 4, 6, 8};
     int shift = rates[m_ram[HI_PAGE + 7] & 3] - (m_header.timer_mode >> 7);
-    m_playPeriod = (256L - m_ram[HI_PAGE + 6]) << shift;
+    mPlayPeriod = (256L - m_ram[HI_PAGE + 6]) << shift;
   } else {
-    m_playPeriod = 70224;  // 59.73 Hz
+    mPlayPeriod = 70224;  // 59.73 Hz
   }
   if (mGetTempo() != 1.0)
-    m_playPeriod = blip_time_t(m_playPeriod / mGetTempo());
+    mPlayPeriod = blip_time_t(mPlayPeriod / mGetTempo());
 }
 
 static uint8_t const sound_data[GbApu::REGS_NUM] = {0x80, 0xBF, 0x00, 0x00, 0xBF,  // square 1
@@ -194,35 +194,35 @@ blargg_err_t GbsEmu::mStartTrack(int track) {
   m_ram[HI_PAGE + 6] = m_header.timer_modulo;
   m_ram[HI_PAGE + 7] = m_header.timer_mode;
   m_updateTimer();
-  m_nextPlay = m_playPeriod;
+  mNextPlay = mPlayPeriod;
 
   cpu::r.a = track;
   cpu::r.pc = IDLE_ADDR;
   cpu::r.sp = get_le16(m_header.stack_ptr);
-  m_cpuTime = 0;
+  mCpuTime = 0;
   m_cpuJsr(get_le16(m_header.init_addr));
 
   return 0;
 }
 
-blargg_err_t GbsEmu::mRunClocks(blip_time_t &duration, int) {
-  m_cpuTime = 0;
-  while (m_cpuTime < duration) {
-    long count = duration - m_cpuTime;
-    m_cpuTime = duration;
+blargg_err_t GbsEmu::mRunClocks(blip_clk_time_t &duration, int) {
+  mCpuTime = 0;
+  while (mCpuTime < duration) {
+    long count = duration - mCpuTime;
+    mCpuTime = duration;
     bool result = cpu::run(count);
-    m_cpuTime -= cpu::remain();
+    mCpuTime -= cpu::remain();
 
     if (result) {
       if (cpu::r.pc == IDLE_ADDR) {
-        if (m_nextPlay > duration) {
-          m_cpuTime = duration;
+        if (mNextPlay > duration) {
+          mCpuTime = duration;
           break;
         }
 
-        if (m_cpuTime < m_nextPlay)
-          m_cpuTime = m_nextPlay;
-        m_nextPlay += m_playPeriod;
+        if (mCpuTime < mNextPlay)
+          mCpuTime = mNextPlay;
+        mNextPlay += mPlayPeriod;
         m_cpuJsr(get_le16(m_header.play_addr));
         GME_FRAME_HOOK(this);
         // TODO: handle timer rates different than 60 Hz
@@ -233,16 +233,16 @@ blargg_err_t GbsEmu::mRunClocks(blip_time_t &duration, int) {
         m_setWarning("Emulation error (illegal/unsupported instruction)");
         debug_printf("Bad opcode $%.2x at $%.4x\n", (int) *cpu::get_code(cpu::r.pc), (int) cpu::r.pc);
         cpu::r.pc = (cpu::r.pc + 1) & 0xFFFF;
-        m_cpuTime += 6;
+        mCpuTime += 6;
       }
     }
   }
 
-  duration = m_cpuTime;
-  m_nextPlay -= m_cpuTime;
-  if (m_nextPlay < 0)  // could go negative if routine is taking too long to return
-    m_nextPlay = 0;
-  mApu.EndFrame(m_cpuTime);
+  duration = mCpuTime;
+  mNextPlay -= mCpuTime;
+  if (mNextPlay < 0)  // could go negative if routine is taking too long to return
+    mNextPlay = 0;
+  mApu.EndFrame(mCpuTime);
 
   return 0;
 }

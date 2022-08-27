@@ -224,7 +224,7 @@ blargg_err_t KssEmu::mStartTrack(int track) {
   ram[--r.sp] = idle_addr & 0xFF;
   r.b.a = track;
   r.pc = get_le16(header_.init_addr);
-  next_play = play_period;
+  mNextPlay = play_period;
   scc_accessed = false;
   gain_updated = false;
   update_gain();
@@ -337,15 +337,15 @@ int kss_cpu_in(KssCpu *, cpu_time_t, unsigned addr) {
 
 // Emulation
 
-blargg_err_t KssEmu::mRunClocks(blip_time_t &duration, int) {
+blargg_err_t KssEmu::mRunClocks(blip_clk_time_t &duration, int) {
   while (time() < duration) {
-    blip_time_t end = min(duration, next_play);
-    cpu::run(min(duration, next_play));
+    blip_time_t end = min(duration, mNextPlay);
+    cpu::run(min(duration, mNextPlay));
     if (r.pc == idle_addr)
       set_time(end);
 
-    if (time() >= next_play) {
-      next_play += play_period;
+    if (time() >= mNextPlay) {
+      mNextPlay += play_period;
       if (r.pc == idle_addr) {
         if (!gain_updated) {
           gain_updated = true;
@@ -362,8 +362,8 @@ blargg_err_t KssEmu::mRunClocks(blip_time_t &duration, int) {
   }
 
   duration = time();
-  next_play -= duration;
-  check(next_play >= 0);
+  mNextPlay -= duration;
+  check(mNextPlay >= 0);
   adjust_time(-duration);
   ay.EndFrame(duration);
   scc.end_frame(duration);

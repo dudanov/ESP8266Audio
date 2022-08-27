@@ -62,7 +62,7 @@ class SmsApu {
   unsigned m_noiseFeedback;
   unsigned m_loopedFeedback;
 
-  void run_until(blip_time_t);
+  void mRunUntil(blip_time_t);
 };
 
 // struct SmsApuState {

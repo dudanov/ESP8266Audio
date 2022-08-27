@@ -31,7 +31,7 @@ class SccApu {
   enum { REG_COUNT = 0x90 };
   void write(blip_time_t time, int addr, int data) {
     assert((unsigned) addr < REG_COUNT);
-    run_until(time);
+    mRunUntil(time);
     m_regs[addr] = data;
   }
 
@@ -40,7 +40,7 @@ class SccApu {
   // can be whatever length is convenient.
   void end_frame(blip_time_t end_time) {
     if (end_time > m_lastTime)
-      run_until(end_time);
+      mRunUntil(end_time);
     m_lastTime -= end_time;
     assert(m_lastTime >= 0);
   }
@@ -77,7 +77,7 @@ class SccApu {
   unsigned char m_regs[REG_COUNT];
   BlipSynth<BLIP_MED_QUALITY, 1> m_synth;
 
-  void run_until(blip_time_t);
+  void mRunUntil(blip_time_t);
 };
 
 }  // namespace kss

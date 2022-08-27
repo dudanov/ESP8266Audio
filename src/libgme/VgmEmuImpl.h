@@ -24,7 +24,7 @@ template<class Emu> class YmEmu : public Emu {
   void enable(bool b) { mLastTime = b ? 0 : DISABLED_TIME; }
   bool enabled() const { return mLastTime != DISABLED_TIME; }
   void begin_frame(short *p);
-  int run_until(int time);
+  int mRunUntil(int time);
 };
 
 class VgmEmuImpl : public ClassicEmu, private DualResampler {
@@ -51,9 +51,9 @@ class VgmEmuImpl : public ClassicEmu, private DualResampler {
   uint8_t const *mDataEnd;
   void mUpdateFmRates(long *ym2413_rate, long *ym2612_rate) const;
 
-  vgm_time_t mVgmTime;
+  blip_clk_time_t mVgmTime;
   const uint8_t *mPos;
-  blip_time_t mRunCommands(vgm_time_t);
+  blip_time_t mRunCommands(blip_clk_time_t);
   int mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *buf) override;
 
   uint8_t const *mPcmData;

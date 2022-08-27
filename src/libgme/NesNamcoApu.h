@@ -29,7 +29,7 @@ class NesNamcoApu {
   // Read/write data register is at 0x4800
   enum { data_reg_addr = 0x4800 };
   void write_data(blip_time_t time, int data) {
-    run_until(time);
+    mRunUntil(time);
     access() = data;
   }
   int read_data() { return access(); }
@@ -70,7 +70,7 @@ class NesNamcoApu {
       m_regAddr = (addr + 1) | 0x80;
     return m_regs[addr];
   }
-  void run_until(blip_time_t);
+  void mRunUntil(blip_time_t);
 };
 /*
 struct namco_state_t

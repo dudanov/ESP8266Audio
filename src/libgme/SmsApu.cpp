@@ -199,7 +199,7 @@ void SmsApu::reset(unsigned feedback, int noise_width) {
   m_noise.reset();
 }
 
-void SmsApu::run_until(blip_time_t end_time) {
+void SmsApu::mRunUntil(blip_time_t end_time) {
   require(end_time >= m_lastTime);  // end_time must not be before previous time
 
   if (end_time > m_lastTime) {
@@ -221,7 +221,7 @@ void SmsApu::run_until(blip_time_t end_time) {
 
 void SmsApu::EndFrame(blip_time_t end_time) {
   if (end_time > m_lastTime)
-    run_until(end_time);
+    mRunUntil(end_time);
 
   assert(m_lastTime >= end_time);
   m_lastTime -= end_time;
@@ -230,7 +230,7 @@ void SmsApu::EndFrame(blip_time_t end_time) {
 void SmsApu::writeGGStereo(blip_time_t time, int data) {
   require((unsigned) data <= 0xFF);
 
-  run_until(time);
+  mRunUntil(time);
 
   for (int i = 0; i < OSCS_NUM; i++) {
     SmsOsc &osc = *m_oscs[i];
@@ -253,7 +253,7 @@ void SmsApu::writeData(blip_time_t time, int data) {
   static const uint8_t VOLUMES[] PROGMEM = {64, 50, 39, 31, 24, 19, 15, 12, 9, 7, 5, 4, 3, 2, 1, 0};
   require((unsigned) data <= 0xFF);
 
-  run_until(time);
+  mRunUntil(time);
 
   if (data & 0x80)
     m_latch = data;

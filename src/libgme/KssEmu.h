@@ -59,7 +59,7 @@ class KssEmu : private KssCpu, public ClassicEmu {
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
   blargg_err_t mLoad(DataReader &) override;
   blargg_err_t mStartTrack(int) override;
-  blargg_err_t mRunClocks(blip_time_t &, int) override;
+  blargg_err_t mRunClocks(blip_clk_time_t &, int) override;
   void mSetTempo(double) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
@@ -78,8 +78,8 @@ class KssEmu : private KssCpu, public ClassicEmu {
   void set_bank(int logical, int physical);
   blargg_long bank_size() const { return (16 * 1024L) >> (header_.bank_mode >> 7 & 1); }
 
-  blip_time_t play_period;
-  blip_time_t next_play;
+  blip_clk_time_t play_period;
+  blip_clk_time_t mNextPlay;
   int ay_latch;
 
   friend void kss_cpu_out(class KssCpu *, cpu_time_t, unsigned addr, int data);

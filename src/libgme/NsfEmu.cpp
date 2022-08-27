@@ -45,15 +45,15 @@ NsfEmu::NsfEmu() {
   this->namco = nullptr;
   this->fme7 = nullptr;
 
-  this->mSetType(gme_nsf_type);
-  this->mSetSilenceLookahead(6);
-  this->mApu.SetDmcReader(pcmRead, this);
+  mSetType(gme_nsf_type);
+  mSetSilenceLookahead(6);
+  mApu.SetDmcReader(pcmRead, this);
   MusicEmu::SetEqualizer(nes_eq);
   SetGain(1.4);
-  std::fill(this->m_unMappedCode.begin(), this->m_unMappedCode.end(), NesCpu::BAD_OPCODE);
+  std::fill(m_unMappedCode.begin(), m_unMappedCode.end(), NesCpu::BAD_OPCODE);
 }
 
-NsfEmu::~NsfEmu() { this->mUnload(); }
+NsfEmu::~NsfEmu() { mUnload(); }
 
 void NsfEmu::mUnload() {
 #if !NSF_EMU_APU_ONLY
@@ -69,7 +69,7 @@ void NsfEmu::mUnload() {
   }
 #endif
 
-  this->m_rom.clear();
+  m_rom.clear();
   MusicEmu::mUnload();
 }
 
@@ -84,7 +84,7 @@ static void copy_nsf_fields(NsfEmu::Header const &h, track_info_t *out) {
 }
 
 blargg_err_t NsfEmu::mGetTrackInfo(track_info_t *out, int) const {
-  copy_nsf_fields(this->m_header, out);
+  copy_nsf_fields(m_header, out);
   return 0;
 }
 
@@ -96,7 +96,7 @@ static blargg_err_t check_nsf_header(void const *header) {
 
 struct NsfFile : GmeInfo {
   NsfEmu::Header hdr;
-  NsfFile() { this->mSetType(gme_nsf_type); }
+  NsfFile() { mSetType(gme_nsf_type); }
   static MusicEmu *createNsfFile() { return BLARGG_NEW NsfFile; }
   blargg_err_t mLoad(DataReader &in) override {
     blargg_err_t err = in.read(&hdr, NsfEmu::HEADER_SIZE);
@@ -104,9 +104,9 @@ struct NsfFile : GmeInfo {
       return (err == in.eof_error ? gme_wrong_file_type : err);
 
     if (hdr.chip_flags & ~(NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
-      this->m_setWarning("Uses unsupported audio expansion hardware");
+      m_setWarning("Uses unsupported audio expansion hardware");
 
-    this->m_setTrackNum(hdr.track_count);
+    m_setTrackNum(hdr.track_count);
     return check_nsf_header(&hdr);
   }
 
@@ -119,56 +119,56 @@ struct NsfFile : GmeInfo {
 // Setup
 
 void NsfEmu::mSetTempo(double t) {
-  uint16_t playback_rate = get_le16(this->m_header.ntsc_speed);
+  uint16_t playback_rate = get_le16(m_header.ntsc_speed);
   uint16_t standard_rate = 0x411A;
-  this->m_clockRate = 1789772.72727f;
-  this->m_playPeriod = 262 * 341L * 4 - 2;  // two fewer PPU clocks every four frames
+  m_clockRate = 1789772.72727f;
+  mPlayPeriod = 262 * 341L * 4 - 2;  // two fewer PPU clocks every four frames
 
-  if (this->mPalMode) {
-    this->m_playPeriod = 33247 * CLK_DIV;
-    this->m_clockRate = 1662607.125;
+  if (mPalMode) {
+    mPlayPeriod = 33247 * CLK_DIV;
+    m_clockRate = 1662607.125;
     standard_rate = 0x4E20;
-    playback_rate = get_le16(this->m_header.pal_speed);
+    playback_rate = get_le16(m_header.pal_speed);
   }
 
   if (!playback_rate)
     playback_rate = standard_rate;
 
   if (playback_rate != standard_rate || t != 1.0)
-    this->m_playPeriod = long(playback_rate * this->m_clockRate / (1000000.0 / CLK_DIV * t));
+    mPlayPeriod = long(playback_rate * m_clockRate / (1000000.0 / CLK_DIV * t));
 
-  this->mApu.SetTempo(t);
+  mApu.SetTempo(t);
 }
 
 blargg_err_t NsfEmu::mInitSound() {
-  if (this->m_header.chip_flags & ~(NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
-    this->m_setWarning("Uses unsupported audio expansion hardware");
+  if (m_header.chip_flags & ~(NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
+    m_setWarning("Uses unsupported audio expansion hardware");
 
   {
 #define APU_NAMES "Square 1", "Square 2", "Triangle", "Noise", "DMC"
 
     int const count = NesApu::OSCS_NUM;
     static const char *const apuNames[count] = {APU_NAMES};
-    this->mSetChannelsNumber(count);
-    this->mSetChannelsNames(apuNames);
+    mSetChannelsNumber(count);
+    mSetChannelsNames(apuNames);
   }
 
   static int const types[] = {WAVE_TYPE | 1,  WAVE_TYPE | 2,  WAVE_TYPE | 0,  NOISE_TYPE | 0,
                               MIXED_TYPE | 1, WAVE_TYPE | 3,  WAVE_TYPE | 4,  WAVE_TYPE | 5,
                               WAVE_TYPE | 6,  WAVE_TYPE | 7,  WAVE_TYPE | 8,  WAVE_TYPE | 9,
                               WAVE_TYPE | 10, WAVE_TYPE | 11, WAVE_TYPE | 12, WAVE_TYPE | 13};
-  this->mSetChannelsTypes(types);  // common to all sound chip configurations
+  mSetChannelsTypes(types);  // common to all sound chip configurations
 
-  double adjusted_gain = this->mGetGain();
+  double adjusted_gain = mGetGain();
 
 #if NSF_EMU_APU_ONLY
-  if (this->m_header.chip_flags)
-    this->m_setWarning("Uses unsupported audio expansion hardware");
+  if (m_header.chip_flags)
+    m_setWarning("Uses unsupported audio expansion hardware");
 #else
-  if (this->m_header.chip_flags & (NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
-    this->mSetChannelsNumber(NesApu::OSCS_NUM + 3);
+  if (m_header.chip_flags & (NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
+    mSetChannelsNumber(NesApu::OSCS_NUM + 3);
 
-  if (this->m_header.chip_flags & NAMCO_FLAG) {
+  if (m_header.chip_flags & NAMCO_FLAG) {
     namco = BLARGG_NEW NesNamcoApu;
     CHECK_ALLOC(namco);
     adjusted_gain *= 0.75;
@@ -176,38 +176,38 @@ blargg_err_t NsfEmu::mInitSound() {
     static const int count = NesApu::OSCS_NUM + NesNamcoApu::OSCS_NUM;
     static const char *const names[count] = {APU_NAMES, "Wave 1", "Wave 2", "Wave 3", "Wave 4",
                                              "Wave 5",  "Wave 6", "Wave 7", "Wave 8"};
-    this->mSetChannelsNumber(count);
-    this->mSetChannelsNames(names);
+    mSetChannelsNumber(count);
+    mSetChannelsNames(names);
   }
 
-  if (this->m_header.chip_flags & VRC6_FLAG) {
+  if (m_header.chip_flags & VRC6_FLAG) {
     vrc6 = BLARGG_NEW NesVrc6Apu;
     CHECK_ALLOC(vrc6);
     adjusted_gain *= 0.75;
 
     static const int count = NesApu::OSCS_NUM + NesVrc6Apu::OSCS_NUM;
     static const char *const names[count] = {APU_NAMES, "Saw Wave", "Square 3", "Square 4"};
-    this->mSetChannelsNumber(count);
-    this->mSetChannelsNames(names);
+    mSetChannelsNumber(count);
+    mSetChannelsNames(names);
 
-    if (this->m_header.chip_flags & NAMCO_FLAG) {
+    if (m_header.chip_flags & NAMCO_FLAG) {
       static const int count = NesApu::OSCS_NUM + NesVrc6Apu::OSCS_NUM + NesNamcoApu::OSCS_NUM;
       static const char *const names[count] = {APU_NAMES, "Saw Wave", "Square 3", "Square 4", "Wave 1", "Wave 2",
                                                "Wave 3",  "Wave 4",   "Wave 5",   "Wave 6",   "Wave 7", "Wave 8"};
-      this->mSetChannelsNumber(count);
-      this->mSetChannelsNames(names);
+      mSetChannelsNumber(count);
+      mSetChannelsNames(names);
     }
   }
 
-  if (this->m_header.chip_flags & FME7_FLAG) {
+  if (m_header.chip_flags & FME7_FLAG) {
     fme7 = BLARGG_NEW NesFme7Apu;
     CHECK_ALLOC(fme7);
     adjusted_gain *= 0.75;
 
     int const count = NesApu::OSCS_NUM + NesFme7Apu::OSCS_NUM;
     static const char *const names[count] = {APU_NAMES, "Square 3", "Square 4", "Square 5"};
-    this->mSetChannelsNumber(count);
-    this->mSetChannelsNames(names);
+    mSetChannelsNumber(count);
+    mSetChannelsNames(names);
   }
 
   if (namco)
@@ -218,45 +218,45 @@ blargg_err_t NsfEmu::mInitSound() {
     fme7->volume(adjusted_gain);
 #endif
 
-  this->mApu.SetVolume(adjusted_gain);
+  mApu.SetVolume(adjusted_gain);
 
   return 0;
 }
 
 blargg_err_t NsfEmu::mLoad(DataReader &in) {
   assert(offsetof(Header, unused[4]) == HEADER_SIZE);
-  RETURN_ERR(this->m_rom.load(in, HEADER_SIZE, &this->m_header, 0));
+  RETURN_ERR(m_rom.load(in, HEADER_SIZE, &m_header, 0));
 
-  this->m_setTrackNum(this->m_header.track_count);
-  RETURN_ERR(check_nsf_header(&this->m_header));
+  m_setTrackNum(m_header.track_count);
+  RETURN_ERR(check_nsf_header(&m_header));
 
-  if (this->m_header.vers != 1)
-    this->m_setWarning("Unknown file version");
+  if (m_header.vers != 1)
+    m_setWarning("Unknown file version");
 
   // sound and memory
-  blargg_err_t err = this->mInitSound();
+  blargg_err_t err = mInitSound();
   if (err)
     return err;
 
   // set up data
-  nes_addr_t load_addr = get_le16(this->m_header.load_addr);
-  this->m_initAddress = get_le16(this->m_header.init_addr);
-  this->m_playAddress = get_le16(this->m_header.play_addr);
+  nes_addr_t load_addr = get_le16(m_header.load_addr);
+  m_initAddress = get_le16(m_header.init_addr);
+  m_playAddress = get_le16(m_header.play_addr);
   if (!load_addr)
     load_addr = ROM_BEGIN;
-  if (!this->m_initAddress)
-    this->m_initAddress = ROM_BEGIN;
-  if (!this->m_playAddress)
-    this->m_playAddress = ROM_BEGIN;
-  if (load_addr < ROM_BEGIN || this->m_initAddress < ROM_BEGIN) {
+  if (!m_initAddress)
+    m_initAddress = ROM_BEGIN;
+  if (!m_playAddress)
+    m_playAddress = ROM_BEGIN;
+  if (load_addr < ROM_BEGIN || m_initAddress < ROM_BEGIN) {
     const char *w = warning();
     if (!w)
       w = "Corrupt file (invalid load/init/play address)";
     return w;
   }
 
-  this->m_rom.setAddr(load_addr % BANK_SIZE);
-  int total_banks = this->m_rom.size() / BANK_SIZE;
+  m_rom.setAddr(load_addr % BANK_SIZE);
+  int total_banks = m_rom.size() / BANK_SIZE;
 
   // bank switching
   int first_bank = (load_addr - ROM_BEGIN) / BANK_SIZE;
@@ -264,28 +264,28 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
     unsigned bank = i - first_bank;
     if (bank >= (unsigned) total_banks)
       bank = 0;
-    this->m_initBanks[i] = bank;
+    m_initBanks[i] = bank;
 
-    if (this->m_header.banks[i]) {
+    if (m_header.banks[i]) {
       // bank-switched
-      memcpy(this->m_initBanks.data(), this->m_header.banks, sizeof this->m_initBanks);
+      memcpy(m_initBanks.data(), m_header.banks, sizeof m_initBanks);
       break;
     }
   }
 
-  this->mPalMode = (this->m_header.speed_flags & 3) == 1;
+  mPalMode = (m_header.speed_flags & 3) == 1;
 
 #if !NSF_EMU_EXTRA_FLAGS
-  this->m_header.speed_flags = 0;
+  m_header.speed_flags = 0;
 #endif
 
-  SetTempo(this->mGetTempo());
+  SetTempo(mGetTempo());
 
-  return this->mSetupBuffer((long) (this->m_clockRate + 0.5));
+  return mSetupBuffer((long) (m_clockRate + 0.5));
 }
 
 void NsfEmu::mUpdateEq(BlipEq const &eq) {
-  this->mApu.SetTrebleEq(eq);
+  mApu.SetTrebleEq(eq);
 
 #if !NSF_EMU_APU_ONLY
   {
@@ -301,7 +301,7 @@ void NsfEmu::mUpdateEq(BlipEq const &eq) {
 
 void NsfEmu::mSetChannel(int i, BlipBuffer *buf, BlipBuffer *, BlipBuffer *) {
   if (i < NesApu::OSCS_NUM) {
-    this->mApu.SetOscOutput(i, buf);
+    mApu.SetOscOutput(i, buf);
     return;
   }
   i -= NesApu::OSCS_NUM;
@@ -398,17 +398,17 @@ void NsfEmu::mCpuWriteMisc(nes_addr_t addr, uint8_t data) {
 blargg_err_t NsfEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
 
-  std::fill(this->m_lowMem.begin(), this->m_lowMem.end(), 0);
-  std::fill(this->m_sram.begin(), this->m_sram.end(), 0);
+  std::fill(m_lowMem.begin(), m_lowMem.end(), 0);
+  std::fill(m_sram.begin(), m_sram.end(), 0);
 
-  cpu::reset(this->m_unMappedCode.data());  // also maps lowMem
-  cpu::mapCode(SRAM_ADDR, this->m_sram.size(), this->m_sram.data());
+  cpu::reset(m_unMappedCode.data());  // also maps lowMem
+  cpu::mapCode(SRAM_ADDR, m_sram.size(), m_sram.data());
   for (size_t i = 0; i < BANKS_NUM; ++i)
-    this->mCpuWrite(BANK_SELECT_ADDR + i, this->m_initBanks[i]);
+    mCpuWrite(BANK_SELECT_ADDR + i, m_initBanks[i]);
 
-  this->mApu.Reset(this->mPalMode, (this->m_header.speed_flags & 0x20) ? 0x3F : 0);
-  this->mApu.WriteRegister(0, 0x4015, 0x0F);
-  this->mApu.WriteRegister(0, 0x4017, (this->m_header.speed_flags & 0x10) ? 0x80 : 0);
+  mApu.Reset(mPalMode, (m_header.speed_flags & 0x20) ? 0x3F : 0);
+  mApu.WriteRegister(0, 0x4015, 0x0F);
+  mApu.WriteRegister(0, 0x4017, (m_header.speed_flags & 0x10) ? 0x80 : 0);
 #if !NSF_EMU_APU_ONLY
   {
     if (namco)
@@ -420,53 +420,53 @@ blargg_err_t NsfEmu::mStartTrack(int track) {
   }
 #endif
 
-  this->m_playReady = 4;
-  this->m_playExtra = 0;
-  this->m_nextPlay = this->m_playPeriod / CLK_DIV;
+  m_playReady = 4;
+  m_playExtra = 0;
+  mNextPlay = mPlayPeriod / CLK_DIV;
 
-  this->m_savedState.pc = BADOP_ADDR;
-  this->m_lowMem[0x1FF] = (BADOP_ADDR - 1) >> 8;
-  this->m_lowMem[0x1FE] = (BADOP_ADDR - 1) & 0xFF;
-  this->m_regs.sp = 0xFD;
-  this->m_regs.pc = this->m_initAddress;
-  this->m_regs.a = track;
-  this->m_regs.x = this->mPalMode;
+  m_savedState.pc = BADOP_ADDR;
+  m_lowMem[0x1FF] = (BADOP_ADDR - 1) >> 8;
+  m_lowMem[0x1FE] = (BADOP_ADDR - 1) & 0xFF;
+  m_regs.sp = 0xFD;
+  m_regs.pc = m_initAddress;
+  m_regs.a = track;
+  m_regs.x = mPalMode;
 
   return 0;
 }
 
-blargg_err_t NsfEmu::mRunClocks(blip_time_t &duration, int) {
+blargg_err_t NsfEmu::mRunClocks(blip_clk_time_t &duration, int) {
   setTime(0);
   while (time() < duration) {
-    nes_time_t end = std::min((blip_time_t) this->m_nextPlay, duration);
+    nes_time_t end = std::min(mNextPlay, duration);
     end = std::min(end, time() + 32767);  // allows CPU to use 16-bit time delta
     if (cpu::run(end)) {
-      if (this->m_regs.pc != BADOP_ADDR) {
-        this->m_setWarning("Emulation error (illegal instruction)");
-        this->m_regs.pc++;
+      if (m_regs.pc != BADOP_ADDR) {
+        m_setWarning("Emulation error (illegal instruction)");
+        m_regs.pc++;
       } else {
-        this->m_playReady = 1;
-        if (this->m_savedState.pc != BADOP_ADDR) {
-          cpu::m_regs = this->m_savedState;
-          this->m_savedState.pc = BADOP_ADDR;
+        m_playReady = 1;
+        if (m_savedState.pc != BADOP_ADDR) {
+          cpu::m_regs = m_savedState;
+          m_savedState.pc = BADOP_ADDR;
         } else {
           setTime(end);
         }
       }
     }
 
-    if (time() >= this->m_nextPlay) {
-      nes_time_t period = (this->m_playPeriod + this->m_playExtra) / CLK_DIV;
-      this->m_playExtra = this->m_playPeriod - period * CLK_DIV;
-      this->m_nextPlay += period;
-      if (this->m_playReady && !--this->m_playReady) {
-        check(this->m_savedState.pc == BADOP_ADDR);
-        if (this->m_regs.pc != BADOP_ADDR)
-          this->m_savedState = cpu::m_regs;
+    if (time() >= mNextPlay) {
+      nes_time_t period = (mPlayPeriod + m_playExtra) / CLK_DIV;
+      m_playExtra = mPlayPeriod - period * CLK_DIV;
+      mNextPlay += period;
+      if (m_playReady && !--m_playReady) {
+        check(m_savedState.pc == BADOP_ADDR);
+        if (m_regs.pc != BADOP_ADDR)
+          m_savedState = cpu::m_regs;
 
-        this->m_regs.pc = this->m_playAddress;
-        this->m_lowMem[0x100 + this->m_regs.sp--] = (BADOP_ADDR - 1) >> 8;
-        this->m_lowMem[0x100 + this->m_regs.sp--] = (BADOP_ADDR - 1) & 0xFF;
+        m_regs.pc = m_playAddress;
+        m_lowMem[0x100 + m_regs.sp--] = (BADOP_ADDR - 1) >> 8;
+        m_lowMem[0x100 + m_regs.sp--] = (BADOP_ADDR - 1) & 0xFF;
         GME_FRAME_HOOK(this);
       }
     }
@@ -474,16 +474,16 @@ blargg_err_t NsfEmu::mRunClocks(blip_time_t &duration, int) {
 
   if (cpu::getErrorsNum()) {
     cpu::clearErrors();
-    this->m_setWarning("Emulation error (illegal instruction)");
+    m_setWarning("Emulation error (illegal instruction)");
   }
 
   duration = time();
-  this->m_nextPlay -= duration;
-  check(this->m_nextPlay >= 0);
-  if (this->m_nextPlay < 0)
-    this->m_nextPlay = 0;
+  mNextPlay -= duration;
+  check(mNextPlay >= 0);
+  if (mNextPlay < 0)
+    mNextPlay = 0;
 
-  this->mApu.EndFrame(duration);
+  mApu.EndFrame(duration);
 
 #if !NSF_EMU_APU_ONLY
   {

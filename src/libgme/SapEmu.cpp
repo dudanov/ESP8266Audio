@@ -180,7 +180,7 @@ static void copy_sap_fields(SapEmu::info_t const &in, track_info_t *out) {
 }
 
 blargg_err_t SapEmu::mGetTrackInfo(track_info_t *out, int) const {
-  copy_sap_fields(info, out);
+  copy_sap_fields(mInfo, out);
   return 0;
 }
 
@@ -205,20 +205,20 @@ struct SapFile : GmeInfo {
 // Setup
 
 blargg_err_t SapEmu::mLoad(uint8_t const *in, long size) {
-  file_end = in + size;
+  mFileEnd = in + size;
 
-  info.warning = 0;
-  info.type = 'B';
-  info.stereo = false;
-  info.init_addr = -1;
-  info.play_addr = -1;
-  info.music_addr = -1;
-  info.fastplay = 312;
-  RETURN_ERR(parse_info(in, size, &info));
+  mInfo.warning = 0;
+  mInfo.type = 'B';
+  mInfo.stereo = false;
+  mInfo.init_addr = -1;
+  mInfo.play_addr = -1;
+  mInfo.music_addr = -1;
+  mInfo.fastplay = 312;
+  RETURN_ERR(parse_info(in, size, &mInfo));
 
-  m_setWarning(info.warning);
-  m_setTrackNum(info.track_count);
-  mSetChannelsNumber(SapApu::OSCS_NUM << info.stereo);
+  m_setWarning(mInfo.warning);
+  m_setTrackNum(mInfo.track_count);
+  mSetChannelsNumber(SapApu::OSCS_NUM << mInfo.stereo);
   apu_impl.volume(mGetGain());
 
   return mSetupBuffer(1773447);
@@ -231,14 +231,14 @@ void SapEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer
   if (i2 >= 0)
     apu2.osc_output(i2, right);
   else
-    mApu.osc_output(i, (info.stereo ? left : center));
+    mApu.osc_output(i, (mInfo.stereo ? left : center));
 }
 
 // Emulation
 
-void SapEmu::mSetTempo(double t) { scanline_period = sap_time_t(base_scanline_period / t); }
+void SapEmu::mSetTempo(double t) { mScanlinePeriod = sap_time_t(base_scanline_period / t); }
 
-inline sap_time_t SapEmu::play_period() const { return info.fastplay * scanline_period; }
+inline sap_time_t SapEmu::play_period() const { return mInfo.fastplay * mScanlinePeriod; }
 
 void SapEmu::cpu_jsr(sap_addr_t addr) {
   check(r.sp >= 0xFE);  // catch anything trying to leave data on stack
@@ -258,20 +258,20 @@ void SapEmu::run_routine(sap_addr_t addr) {
 }
 
 inline void SapEmu::call_init(int track) {
-  switch (info.type) {
+  switch (mInfo.type) {
     case 'B':
       r.a = track;
-      run_routine(info.init_addr);
+      run_routine(mInfo.init_addr);
       break;
 
     case 'C':
       r.a = 0x70;
-      r.x = info.music_addr & 0xFF;
-      r.y = info.music_addr >> 8;
-      run_routine(info.play_addr + 3);
+      r.x = mInfo.music_addr & 0xFF;
+      r.y = mInfo.music_addr >> 8;
+      run_routine(mInfo.play_addr + 3);
       r.a = 0;
       r.x = track;
-      run_routine(info.play_addr + 3);
+      run_routine(mInfo.play_addr + 3);
       break;
   }
 }
@@ -281,8 +281,8 @@ blargg_err_t SapEmu::mStartTrack(int track) {
 
   memset(&mem, 0, sizeof mem);
 
-  uint8_t const *in = info.rom_data;
-  while (file_end - in >= 5) {
+  uint8_t const *in = mInfo.rom_data;
+  while (mFileEnd - in >= 5) {
     unsigned start = get_le16(in);
     unsigned end = get_le16(in + 2);
     // debug_printf( "Block $%04X-$%04X\n", start, end );
@@ -292,25 +292,25 @@ blargg_err_t SapEmu::mStartTrack(int track) {
       break;
     }
     long len = end - start + 1;
-    if (len > file_end - in) {
+    if (len > mFileEnd - in) {
       m_setWarning("Invalid file data block");
       break;
     }
 
     memcpy(mem.ram + start, in, len);
     in += len;
-    if (file_end - in >= 2 && in[0] == 0xFF && in[1] == 0xFF)
+    if (mFileEnd - in >= 2 && in[0] == 0xFF && in[1] == 0xFF)
       in += 2;
   }
 
   mApu.reset(&apu_impl);
   apu2.reset(&apu_impl);
   cpu::reset(mem.ram);
-  time_mask = 0;  // disables sound during init
+  mTimeMask = 0;  // disables sound during init
   call_init(track);
-  time_mask = -1;
+  mTimeMask = -1;
 
-  next_play = play_period();
+  mNextPlay = play_period();
 
   return 0;
 }
@@ -322,13 +322,13 @@ blargg_err_t SapEmu::mStartTrack(int track) {
 void SapEmu::cpu_write_(sap_addr_t addr, int data) {
   if ((addr ^ SapApu::start_addr) <= (SapApu::end_addr - SapApu::start_addr)) {
     GME_APU_HOOK(this, addr - SapApu::start_addr, data);
-    mApu.write_data(time() & time_mask, addr, data);
+    mApu.write_data(time() & mTimeMask, addr, data);
     return;
   }
 
-  if ((addr ^ (SapApu::start_addr + 0x10)) <= (SapApu::end_addr - SapApu::start_addr) && info.stereo) {
+  if ((addr ^ (SapApu::start_addr + 0x10)) <= (SapApu::end_addr - SapApu::start_addr) && mInfo.stereo) {
     GME_APU_HOOK(this, addr - 0x10 - SapApu::start_addr + 10, data);
-    apu2.write_data(time() & time_mask, addr ^ 0x10, data);
+    apu2.write_data(time() & mTimeMask, addr ^ 0x10, data);
     return;
   }
 
@@ -337,27 +337,27 @@ void SapEmu::cpu_write_(sap_addr_t addr, int data) {
 }
 
 inline void SapEmu::call_play() {
-  switch (info.type) {
+  switch (mInfo.type) {
     case 'B':
-      cpu_jsr(info.play_addr);
+      cpu_jsr(mInfo.play_addr);
       break;
 
     case 'C':
-      cpu_jsr(info.play_addr + 6);
+      cpu_jsr(mInfo.play_addr + 6);
       break;
   }
 }
 
-blargg_err_t SapEmu::mRunClocks(blip_time_t &duration, int) {
+blargg_err_t SapEmu::mRunClocks(blip_clk_time_t &duration, int) {
   set_time(0);
   while (time() < duration) {
     if (cpu::run(duration) || r.pc > idle_addr)
       return "Emulation error (illegal instruction)";
 
     if (r.pc == idle_addr) {
-      if (next_play <= duration) {
-        set_time(next_play);
-        next_play += play_period();
+      if (mNextPlay <= duration) {
+        set_time(mNextPlay);
+        mNextPlay += play_period();
         call_play();
         GME_FRAME_HOOK(this);
       } else {
@@ -367,12 +367,12 @@ blargg_err_t SapEmu::mRunClocks(blip_time_t &duration, int) {
   }
 
   duration = time();
-  next_play -= duration;
-  check(next_play >= 0);
-  if (next_play < 0)
-    next_play = 0;
+  mNextPlay -= duration;
+  check(mNextPlay >= 0);
+  if (mNextPlay < 0)
+    mNextPlay = 0;
   mApu.end_frame(duration);
-  if (info.stereo)
+  if (mInfo.stereo)
     apu2.end_frame(duration);
 
   return 0;

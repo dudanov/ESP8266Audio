@@ -110,7 +110,7 @@ inline void SapApu::calc_periods() {
   }
 }
 
-void SapApu::run_until(blip_time_t end_time) {
+void SapApu::mRunUntil(blip_time_t end_time) {
   calc_periods();
   SapApuImpl *const impl = this->impl;  // cache
 
@@ -264,7 +264,7 @@ void SapApu::run_until(blip_time_t end_time) {
 }
 
 void SapApu::write_data(blip_time_t time, unsigned addr, int data) {
-  run_until(time);
+  mRunUntil(time);
   int i = (addr ^ 0xD200) >> 1;
   if (i < OSCS_NUM) {
     oscs[i].mRegs[addr & 1] = data;
@@ -288,7 +288,7 @@ void SapApu::write_data(blip_time_t time, unsigned addr, int data) {
 
 void SapApu::end_frame(blip_time_t end_time) {
   if (end_time > last_time)
-    run_until(end_time);
+    mRunUntil(end_time);
 
   last_time -= end_time;
 }

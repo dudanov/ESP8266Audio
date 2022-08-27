@@ -80,7 +80,7 @@ template<class Emu> inline void YmEmu<Emu>::begin_frame(short *p) {
   mLastTime = 0;
 }
 
-template<class Emu> inline int YmEmu<Emu>::run_until(int time) {
+template<class Emu> inline int YmEmu<Emu>::mRunUntil(int time) {
   int count = time - mLastTime;
   if (count > 0) {
     if (mLastTime < 0)
@@ -110,9 +110,9 @@ void VgmEmuImpl::mWritePcm(vgm_time_t vgm_time, int amp) {
     mDacAmp |= mDacDisabled;
 }
 
-blip_time_t VgmEmuImpl::mRunCommands(vgm_time_t end_time) {
-  vgm_time_t vgm_time = this->mVgmTime;
-  uint8_t const *pos = this->mPos;
+blip_time_t VgmEmuImpl::mRunCommands(blip_clk_time_t end_time) {
+  auto vgm_time = this->mVgmTime;
+  const uint8_t *pos = this->mPos;
   if (pos >= mDataEnd) {
     mSetTrackEnded();
     if (pos > mDataEnd)
@@ -161,13 +161,13 @@ blip_time_t VgmEmuImpl::mRunCommands(vgm_time_t end_time) {
         break;
 
       case cmd_ym2413:
-        if (mYm2413[0].run_until(mToFmTime(vgm_time)))
+        if (mYm2413[0].mRunUntil(mToFmTime(vgm_time)))
           mYm2413[0].write(pos[0], pos[1]);
         pos += 2;
         break;
 
       case cmd_ym2413_2:
-        if (mYm2413[1].run_until(mToFmTime(vgm_time)))
+        if (mYm2413[1].mRunUntil(mToFmTime(vgm_time)))
           mYm2413[1].write(pos[0], pos[1]);
         pos += 2;
         break;
@@ -175,7 +175,7 @@ blip_time_t VgmEmuImpl::mRunCommands(vgm_time_t end_time) {
       case cmd_ym2612_port0:
         if (pos[0] == ym2612_dac_port) {
           mWritePcm(vgm_time, pos[1]);
-        } else if (mYm2612[0].run_until(mToFmTime(vgm_time))) {
+        } else if (mYm2612[0].mRunUntil(mToFmTime(vgm_time))) {
           if (pos[0] == 0x2B) {
             mDacDisabled = (pos[1] >> 7 & 1) - 1;
             mDacAmp |= mDacDisabled;
@@ -186,7 +186,7 @@ blip_time_t VgmEmuImpl::mRunCommands(vgm_time_t end_time) {
         break;
 
       case cmd_ym2612_port1:
-        if (mYm2612[0].run_until(mToFmTime(vgm_time)))
+        if (mYm2612[0].mRunUntil(mToFmTime(vgm_time)))
           mYm2612[0].write1(pos[0], pos[1]);
         pos += 2;
         break;
@@ -194,7 +194,7 @@ blip_time_t VgmEmuImpl::mRunCommands(vgm_time_t end_time) {
       case cmd_ym2612_2_port0:
         if (pos[0] == ym2612_dac_port) {
           mWritePcm(vgm_time, pos[1]);
-        } else if (mYm2612[1].run_until(mToFmTime(vgm_time))) {
+        } else if (mYm2612[1].mRunUntil(mToFmTime(vgm_time))) {
           if (pos[0] == 0x2B) {
             mDacDisabled = (pos[1] >> 7 & 1) - 1;
             mDacAmp |= mDacDisabled;
@@ -205,7 +205,7 @@ blip_time_t VgmEmuImpl::mRunCommands(vgm_time_t end_time) {
         break;
 
       case cmd_ym2612_2_port1:
-        if (mYm2612[1].run_until(mToFmTime(vgm_time)))
+        if (mYm2612[1].mRunUntil(mToFmTime(vgm_time)))
           mYm2612[1].write1(pos[0], pos[1]);
         pos += 2;
         break;
@@ -281,14 +281,14 @@ int VgmEmuImpl::mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *bu
   mRunCommands(vgm_time);
 
   if (mYm2612[0].enabled())
-    mYm2612[0].run_until(pairs);
+    mYm2612[0].mRunUntil(pairs);
   if (mYm2612[1].enabled())
-    mYm2612[1].run_until(pairs);
+    mYm2612[1].mRunUntil(pairs);
 
   if (mYm2413[0].enabled())
-    mYm2413[0].run_until(pairs);
+    mYm2413[0].mRunUntil(pairs);
   if (mYm2413[1].enabled())
-    mYm2413[1].run_until(pairs);
+    mYm2413[1].mRunUntil(pairs);
 
   mFmTimeOffset = (vgm_time * mFmTimeFactor + mFmTimeOffset) - ((long) pairs << FM_TIME_BITS);
 

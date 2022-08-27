@@ -78,7 +78,7 @@ class VgmEmu : public VgmEmuImpl {
   blargg_err_t mSetSampleRate(long sample_rate) override;
   blargg_err_t mStartTrack(int) override;
   blargg_err_t mPlay(long count, sample_t *) override;
-  blargg_err_t mRunClocks(blip_time_t &, int) override;
+  blargg_err_t mRunClocks(blip_clk_time_t &, int) override;
   void mSetTempo(double) override;
   void mMuteChannel(int mask) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;

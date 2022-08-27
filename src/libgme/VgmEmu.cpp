@@ -426,7 +426,7 @@ blargg_err_t VgmEmu::mStartTrack(int track) {
   return 0;
 }
 
-blargg_err_t VgmEmu::mRunClocks(blip_time_t &time_io, int msec) {
+blargg_err_t VgmEmu::mRunClocks(blip_clk_time_t &time_io, int msec) {
   time_io = mRunCommands(msec * m_vgmRate / 1000);
   mPsg[0].EndFrame(time_io);
   if (mPsgDual)

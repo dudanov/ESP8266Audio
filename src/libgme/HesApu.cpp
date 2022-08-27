@@ -63,7 +63,7 @@ void HesApu::osc_output(int index, BlipBuffer *center, BlipBuffer *left, BlipBuf
   } while (osc != oscs);
 }
 
-void HesOsc::run_until(synth_t &synth_, blip_time_t end_time) {
+void HesOsc::mRunUntil(synth_t &synth_, blip_time_t end_time) {
   BlipBuffer *const osc_outputs_0 = outputs[0];  // cache often-used values
   if (osc_outputs_0 && control & 0x80) {
     int dac = this->dac;
@@ -213,13 +213,13 @@ void HesApu::write_data(blip_time_t time, int addr, int data) {
       HesOsc *osc = &oscs[OSCS_NUM];
       do {
         osc--;
-        osc->run_until(synth, time);
+        osc->mRunUntil(synth, time);
         balance_changed(*oscs);
       } while (osc != oscs);
     }
   } else if (latch < OSCS_NUM) {
     HesOsc &osc = oscs[latch];
-    osc.run_until(synth, time);
+    osc.mRunUntil(synth, time);
     switch (addr) {
       case 0x802:
         osc.period = (osc.period & 0xF00) | data;
@@ -268,7 +268,7 @@ void HesApu::end_frame(blip_time_t end_time) {
   do {
     osc--;
     if (end_time > osc->last_time)
-      osc->run_until(synth, end_time);
+      osc->mRunUntil(synth, end_time);
     assert(osc->last_time >= end_time);
     osc->last_time -= end_time;
   } while (osc != oscs);

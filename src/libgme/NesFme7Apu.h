@@ -60,7 +60,7 @@ class NesFme7Apu : private fme7_apu_state_t {
   enum { amp_range = 192 };  // can be any value; this gives best error/quality tradeoff
   BlipSynth<BLIP_GOOD_QUALITY, 1> synth;
 
-  void run_until(blip_time_t);
+  void mRunUntil(blip_time_t);
 };
 
 inline void NesFme7Apu::volume(double v) {
@@ -95,13 +95,13 @@ inline void NesFme7Apu::write_data(blip_time_t time, int data) {
     return;
   }
 
-  run_until(time);
+  mRunUntil(time);
   mRegs[latch] = data;
 }
 
 inline void NesFme7Apu::end_frame(blip_time_t time) {
   if (time > last_time)
-    run_until(time);
+    mRunUntil(time);
 
   assert(last_time >= time);
   last_time -= time;

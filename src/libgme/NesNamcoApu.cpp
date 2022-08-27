@@ -68,13 +68,13 @@ void NesNamcoApu::reflect_state( Tagged_Data& data )
 
 void NesNamcoApu::end_frame(blip_time_t time) {
   if (time > last_time)
-    run_until(time);
+    mRunUntil(time);
 
   assert(last_time >= time);
   last_time -= time;
 }
 
-void NesNamcoApu::run_until(blip_time_t nes_end_time) {
+void NesNamcoApu::mRunUntil(blip_time_t nes_end_time) {
   int active_oscs = (m_regs[0x7F] >> 4 & 7) + 1;
   for (unsigned i = OSCS_NUM - active_oscs; i < OSCS_NUM; i++) {
     NamcoOsc &osc = oscs[i];

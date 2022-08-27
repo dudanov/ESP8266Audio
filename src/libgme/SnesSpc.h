@@ -129,7 +129,7 @@ struct SnesSpc {
 
   uint8_t *smp_ram() { return m.ram.ram; }
 
-  void run_until(time_t t) { run_until_(t); }
+  void mRunUntil(time_t t) { run_until_(t); }
 
  public:
   // Time relative to m_spc_time. Speeds up code a bit by eliminating need to

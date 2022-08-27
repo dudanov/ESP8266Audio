@@ -66,7 +66,7 @@ class NsfEmu : private NesCpu, public ClassicEmu {
 
   /* ClassicEmu methods */
 
-  blargg_err_t mRunClocks(blip_time_t &, int) override;
+  blargg_err_t mRunClocks(blip_clk_time_t &, int) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(const BlipEq &) override;
 
@@ -80,8 +80,8 @@ class NsfEmu : private NesCpu, public ClassicEmu {
 
   // timing
   NesCpu::registers_t m_savedState;
-  nes_time_t m_nextPlay;
-  nes_time_t m_playPeriod;
+  blip_clk_time_t mNextPlay;
+  blip_clk_time_t mPlayPeriod;
   int m_playExtra;
   int m_playReady;
 

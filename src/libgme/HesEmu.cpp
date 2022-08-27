@@ -238,7 +238,7 @@ void HesEmu::cpu_write_vdp(int addr, int data) {
       if (vdp.latch == 5) {
         if (data & 0x04)
           m_setWarning("Scanline interrupt unsupported");
-        run_until(time());
+        mRunUntil(time());
         vdp.control = data;
         irq_changed();
       } else {
@@ -271,7 +271,7 @@ void HesEmu::cpu_write_(hes_addr_t addr, int data) {
       return;
 
     case 0x0C00: {
-      run_until(time);
+      mRunUntil(time);
       timer.raw_load = (data & 0x7F) + 1;
       recalc_timer_load();
       timer.count = timer.load;
@@ -282,21 +282,21 @@ void HesEmu::cpu_write_(hes_addr_t addr, int data) {
       data &= 1;
       if (timer.enabled == data)
         return;
-      run_until(time);
+      mRunUntil(time);
       timer.enabled = data;
       if (data)
         timer.count = timer.load;
       break;
 
     case 0x1402:
-      run_until(time);
+      mRunUntil(time);
       irq.disables = data;
       if ((data & 0xF8) && (data & 0xF8) != 0xF8)  // flag questionable values
         debug_printf("Int mask: $%02X\n", data);
       break;
 
     case 0x1403:
-      run_until(time);
+      mRunUntil(time);
       if (timer.enabled)
         timer.count = timer.load;
       timer.fired = false;
@@ -327,7 +327,7 @@ int HesEmu::cpu_read_(hes_addr_t addr) {
       if (irq.vdp > time)
         return 0;
       irq.vdp = future_hes_time;
-      run_until(time);
+      mRunUntil(time);
       irq_changed();
       return 0x20;
 
@@ -339,7 +339,7 @@ int HesEmu::cpu_read_(hes_addr_t addr) {
     case 0x0C01:
       // return timer.enabled; // TODO: remove?
     case 0x0C00:
-      run_until(time);
+      mRunUntil(time);
       debug_printf("Timer count read\n");
       return (unsigned) (timer.count - 1) / timer_base;
 
@@ -373,7 +373,7 @@ int HesEmu::cpu_read_(hes_addr_t addr) {
 
 // Emulation
 
-void HesEmu::run_until(hes_time_t present) {
+void HesEmu::mRunUntil(hes_time_t present) {
   while (vdp.next_vbl < present)
     vdp.next_vbl += play_period;
 
@@ -437,7 +437,7 @@ int HesEmu::cpu_done() {
 
     if (irq.vdp <= present && !(irq.disables & vdp_mask)) {
 // work around for bugs with music not acknowledging VDP
-// run_until( present );
+// mRunUntil( present );
 // irq.vdp = future_hes_time;
 // irq_changed();
 #if GME_FRAME_HOOK_DEFINED
@@ -458,7 +458,7 @@ static void adjTime(blargg_long &time, hes_time_t delta) {
   }
 }
 
-blargg_err_t HesEmu::mRunClocks(blip_time_t &duration_, int) {
+blargg_err_t HesEmu::mRunClocks(blip_clk_time_t &duration_, int) {
   blip_time_t const duration = duration_;  // cache
 
   if (cpu::run(duration))
@@ -468,7 +468,7 @@ blargg_err_t HesEmu::mRunClocks(blip_time_t &duration_, int) {
   // check( time() - duration < 20 ); // Txx instruction could cause going way
   // over
 
-  run_until(duration);
+  mRunUntil(duration);
 
   // end time frame
   timer.last_time -= duration;

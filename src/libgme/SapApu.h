@@ -47,7 +47,7 @@ class SapApu {
   int control;
 
   void calc_periods();
-  void run_until(blip_time_t);
+  void mRunUntil(blip_time_t);
 
   enum { poly4_len = (1L << 4) - 1 };
   enum { poly9_len = (1L << 9) - 1 };
