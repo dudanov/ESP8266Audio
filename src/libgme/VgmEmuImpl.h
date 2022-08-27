@@ -32,44 +32,44 @@ class VgmEmuImpl : public ClassicEmu, private DualResampler {
   typedef ClassicEmu::sample_t sample_t;
 
  protected:
-  enum { stereo = 2 };
+  enum { STEREO = 2 };
 
   typedef int vgm_time_t;
 
-  enum { fm_time_bits = 12 };
+  enum { FM_TIME_BITS = 12 };
   typedef int fm_time_t;
-  long fm_time_offset;
-  int fm_time_factor;
-  fm_time_t to_fm_time(vgm_time_t) const;
+  long mFmTimeOffset;
+  int mFmTimeFactor;
+  fm_time_t mToFmTime(vgm_time_t) const;
 
-  enum { blip_time_bits = 12 };
-  int blip_time_factor;
-  blip_time_t to_blip_time(vgm_time_t) const;
+  enum { BLIP_TIME_BITS = 12 };
+  int mBlipTimeFactor;
+  blip_time_t mToBlipTime(vgm_time_t) const;
 
   uint8_t const *data;
   uint8_t const *loop_begin;
   uint8_t const *data_end;
-  void update_fm_rates(long *ym2413_rate, long *ym2612_rate) const;
+  void mUpdateFmRates(long *ym2413_rate, long *ym2612_rate) const;
 
-  vgm_time_t vgm_time;
-  uint8_t const *pos;
-  blip_time_t run_commands(vgm_time_t);
+  vgm_time_t mVgmTime;
+  const uint8_t *mPos;
+  blip_time_t mRunCommands(vgm_time_t);
   int mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *buf) override;
 
-  uint8_t const *pcm_data;
-  uint8_t const *pcm_pos;
-  int dac_amp;
-  int dac_disabled;  // -1 if disabled
-  void write_pcm(vgm_time_t, int amp);
+  uint8_t const *mPcmData;
+  uint8_t const *mPcmPos;
+  int mDacAmp;
+  int mDacDisabled;  // -1 if disabled
+  void mWritePcm(vgm_time_t, int amp);
 
-  YmEmu<Ym2612Emu> ym2612[2];
-  YmEmu<Ym2413Emu> ym2413[2];
+  YmEmu<Ym2612Emu> mYm2612[2];
+  YmEmu<Ym2413Emu> mYm2413[2];
 
-  BlipBuffer blip_buf;
-  gme::emu::sms::SmsApu psg[2];
-  bool psg_dual{};
-  bool psg_t6w28;
-  BlipSynth<BLIP_MED_QUALITY, 1> dac_synth;
+  BlipBuffer mBlipBuf;
+  gme::emu::sms::SmsApu mPsg[2];
+  bool mPsgDual{};
+  bool mPsgT6w28;
+  BlipSynth<BLIP_MED_QUALITY, 1> mDacSynth;
 
   friend class VgmEmu;
 };

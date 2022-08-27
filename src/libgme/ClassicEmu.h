@@ -29,7 +29,7 @@ class ClassicEmu : public MusicEmu {
   virtual void mSetChannel(int index, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) = 0;
   virtual void mUpdateEq(BlipEq const &) = 0;
   virtual blargg_err_t mStartTrack(int track) override;
-  virtual blargg_err_t mRunClocks(blip_time_t &time_io, int msec) = 0;
+  virtual blargg_err_t mRunClocks(blip_clk_time_t &clk_time, int msec) = 0;
 
  protected:
   blargg_err_t mSetSampleRate(long sample_rate) override;

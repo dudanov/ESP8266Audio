@@ -88,9 +88,9 @@ blargg_err_t ClassicEmu::mPlay(long count, sample_t *out) {
         mBufChangedNum = mBuf->GetChangedChannelsNumber();
         mRemuteChannels();
       }
-      int msec = mBuf->GetLength();
-      blip_time_t clocks_emulated = (blargg_long) msec * mClockRate / 1000;
-      RETURN_ERR(mRunClocks(clocks_emulated, msec));
+      auto ms = mBuf->GetLength();
+      blip_clk_time_t clocks_emulated = ms * mClockRate / 1000;
+      RETURN_ERR(mRunClocks(clocks_emulated, ms));
       assert(clocks_emulated);
       mBuf->EndFrame(clocks_emulated);
     }

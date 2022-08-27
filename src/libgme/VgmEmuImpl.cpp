@@ -93,26 +93,26 @@ template<class Emu> inline int YmEmu<Emu>::run_until(int time) {
   return true;
 }
 
-inline VgmEmuImpl::fm_time_t VgmEmuImpl::to_fm_time(vgm_time_t t) const {
-  return (t * fm_time_factor + fm_time_offset) >> fm_time_bits;
+inline VgmEmuImpl::fm_time_t VgmEmuImpl::mToFmTime(vgm_time_t t) const {
+  return (t * mFmTimeFactor + mFmTimeOffset) >> FM_TIME_BITS;
 }
 
-inline blip_time_t VgmEmuImpl::to_blip_time(vgm_time_t t) const { return (t * blip_time_factor) >> blip_time_bits; }
+inline blip_time_t VgmEmuImpl::mToBlipTime(vgm_time_t t) const { return (t * mBlipTimeFactor) >> BLIP_TIME_BITS; }
 
-void VgmEmuImpl::write_pcm(vgm_time_t vgm_time, int amp) {
-  blip_time_t blip_time = to_blip_time(vgm_time);
-  int old = dac_amp;
+void VgmEmuImpl::mWritePcm(vgm_time_t vgm_time, int amp) {
+  blip_time_t blip_time = mToBlipTime(vgm_time);
+  int old = mDacAmp;
   int delta = amp - old;
-  dac_amp = amp;
+  mDacAmp = amp;
   if (old >= 0)
-    dac_synth.Offset(&blip_buf, blip_time, delta);
+    mDacSynth.Offset(&mBlipBuf, blip_time, delta);
   else
-    dac_amp |= dac_disabled;
+    mDacAmp |= mDacDisabled;
 }
 
-blip_time_t VgmEmuImpl::run_commands(vgm_time_t end_time) {
-  vgm_time_t vgm_time = this->vgm_time;
-  uint8_t const *pos = this->pos;
+blip_time_t VgmEmuImpl::mRunCommands(vgm_time_t end_time) {
+  vgm_time_t vgm_time = this->mVgmTime;
+  uint8_t const *pos = this->mPos;
   if (pos >= data_end) {
     mSetTrackEnded();
     if (pos > data_end)
@@ -136,19 +136,19 @@ blip_time_t VgmEmuImpl::run_commands(vgm_time_t end_time) {
         break;
 
       case cmd_gg_stereo:
-        psg[0].writeGGStereo(to_blip_time(vgm_time), *pos++);
+        mPsg[0].writeGGStereo(mToBlipTime(vgm_time), *pos++);
         break;
 
       case cmd_psg:
-        psg[0].writeData(to_blip_time(vgm_time), *pos++);
+        mPsg[0].writeData(mToBlipTime(vgm_time), *pos++);
         break;
 
       case cmd_gg_stereo_2:
-        psg[1].writeGGStereo(to_blip_time(vgm_time), *pos++);
+        mPsg[1].writeGGStereo(mToBlipTime(vgm_time), *pos++);
         break;
 
       case cmd_psg_2:
-        psg[1].writeData(to_blip_time(vgm_time), *pos++);
+        mPsg[1].writeData(mToBlipTime(vgm_time), *pos++);
         break;
 
       case cmd_delay:
@@ -161,52 +161,52 @@ blip_time_t VgmEmuImpl::run_commands(vgm_time_t end_time) {
         break;
 
       case cmd_ym2413:
-        if (ym2413[0].run_until(to_fm_time(vgm_time)))
-          ym2413[0].write(pos[0], pos[1]);
+        if (mYm2413[0].run_until(mToFmTime(vgm_time)))
+          mYm2413[0].write(pos[0], pos[1]);
         pos += 2;
         break;
 
       case cmd_ym2413_2:
-        if (ym2413[1].run_until(to_fm_time(vgm_time)))
-          ym2413[1].write(pos[0], pos[1]);
+        if (mYm2413[1].run_until(mToFmTime(vgm_time)))
+          mYm2413[1].write(pos[0], pos[1]);
         pos += 2;
         break;
 
       case cmd_ym2612_port0:
         if (pos[0] == ym2612_dac_port) {
-          write_pcm(vgm_time, pos[1]);
-        } else if (ym2612[0].run_until(to_fm_time(vgm_time))) {
+          mWritePcm(vgm_time, pos[1]);
+        } else if (mYm2612[0].run_until(mToFmTime(vgm_time))) {
           if (pos[0] == 0x2B) {
-            dac_disabled = (pos[1] >> 7 & 1) - 1;
-            dac_amp |= dac_disabled;
+            mDacDisabled = (pos[1] >> 7 & 1) - 1;
+            mDacAmp |= mDacDisabled;
           }
-          ym2612[0].write0(pos[0], pos[1]);
+          mYm2612[0].write0(pos[0], pos[1]);
         }
         pos += 2;
         break;
 
       case cmd_ym2612_port1:
-        if (ym2612[0].run_until(to_fm_time(vgm_time)))
-          ym2612[0].write1(pos[0], pos[1]);
+        if (mYm2612[0].run_until(mToFmTime(vgm_time)))
+          mYm2612[0].write1(pos[0], pos[1]);
         pos += 2;
         break;
 
       case cmd_ym2612_2_port0:
         if (pos[0] == ym2612_dac_port) {
-          write_pcm(vgm_time, pos[1]);
-        } else if (ym2612[1].run_until(to_fm_time(vgm_time))) {
+          mWritePcm(vgm_time, pos[1]);
+        } else if (mYm2612[1].run_until(mToFmTime(vgm_time))) {
           if (pos[0] == 0x2B) {
-            dac_disabled = (pos[1] >> 7 & 1) - 1;
-            dac_amp |= dac_disabled;
+            mDacDisabled = (pos[1] >> 7 & 1) - 1;
+            mDacAmp |= mDacDisabled;
           }
-          ym2612[1].write0(pos[0], pos[1]);
+          mYm2612[1].write0(pos[0], pos[1]);
         }
         pos += 2;
         break;
 
       case cmd_ym2612_2_port1:
-        if (ym2612[1].run_until(to_fm_time(vgm_time)))
-          ym2612[1].write1(pos[0], pos[1]);
+        if (mYm2612[1].run_until(mToFmTime(vgm_time)))
+          mYm2612[1].write1(pos[0], pos[1]);
         pos += 2;
         break;
 
@@ -216,13 +216,13 @@ blip_time_t VgmEmuImpl::run_commands(vgm_time_t end_time) {
         long size = get_le32(pos + 2);
         pos += 6;
         if (type == pcm_block_type)
-          pcm_data = pos;
+          mPcmData = pos;
         pos += size;
         break;
       }
 
       case cmd_pcm_seek:
-        pcm_pos = pcm_data + pos[3] * 0x1000000L + pos[2] * 0x10000L + pos[1] * 0x100L + pos[0];
+        mPcmPos = mPcmData + pos[3] * 0x1000000L + pos[2] * 0x10000L + pos[1] * 0x100L + pos[0];
         pos += 4;
         break;
 
@@ -230,7 +230,7 @@ blip_time_t VgmEmuImpl::run_commands(vgm_time_t end_time) {
         int cmd = pos[-1];
         switch (cmd & 0xF0) {
           case cmd_pcm_delay:
-            write_pcm(vgm_time, *pcm_pos++);
+            mWritePcm(vgm_time, *mPcmPos++);
             vgm_time += cmd & 0x0F;
             break;
 
@@ -249,58 +249,58 @@ blip_time_t VgmEmuImpl::run_commands(vgm_time_t end_time) {
     }
   }
   vgm_time -= end_time;
-  this->pos = pos;
-  this->vgm_time = vgm_time;
+  this->mPos = pos;
+  this->mVgmTime = vgm_time;
 
-  return to_blip_time(end_time);
+  return mToBlipTime(end_time);
 }
 
 int VgmEmuImpl::mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *buf) {
   // to do: timing is working mostly by luck
 
   int min_pairs = sample_count >> 1;
-  int vgm_time = ((long) min_pairs << fm_time_bits) / fm_time_factor - 1;
-  assert(to_fm_time(vgm_time) <= min_pairs);
+  int vgm_time = ((long) min_pairs << FM_TIME_BITS) / mFmTimeFactor - 1;
+  assert(mToFmTime(vgm_time) <= min_pairs);
   int pairs = min_pairs;
-  while ((pairs = to_fm_time(vgm_time)) < min_pairs)
+  while ((pairs = mToFmTime(vgm_time)) < min_pairs)
     vgm_time++;
   // debug_printf( "pairs: %d, min_pairs: %d\n", pairs, min_pairs );
 
-  if (ym2612[0].enabled()) {
-    ym2612[0].begin_frame(buf);
-    if (ym2612[1].enabled())
-      ym2612[1].begin_frame(buf);
-    memset(buf, 0, pairs * stereo * sizeof *buf);
-  } else if (ym2413[0].enabled()) {
-    ym2413[0].begin_frame(buf);
-    if (ym2413[1].enabled())
-      ym2413[1].begin_frame(buf);
-    memset(buf, 0, pairs * stereo * sizeof *buf);
+  if (mYm2612[0].enabled()) {
+    mYm2612[0].begin_frame(buf);
+    if (mYm2612[1].enabled())
+      mYm2612[1].begin_frame(buf);
+    memset(buf, 0, pairs * STEREO * sizeof *buf);
+  } else if (mYm2413[0].enabled()) {
+    mYm2413[0].begin_frame(buf);
+    if (mYm2413[1].enabled())
+      mYm2413[1].begin_frame(buf);
+    memset(buf, 0, pairs * STEREO * sizeof *buf);
   }
 
-  run_commands(vgm_time);
+  mRunCommands(vgm_time);
 
-  if (ym2612[0].enabled())
-    ym2612[0].run_until(pairs);
-  if (ym2612[1].enabled())
-    ym2612[1].run_until(pairs);
+  if (mYm2612[0].enabled())
+    mYm2612[0].run_until(pairs);
+  if (mYm2612[1].enabled())
+    mYm2612[1].run_until(pairs);
 
-  if (ym2413[0].enabled())
-    ym2413[0].run_until(pairs);
-  if (ym2413[1].enabled())
-    ym2413[1].run_until(pairs);
+  if (mYm2413[0].enabled())
+    mYm2413[0].run_until(pairs);
+  if (mYm2413[1].enabled())
+    mYm2413[1].run_until(pairs);
 
-  fm_time_offset = (vgm_time * fm_time_factor + fm_time_offset) - ((long) pairs << fm_time_bits);
+  mFmTimeOffset = (vgm_time * mFmTimeFactor + mFmTimeOffset) - ((long) pairs << FM_TIME_BITS);
 
-  psg[0].EndFrame(blip_time);
-  if (psg_dual)
-    psg[1].EndFrame(blip_time);
+  mPsg[0].EndFrame(blip_time);
+  if (mPsgDual)
+    mPsg[1].EndFrame(blip_time);
 
-  return pairs * stereo;
+  return pairs * STEREO;
 }
 
 // Update pre-1.10 header FM rates by scanning commands
-void VgmEmuImpl::update_fm_rates(long *ym2413_rate, long *ym2612_rate) const {
+void VgmEmuImpl::mUpdateFmRates(long *ym2413_rate, long *ym2612_rate) const {
   uint8_t const *p = data + 0x40;
   while (p < data_end) {
     switch (*p) {

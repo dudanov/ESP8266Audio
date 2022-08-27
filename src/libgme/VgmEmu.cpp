@@ -194,21 +194,21 @@ struct VgmFile : GmeInfo {
 void VgmEmu::mSetTempo(double t) {
   if (m_psgRate) {
     m_vgmRate = (long) (44100 * t + 0.5);
-    blip_time_factor = (long) floor(double(1L << blip_time_bits) / m_vgmRate * m_psgRate + 0.5);
-    // debug_printf( "blip_time_factor: %ld\n", blip_time_factor );
+    mBlipTimeFactor = (long) floor(double(1L << BLIP_TIME_BITS) / m_vgmRate * m_psgRate + 0.5);
+    // debug_printf( "mBlipTimeFactor: %ld\n", mBlipTimeFactor );
     // debug_printf( "m_vgmRate: %ld\n", m_vgmRate );
     // TODO: remove? calculates m_vgmRate more accurately (above differs at
     // most by one Hz only)
-    // blip_time_factor = (long) floor( double (1L << blip_time_bits) *
+    // mBlipTimeFactor = (long) floor( double (1L << BLIP_TIME_BITS) *
     // m_psgRate / 44100 / t + 0.5 ); m_vgmRate = (long) floor( double (1L <<
-    // blip_time_bits) * m_psgRate / blip_time_factor + 0.5 );
+    // BLIP_TIME_BITS) * m_psgRate / mBlipTimeFactor + 0.5 );
 
-    fm_time_factor = 2 + (long) floor(m_fmRate * (1L << fm_time_bits) / m_vgmRate + 0.5);
+    mFmTimeFactor = 2 + (long) floor(m_fmRate * (1L << FM_TIME_BITS) / m_vgmRate + 0.5);
   }
 }
 
 blargg_err_t VgmEmu::mSetSampleRate(long sample_rate) {
-  RETURN_ERR(blip_buf.SetSampleRate(sample_rate, 1000 / 30));
+  RETURN_ERR(mBlipBuf.SetSampleRate(sample_rate, 1000 / 30));
   return ClassicEmu::mSetSampleRate(sample_rate);
 }
 
@@ -232,55 +232,55 @@ blargg_err_t VgmEmu::SetMultiChannel(bool is_enabled) {
 }
 
 void VgmEmu::mUpdateEq(BlipEq const &eq) {
-  psg[0].setTrebleEq(eq);
-  if (psg_dual)
-    psg[1].setTrebleEq(eq);
-  dac_synth.SetTrebleEq(eq);
+  mPsg[0].setTrebleEq(eq);
+  if (mPsgDual)
+    mPsg[1].setTrebleEq(eq);
+  mDacSynth.SetTrebleEq(eq);
 }
 
 void VgmEmu::mSetChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) {
-  if (psg_dual) {
-    if (psg_t6w28) {
+  if (mPsgDual) {
+    if (mPsgT6w28) {
       // TODO: Make proper output of each PSG chip: 0 - all right, 1 - all
       // left
-      if (i < psg[0].OSCS_NUM)
-        psg[0].setOscOutput(i, c, r, r);
-      if (i < psg[1].OSCS_NUM)
-        psg[1].setOscOutput(i, c, l, l);
+      if (i < mPsg[0].OSCS_NUM)
+        mPsg[0].setOscOutput(i, c, r, r);
+      if (i < mPsg[1].OSCS_NUM)
+        mPsg[1].setOscOutput(i, c, l, l);
     } else {
-      if (i < psg[0].OSCS_NUM)
-        psg[0].setOscOutput(i, c, l, r);
-      if (i < psg[1].OSCS_NUM)
-        psg[1].setOscOutput(i, c, l, r);
+      if (i < mPsg[0].OSCS_NUM)
+        mPsg[0].setOscOutput(i, c, l, r);
+      if (i < mPsg[1].OSCS_NUM)
+        mPsg[1].setOscOutput(i, c, l, r);
     }
   } else {
-    if (i < psg[0].OSCS_NUM)
-      psg[0].setOscOutput(i, c, l, r);
+    if (i < mPsg[0].OSCS_NUM)
+      mPsg[0].setOscOutput(i, c, l, r);
   }
 }
 
 void VgmEmu::mMuteChannel(int mask) {
   ClassicEmu::mMuteChannel(mask);
-  dac_synth.SetOutput(&blip_buf);
+  mDacSynth.SetOutput(&mBlipBuf);
   if (uses_fm) {
-    psg[0].SetOutput((mask & 0x80) ? 0 : &blip_buf);
-    if (psg_dual)
-      psg[1].SetOutput((mask & 0x80) ? 0 : &blip_buf);
-    if (ym2612[0].enabled()) {
-      dac_synth.SetVolume((mask & 0x40) ? 0.0 : 0.1115 / 256 * FM_GAIN * mGetGain());
-      ym2612[0].mute_voices(mask);
-      if (ym2612[1].enabled())
-        ym2612[1].mute_voices(mask);
+    mPsg[0].SetOutput((mask & 0x80) ? 0 : &mBlipBuf);
+    if (mPsgDual)
+      mPsg[1].SetOutput((mask & 0x80) ? 0 : &mBlipBuf);
+    if (mYm2612[0].enabled()) {
+      mDacSynth.SetVolume((mask & 0x40) ? 0.0 : 0.1115 / 256 * FM_GAIN * mGetGain());
+      mYm2612[0].mute_voices(mask);
+      if (mYm2612[1].enabled())
+        mYm2612[1].mute_voices(mask);
     }
-    if (ym2413[0].enabled()) {
+    if (mYm2413[0].enabled()) {
       int m = mask & 0x3F;
       if (mask & 0x20)
         m |= 0x01E0;  // channels 5-8
       if (mask & 0x40)
         m |= 0x3E00;
-      ym2413[0].mute_voices(m);
-      if (ym2413[1].enabled())
-        ym2413[1].mute_voices(m);
+      mYm2413[0].mute_voices(m);
+      if (mYm2413[1].enabled())
+        mYm2413[1].mute_voices(m);
     }
   }
 }
@@ -301,10 +301,10 @@ blargg_err_t VgmEmu::mLoad(uint8_t const *new_data, long new_size) {
   m_psgRate = get_le32(h.psg_rate);
   if (!m_psgRate)
     m_psgRate = 3579545;
-  psg_dual = (m_psgRate & 0x40000000) != 0;
-  psg_t6w28 = (m_psgRate & 0x80000000) != 0;
+  mPsgDual = (m_psgRate & 0x40000000) != 0;
+  mPsgT6w28 = (m_psgRate & 0x80000000) != 0;
   m_psgRate &= 0x0FFFFFFF;
-  blip_buf.SetClockRate(m_psgRate);
+  mBlipBuf.SetClockRate(m_psgRate);
 
   data = new_data;
   data_end = new_data + new_size;
@@ -314,7 +314,7 @@ blargg_err_t VgmEmu::mLoad(uint8_t const *new_data, long new_size) {
   if (get_le32(h.loop_offset))
     loop_begin = &data[get_le32(h.loop_offset) + offsetof(header_t, loop_offset)];
 
-  mSetChannelsNumber(psg[0].OSCS_NUM);
+  mSetChannelsNumber(mPsg[0].OSCS_NUM);
 
   RETURN_ERR(setup_fm());
 
@@ -332,23 +332,23 @@ blargg_err_t VgmEmu::setup_fm() {
   long ym2413_rate = get_le32(header().ym2413_rate);
   bool ym2413_dual = (ym2413_rate & 0x40000000) != 0;
   if (ym2413_rate && get_le32(header().version) < 0x110)
-    update_fm_rates(&ym2413_rate, &ym2612_rate);
+    mUpdateFmRates(&ym2413_rate, &ym2612_rate);
 
   uses_fm = false;
 
-  m_fmRate = blip_buf.GetSampleRate() * OVERSAMPLE_FACTOR;
+  m_fmRate = mBlipBuf.GetSampleRate() * OVERSAMPLE_FACTOR;
 
   if (ym2612_rate) {
     ym2612_rate &= ~0xC0000000;
     uses_fm = true;
     if (disable_oversampling_)
       m_fmRate = ym2612_rate / 144.0;
-    DualResampler::setup(m_fmRate / blip_buf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
-    RETURN_ERR(ym2612[0].set_rate(m_fmRate, ym2612_rate));
-    ym2612[0].enable(true);
+    DualResampler::setup(m_fmRate / mBlipBuf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
+    RETURN_ERR(mYm2612[0].set_rate(m_fmRate, ym2612_rate));
+    mYm2612[0].enable(true);
     if (ym2612_dual) {
-      RETURN_ERR(ym2612[1].set_rate(m_fmRate, ym2612_rate));
-      ym2612[1].enable(true);
+      RETURN_ERR(mYm2612[1].set_rate(m_fmRate, ym2612_rate));
+      mYm2612[1].enable(true);
     }
     mSetChannelsNumber(8);
   }
@@ -358,28 +358,28 @@ blargg_err_t VgmEmu::setup_fm() {
     uses_fm = true;
     if (disable_oversampling_)
       m_fmRate = ym2413_rate / 72.0;
-    DualResampler::setup(m_fmRate / blip_buf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
-    RETURN_ERR(ym2413[0].set_rate(m_fmRate, ym2413_rate));
-    ym2413[0].enable(true);
+    DualResampler::setup(m_fmRate / mBlipBuf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
+    RETURN_ERR(mYm2413[0].set_rate(m_fmRate, ym2413_rate));
+    mYm2413[0].enable(true);
     if (ym2413_dual) {
-      RETURN_ERR(ym2413[1].set_rate(m_fmRate, ym2413_rate));
-      ym2413[1].enable(true);
+      RETURN_ERR(mYm2413[1].set_rate(m_fmRate, ym2413_rate));
+      mYm2413[1].enable(true);
     }
     mSetChannelsNumber(8);
   }
 
   if (uses_fm) {
-    RETURN_ERR(DualResampler::reset(blip_buf.GetLength() * blip_buf.GetSampleRate() / 1000));
-    psg[0].setVolume(0.135 * FM_GAIN * mGetGain());
-    if (psg_dual)
-      psg[1].setVolume(0.135 * FM_GAIN * mGetGain());
+    RETURN_ERR(DualResampler::reset(mBlipBuf.GetLength() * mBlipBuf.GetSampleRate() / 1000));
+    mPsg[0].setVolume(0.135 * FM_GAIN * mGetGain());
+    if (mPsgDual)
+      mPsg[1].setVolume(0.135 * FM_GAIN * mGetGain());
   } else {
-    ym2612[0].enable(false);
-    ym2612[1].enable(false);
-    ym2413[0].enable(false);
-    ym2413[1].enable(false);
-    psg[0].setVolume(mGetGain());
-    psg[1].setVolume(mGetGain());
+    mYm2612[0].enable(false);
+    mYm2612[1].enable(false);
+    mYm2413[0].enable(false);
+    mYm2413[1].enable(false);
+    mPsg[0].setVolume(mGetGain());
+    mPsg[1].setVolume(mGetGain());
   }
 
   return 0;
@@ -389,48 +389,48 @@ blargg_err_t VgmEmu::setup_fm() {
 
 blargg_err_t VgmEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
-  psg[0].reset(get_le16(header().noise_feedback), header().noise_width);
-  if (psg_dual)
-    psg[1].reset(get_le16(header().noise_feedback), header().noise_width);
+  mPsg[0].reset(get_le16(header().noise_feedback), header().noise_width);
+  if (mPsgDual)
+    mPsg[1].reset(get_le16(header().noise_feedback), header().noise_width);
 
-  dac_disabled = -1;
-  pos = data + HEADER_SIZE;
-  pcm_data = pos;
-  pcm_pos = pos;
-  dac_amp = -1;
-  vgm_time = 0;
+  mDacDisabled = -1;
+  mPos = data + HEADER_SIZE;
+  mPcmData = mPos;
+  mPcmPos = mPos;
+  mDacAmp = -1;
+  mVgmTime = 0;
   if (get_le32(header().version) >= 0x150) {
     long data_offset = get_le32(header().data_offset);
     check(data_offset);
     if (data_offset)
-      pos += data_offset + offsetof(header_t, data_offset) - 0x40;
+      mPos += data_offset + offsetof(header_t, data_offset) - 0x40;
   }
 
   if (uses_fm) {
-    if (ym2413[0].enabled())
-      ym2413[0].reset();
+    if (mYm2413[0].enabled())
+      mYm2413[0].reset();
 
-    if (ym2413[1].enabled())
-      ym2413[1].reset();
+    if (mYm2413[1].enabled())
+      mYm2413[1].reset();
 
-    if (ym2612[0].enabled())
-      ym2612[0].reset();
+    if (mYm2612[0].enabled())
+      mYm2612[0].reset();
 
-    if (ym2612[1].enabled())
-      ym2612[1].reset();
+    if (mYm2612[1].enabled())
+      mYm2612[1].reset();
 
-    fm_time_offset = 0;
-    blip_buf.Clear();
+    mFmTimeOffset = 0;
+    mBlipBuf.Clear();
     DualResampler::clear();
   }
   return 0;
 }
 
 blargg_err_t VgmEmu::mRunClocks(blip_time_t &time_io, int msec) {
-  time_io = run_commands(msec * m_vgmRate / 1000);
-  psg[0].EndFrame(time_io);
-  if (psg_dual)
-    psg[1].EndFrame(time_io);
+  time_io = mRunCommands(msec * m_vgmRate / 1000);
+  mPsg[0].EndFrame(time_io);
+  if (mPsgDual)
+    mPsg[1].EndFrame(time_io);
   return 0;
 }
 
@@ -438,7 +438,7 @@ blargg_err_t VgmEmu::mPlay(long count, sample_t *out) {
   if (!uses_fm)
     return ClassicEmu::mPlay(count, out);
 
-  DualResampler::dualPlay(count, out, blip_buf);
+  DualResampler::dualPlay(count, out, mBlipBuf);
   return 0;
 }
 
