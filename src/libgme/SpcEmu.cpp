@@ -348,10 +348,10 @@ struct RsnFile : SpcFile {
 blargg_err_t SpcEmu::mSetSampleRate(long sample_rate) {
   RETURN_ERR(mApu.init());
   SetAccuracy(false);
-  if (sample_rate != NATIVE_SAMPLE_RATE) {
-    RETURN_ERR(m_resampler.setBufferSize(NATIVE_SAMPLE_RATE / 20 * 2));
-    m_resampler.setTimeRatio((double) NATIVE_SAMPLE_RATE / sample_rate, 0.9965);
-  }
+  // if (sample_rate != NATIVE_SAMPLE_RATE) {
+  // RETURN_ERR(m_resampler.setBufferSize(NATIVE_SAMPLE_RATE / 20 * 2));
+  // m_resampler.setTimeRatio((double) NATIVE_SAMPLE_RATE / sample_rate, 0.9965);
+  //}
   return 0;
 }
 
@@ -383,7 +383,7 @@ void SpcEmu::mSetTempo(double t) { mApu.set_tempo((int) (t * mApu.TEMPO_UNIT)); 
 
 blargg_err_t SpcEmu::mStartTrack(int track) {
   RETURN_ERR(MusicEmu::mStartTrack(track));
-  m_resampler.clear();
+  // m_resampler.clear();
   m_filter.Clear();
   RETURN_ERR(mApu.load_spc(m_fileData, m_fileSize));
   m_filter.SetGain((int) (mGetGain() * SpcFilter::GAIN_UNIT));
@@ -404,10 +404,10 @@ blargg_err_t SpcEmu::m_playAndFilter(long count, sample_t out[]) {
 }
 
 blargg_err_t SpcEmu::mSkipSamples(long count) {
-  if (GetSampleRate() != NATIVE_SAMPLE_RATE) {
-    count = long(count * m_resampler.getRatio()) & ~1;
-    count -= m_resampler.skipInput(count);
-  }
+  // if (GetSampleRate() != NATIVE_SAMPLE_RATE) {
+  // count = long(count * m_resampler.getRatio()) & ~1;
+  // count -= m_resampler.skipInput(count);
+  //}
 
   // TODO: shouldn't skip be adjusted for the 64 samples read afterwards?
 
@@ -426,17 +426,17 @@ blargg_err_t SpcEmu::mPlay(long count, sample_t *out) {
   if (GetSampleRate() == NATIVE_SAMPLE_RATE)
     return m_playAndFilter(count, out);
 
-  long remain = count;
-  while (remain > 0) {
-    remain -= m_resampler.read(&out[count - remain], remain);
-    if (remain > 0) {
-      long n = m_resampler.getMaxWrite();
-      RETURN_ERR(m_playAndFilter(n, m_resampler.buffer()));
-      m_resampler.write(n);
-    }
-  }
-  check(remain == 0);
-  return 0;
+  // long remain = count;
+  // while (remain > 0) {
+  // remain -= m_resampler.read(&out[count - remain], remain);
+  // if (remain > 0) {
+  // long n = m_resampler.getMaxWrite();
+  // RETURN_ERR(m_playAndFilter(n, m_resampler.buffer()));
+  // m_resampler.write(n);
+  //}
+  //}
+  // check(remain == 0);
+  // return 0;
 }
 
 blargg_err_t RsnEmu::loadArchive(const char *path) {
@@ -499,9 +499,23 @@ RsnEmu::~RsnEmu() {}
 }  // namespace gme
 
 static gme_type_t_ const gme_spc_type_ = {
-    "Super Nintendo", 1, 32000, &gme::emu::snes::SpcEmu::createSpcEmu, &gme::emu::snes::SpcFile::createSpcFile, "SPC", 0};
+    "Super Nintendo",
+    1,
+    32000,
+    &gme::emu::snes::SpcEmu::createSpcEmu,
+    &gme::emu::snes::SpcFile::createSpcFile,
+    "SPC",
+    0,
+};
 extern gme_type_t const gme_spc_type = &gme_spc_type_;
 
 static gme_type_t_ const gme_rsn_type_ = {
-    "Super Nintendo", 0, 32000, &gme::emu::snes::RsnEmu::createRsnEmu, &gme::emu::snes::RsnFile::createRsnFile, "RSN", 0};
+    "Super Nintendo",
+    0,
+    32000,
+    &gme::emu::snes::RsnEmu::createRsnEmu,
+    &gme::emu::snes::RsnFile::createRsnFile,
+    "RSN",
+    0,
+};
 extern gme_type_t const gme_rsn_type = &gme_rsn_type_;

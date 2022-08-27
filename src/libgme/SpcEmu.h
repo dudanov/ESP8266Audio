@@ -66,7 +66,7 @@ class SpcEmu : public MusicEmu {
   long m_fileSize;
 
  private:
-  FirResampler<24> m_resampler;
+  // FirResampler<24> m_resampler;
   SpcFilter m_filter;
   SnesSpc mApu;
 
