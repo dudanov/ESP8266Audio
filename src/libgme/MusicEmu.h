@@ -3,6 +3,7 @@
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #pragma once
 
+#include <array>
 #include "GmeFile.h"
 class MultiBuffer;
 
@@ -31,18 +32,18 @@ struct MusicEmu : public GmeFile {
   // Informational
 
   // Sample rate sound is generated at
-  long GetSampleRate() const { return this->mSampleRate; }
+  long GetSampleRate() const { return mSampleRate; }
 
   // Index of current track or -1 if one hasn't been started
-  int GetCurrentTrack() const { return this->mCurrentTrack; }
+  int GetCurrentTrack() const { return mCurrentTrack; }
 
   // Number of voices used by currently loaded file
-  int GetChannelsNum() const { return this->mChannelsNum; }
+  int GetChannelsNum() const { return mChannelsNum; }
 
   // Names of voices
-  const char **GetChannelsNames() const { return this->mChannelsNames; }
+  const char **GetChannelsNames() const { return mChannelsNames; }
 
-  bool IsMultiChannel() const { return this->mIsMultiChannel; }
+  bool IsMultiChannel() const { return mIsMultiChannel; }
 
   // Track status/control
 
@@ -55,7 +56,7 @@ struct MusicEmu : public GmeFile {
 
   // Seek to new time in track. Seeking backwards or far forward can take a
   // while.
-  blargg_err_t SeekMs(long ms) { return this->SeekSamples(this->mMsToSamples(ms)); }
+  blargg_err_t SeekMs(long ms) { return this->SeekSamples(mMsToSamples(ms)); }
 
   // Equivalent to restarting track then skipping n samples
   blargg_err_t SeekSamples(long n);
@@ -64,7 +65,7 @@ struct MusicEmu : public GmeFile {
   blargg_err_t SkipSamples(long n);
 
   // True if a track has reached its end
-  bool IsTrackEnded() const { return this->mIsTrackEnded; }
+  bool IsTrackEnded() const { return mIsTrackEnded; }
 
   // Set start time and length of track fade out. Once fade ends IsTrackEnded()
   // returns true. Fade time can be changed while track is playing.
@@ -74,16 +75,16 @@ struct MusicEmu : public GmeFile {
   // metadata for supported emulators.
   //
   // @since 0.6.2.
-  bool autoloadPlaybackLimit() const { return this->mEmuAutoloadPlaybackLimit; }
-  void setAutoloadPlaybackLimit(bool do_autoload_limit) { this->mEmuAutoloadPlaybackLimit = do_autoload_limit; }
+  bool autoloadPlaybackLimit() const { return mEmuAutoloadPlaybackLimit; }
+  void setAutoloadPlaybackLimit(bool do_autoload_limit) { mEmuAutoloadPlaybackLimit = do_autoload_limit; }
 
   // Disable automatic end-of-track detection and skipping of silence at
   // beginning
-  void SetIgnoreSilence(bool value = true) { this->mIgnoreSilence = value; }
+  void SetIgnoreSilence(bool value = true) { mIgnoreSilence = value; }
 
   // Info for current track
   using GmeFile::GetTrackInfo;
-  blargg_err_t GetTrackInfo(track_info_t *out) const { return GmeFile::GetTrackInfo(out, this->mCurrentTrack); }
+  blargg_err_t GetTrackInfo(track_info_t *out) const { return GmeFile::GetTrackInfo(out, mCurrentTrack); }
   // Sound customization
 
   // Adjust song tempo, where 1.0 = normal, 0.5 = half speed, 2.0 = double
@@ -101,7 +102,7 @@ struct MusicEmu : public GmeFile {
   // Must be called before SetSampleRate().
   void SetGain(double value) {
     assert(!this->GetSampleRate());  // you must set gain before setting sample rate
-    this->mGain = value;
+    mGain = value;
   }
 
   // Request use of custom multichannel buffer. Only supported by "classic"
@@ -111,7 +112,7 @@ struct MusicEmu : public GmeFile {
 
   // Enables/disables accurate emulation options, if any are supported. Might
   // change equalizer settings.
-  void SetAccuracy(bool value = true) { this->mSetAccuracy(value); }
+  void SetAccuracy(bool value = true) { mSetAccuracy(value); }
 
   // Sound equalization (treble/bass)
 
@@ -122,7 +123,7 @@ struct MusicEmu : public GmeFile {
   // Set frequency equalizer parameters
   void SetEqualizer(const equalizer_t &);
   // Current frequency equalizater parameters
-  const equalizer_t &GetEqualizer() const { return this->mEqualizer; }
+  const equalizer_t &GetEqualizer() const { return mEqualizer; }
 
   // Construct equalizer of given treble/bass settings
   static equalizer_t MakeEqualizer(double treble, double bass) {
@@ -137,25 +138,25 @@ struct MusicEmu : public GmeFile {
   ~MusicEmu();
 
  protected:
-  void mSetMaxInitSilence(int n) { this->mMaxInitSilence = n; }
-  void mSetSilenceLookahead(int n) { this->mSilenceLookahead = n; }
-  void mSetChannelsNumber(int n) { this->mChannelsNum = n; }
+  void mSetMaxInitSilence(int n) { mMaxInitSilence = n; }
+  void mSetSilenceLookahead(int n) { mSilenceLookahead = n; }
+  void mSetChannelsNumber(int n) { mChannelsNum = n; }
   void mSetChannelsNames(const char *const *names) {
     // Intentional removal of const, so users don't have to remember obscure
     // const in middle
-    this->mChannelsNames = const_cast<const char **>(names);
+    mChannelsNames = const_cast<const char **>(names);
   }
-  void mSetTrackEnded() { this->mEmuTrackEnded = true; }
-  double mGetGain() const { return this->mGain; }
-  double mGetTempo() const { return this->mTempo; }
-  void mRemuteChannels() { this->MuteChannels(this->mMuteMask); }
+  void mSetTrackEnded() { mEmuTrackEnded = true; }
+  double mGetGain() const { return mGain; }
+  double mGetTempo() const { return mTempo; }
+  void mRemuteChannels() { this->MuteChannels(mMuteMask); }
   blargg_err_t mSetMultiChannel(bool is_enabled);
 
   virtual blargg_err_t mSetSampleRate(long) = 0;
   virtual void mSetEqualizer(equalizer_t const &) {}
   virtual void mSetAccuracy(bool) {}
   virtual void mMuteChannel(int) {}
-  virtual void mSetTempo(double t) { this->mTempo = t; }
+  virtual void mSetTempo(double t) { mTempo = t; }
   virtual blargg_err_t mStartTrack(int) { return 0; }  // tempo is set before this
   virtual blargg_err_t mPlay(long, sample_t *) = 0;
   virtual blargg_err_t mSkipSamples(long);
@@ -217,12 +218,11 @@ struct MusicEmu : public GmeFile {
   // EN: number of samples left in silence buffer
   // RU: количество оставшихся сэмплов тишины в буфере
   long mBufRemain;
-  enum { BUF_SIZE = 2048 };
-  blargg_vector<sample_t> mSamplesBuffer;
+  std::array<sample_t, 2048> mSamplesBuffer;
   void mFillBuf();
   void mEmuPlay(long count, sample_t *out);
 
-  MultiBuffer *mEffectsBuffer;
+  // MultiBuffer *mEffectsBuffer;
   friend MusicEmu *m_gmeInternalNewEmu(gme_type_t, int, bool);
   friend void gme_set_stereo_depth(MusicEmu *, double);
 };
