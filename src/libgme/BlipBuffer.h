@@ -221,10 +221,10 @@ class BlipEq {
  public:
   // Logarithmic rolloff to treble dB at half sampling rate. Negative values
   // reduce treble, small positive values (0 to 5.0) increase treble.
-  BlipEq(double treble_db = 0) : mTreble(treble_db), mRolloffFreq(0), mSampleRate(44100), mCutoffFreq(0) {}
+  BlipEq(double treble_db = 0) : mTreble(treble_db), mCutoffFreq(0), mRolloffFreq(0), mSampleRate(44100) {}
   // See blip_buffer.txt
   BlipEq(double treble, long rolloff_freq, long sample_rate, long cutoff_freq = 0)
-      : mTreble(treble), mRolloffFreq(rolloff_freq), mSampleRate(sample_rate), mCutoffFreq(cutoff_freq) {}
+      : mTreble(treble), mCutoffFreq(cutoff_freq), mRolloffFreq(rolloff_freq), mSampleRate(sample_rate) {}
 
  private:
   friend class BlipSynthImpl;
@@ -318,7 +318,7 @@ template<int quality, int range>
 void BlipSynth<quality, range>::OffsetResampled(blip_resampled_time_t time, int delta, BlipBuffer *blip_buf) const {
   // Fails if time is beyond end of BlipBuffer, due to a bug in caller code
   // or the need for a longer buffer as set by SetSampleRate().
-  assert((blip_long_t) (time >> BLIP_BUFFER_ACCURACY) < blip_buf->mBufferSize);
+  assert((blip_long_t)(time >> BLIP_BUFFER_ACCURACY) < blip_buf->mBufferSize);
   delta *= mImpl.mDeltaFactor;
   blip_long_t *buf = blip_buf->mBuffer + (time >> BLIP_BUFFER_ACCURACY);
   int phase = (int) (time >> (BLIP_BUFFER_ACCURACY - BLIP_PHASE_BITS) & (BLIP_RES - 1));
