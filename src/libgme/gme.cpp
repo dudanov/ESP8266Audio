@@ -216,26 +216,9 @@ MusicEmu *m_gmeInternalNewEmu(gme_type_t type, int rate, bool multi_channel) {
 
     MusicEmu *me = type->new_emu();
     if (me) {
-#if !GME_DISABLE_STEREO_DEPTH
-      me->SetMultiChannel(multi_channel);
-
-      if (type->flags_ & 1) {
-        if (me->IsMultiChannel()) {
-          me->mEffectsBuffer = BLARGG_NEW EffectsBuffer(8);
-        } else {
-          me->mEffectsBuffer = BLARGG_NEW EffectsBuffer(1);
-        }
-        if (me->mEffectsBuffer)
-          me->SetBuffer(me->mEffectsBuffer);
-      }
-
-      if (!(type->flags_ & 1) || me->mEffectsBuffer)
-#endif
-      {
-        if (!me->SetSampleRate(rate)) {
-          check(me->type() == type);
-          return me;
-        }
+      if (!me->SetSampleRate(rate)) {
+        check(me->type() == type);
+        return me;
       }
       delete me;
     }
@@ -341,14 +324,6 @@ gme_err_t gme_track_info(MusicEmu const *me, gme_info_t **out, int track) {
 }
 
 void gme_free_info(gme_info_t *info) { delete STATIC_CAST(gme_info_t_ *, info); }
-
-void gme_set_stereo_depth(MusicEmu *me, double depth) {
-#if !GME_DISABLE_STEREO_DEPTH
-  if (me->mEffectsBuffer)
-    STATIC_CAST(EffectsBuffer *, me->mEffectsBuffer)->setDepth(depth);
-#endif
-}
-
 void *gme_user_data(MusicEmu const *me) { return me->getUserData(); }
 void gme_set_user_data(MusicEmu *me, void *new_user_data) { me->setUserData(new_user_data); }
 void gme_set_user_cleanup(MusicEmu *me, gme_user_cleanup_t func) { me->setUserCleanupFn(func); }

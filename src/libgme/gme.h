@@ -131,10 +131,6 @@ struct BLARGG_EXPORT gme_info_t {
 
 /******** Advanced playback ********/
 
-/* Adjust stereo echo depth, where 0.0 = off and 1.0 = maximum. Has no effect
-for GYM, SPC, and Sega Genesis VGM music */
-BLARGG_EXPORT void gme_set_stereo_depth(MusicEmu *, double depth);
-
 /* Disable automatic end-of-track detection and skipping of silence at beginning
 if ignore is true */
 BLARGG_EXPORT void gme_ignore_silence(MusicEmu *, int ignore);
