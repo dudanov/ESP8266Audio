@@ -68,14 +68,13 @@ inline uint8_t AyApu::Envelope::GetAmp(bool half) const { return pgm_read_byte(m
 
 inline void AyApu::Envelope::SetMode(uint8_t mode) {
   mIt = (mode & 0b1000) ? MODES[mode & 0b0111] : (mode & 0b0100) ? MODES[7] : MODES[1];
-  mLoop = mIt + 16;
   mEnd = mIt + 48;
   mDelay = 0;  // will get set to envelope period in mRunUntil()
 }
 
 inline AyApu::Envelope &AyApu::Envelope::Advance() {
   if (++mIt == mEnd)
-    mIt = mLoop;
+    mIt -= 32;
   return *this;
 }
 

@@ -84,14 +84,13 @@ class AyApu {
 
     void SetMode(uint8_t mode);
     Envelope &Advance();
-    bool InRampPhase() const { return mIt < mLoop; }
+    bool InRampPhase() const { return std::distance(mIt, mEnd) > 32; }
     uint8_t GetAmp(bool half) const;
     static uint8_t GetAmp(uint8_t volume, bool half);
 
    private:
     static const uint8_t MODES[8][48];
     const uint8_t *mIt;
-    const uint8_t *mLoop;
     const uint8_t *mEnd;
   };
 
