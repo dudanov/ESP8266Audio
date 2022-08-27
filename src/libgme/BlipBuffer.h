@@ -139,12 +139,11 @@ class BlipBuffer {
   blip_resampled_time_t ClockRateFactor(long clock_rate) const;
 
  public:
-  typedef blip_time_t buf_t_;
   // samples per clock * 65536
   blip_resampled_time_t mFactor;
   // current_samples * 65536 in buffer
   blip_resampled_time_t mOffset;
-  buf_t_ *mBuffer;
+  int32_t *mBuffer;
   blip_long_t mBufferSize;
   blip_long_t mReaderAccum;
   int mBassShift;
@@ -321,15 +320,15 @@ void BlipSynth<quality, range>::OffsetResampled(BlipBuffer *dst, blip_resampled_
   // or the need for a longer buffer as set by SetSampleRate().
   assert((blip_long_t)(time >> BLIP_BUFFER_ACCURACY) < dst->mBufferSize);
   delta *= mImpl.mDeltaFactor;
-  blip_long_t *buf = dst->mBuffer + (time >> BLIP_BUFFER_ACCURACY);
+  int32_t *buf = dst->mBuffer + (time >> BLIP_BUFFER_ACCURACY);
   int phase = (int) (time >> (BLIP_BUFFER_ACCURACY - BLIP_PHASE_BITS) & (BLIP_RES - 1));
 
-  blip_long_t left = buf[0] + delta;
+  int32_t left = buf[0] + delta;
 
   // Kind of crappy, but doing shift after multiply results in overflow.
   // Alternate way of delaying multiply by mDeltaFactor results in worse
   // sub-sample resolution.
-  blip_long_t right = (delta >> BLIP_PHASE_BITS) * phase;
+  int32_t right = (delta >> BLIP_PHASE_BITS) * phase;
   left -= right;
   right += buf[1];
 
