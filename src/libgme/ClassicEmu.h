@@ -11,17 +11,17 @@ class ClassicEmu : public MusicEmu {
   ClassicEmu();
   ~ClassicEmu();
   void SetBuffer(MultiBuffer *pbuf) {
-    assert(this->mBuf == nullptr && pbuf != nullptr);
-    this->mBuf = pbuf;
+    assert(mBuf == nullptr && pbuf != nullptr);
+    mBuf = pbuf;
   }
   blargg_err_t SetMultiChannel(bool is_enabled) override;
 
  protected:
   // Services
   enum { WAVE_TYPE = 0x100, NOISE_TYPE = 0x200, MIXED_TYPE = WAVE_TYPE | NOISE_TYPE };
-  void mSetChannelsTypes(const int *t) { this->mChannelTypes = t; }
-  int mGetChannelType(int idx) const { return (this->mChannelTypes != nullptr) ? this->mChannelTypes[idx] : 0; }
-  long mGetClockRate() const { return this->mClockRate; }
+  void mSetChannelsTypes(const int *t) { mChannelTypes = t; }
+  int mGetChannelType(int idx) const { return (mChannelTypes != nullptr) ? mChannelTypes[idx] : 0; }
+  long mGetClockRate() const { return mClockRate; }
   void mChangeClockRate(long);  // experimental
   blargg_err_t mSetupBuffer(long clock_rate);
 
@@ -38,11 +38,11 @@ class ClassicEmu : public MusicEmu {
   blargg_err_t mPlay(long, sample_t *) override;
 
  private:
-  MultiBuffer *mBuf;
-  MultiBuffer *mStereoBuf;  // NULL if using custom buffer
+  MultiBuffer *mBuf{nullptr};
+  MultiBuffer *mStereoBuf{nullptr};  // NULL if using custom buffer
+  const int *mChannelTypes{nullptr};
   long mClockRate;
   unsigned mBufChangedNum;
-  const int *mChannelTypes;
 };
 
 // ROM data handler, used by several ClassicEmu derivitives. Loads file data
@@ -69,23 +69,23 @@ template<int unit> class RomData : public RomDataImpl {
   // Load file data, using already-loaded header 'h' if not NULL. Copy header
   // from loaded file data into *out and fill unmapped bytes with 'fill'.
   blargg_err_t load(DataReader &in, int header_size, void *header_out, int fill) {
-    return this->m_loadRomData(in, header_size, header_out, fill, PAD_SIZE);
+    return m_loadRomData(in, header_size, header_out, fill, PAD_SIZE);
   }
 
   // Size of file data read in (excluding header)
-  long fileSize() const { return this->m_fileSize; }
+  long fileSize() const { return m_fileSize; }
 
   // Pointer to beginning of file data
   uint8_t *begin() const { return this->rom.begin() + PAD_SIZE; }
 
   // Set address that file data should start at
-  void setAddr(long addr) { this->m_setAddr(addr, unit); }
+  void setAddr(long addr) { m_setAddr(addr, unit); }
 
   // Free data
   void clear() { this->rom.clear(); }
 
   // Size of data + start addr, rounded to a multiple of unit
-  long size() const { return this->m_size; }
+  long size() const { return m_size; }
 
   // Pointer to unmapped page filled with same value
   uint8_t *unmapped() { return this->rom.begin(); }
@@ -93,14 +93,14 @@ template<int unit> class RomData : public RomDataImpl {
   // Mask address to nearest power of two greater than size()
   blargg_long maskAddr(blargg_long addr) const {
 #ifdef check
-    check(addr <= this->m_mask);
+    check(addr <= m_mask);
 #endif
-    return addr & this->m_mask;
+    return addr & m_mask;
   }
 
   // Pointer to page starting at addr. Returns unmapped() if outside data.
   uint8_t *atAddr(blargg_long addr) {
-    blargg_ulong offset = this->maskAddr(addr) - this->m_romAddr;
+    blargg_ulong offset = maskAddr(addr) - m_romAddr;
     if (offset > blargg_ulong(this->rom.size() - PAD_SIZE))
       offset = 0;  // unmapped
     return &this->rom[offset];
