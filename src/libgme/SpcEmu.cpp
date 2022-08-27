@@ -48,17 +48,17 @@ SpcEmu::SpcEmu(gme_type_t type) {
 static const long SPC_SIZE = SnesSpc::SPC_FILE_SIZE;
 static const long HEAD_SIZE = SpcEmu::HEADER_SIZE;
 
-const uint8_t *SpcEmu::m_trailer() const { return this->m_fileData + std::min(this->m_fileSize, SPC_SIZE); }
-long SpcEmu::m_trailerSize() const { return std::max(0L, this->m_fileSize - SPC_SIZE); }
+const uint8_t *SpcEmu::mTrailer() const { return this->mFileData + std::min(this->mFileSize, SPC_SIZE); }
+long SpcEmu::mTrailerSize() const { return std::max(0L, this->mFileSize - SPC_SIZE); }
 
-const uint8_t *RsnEmu::m_trailer(int trackIdx) const {
-  auto trackData = this->m_spc[trackIdx];
-  long trackSize = this->m_spc[trackIdx + 1] - trackData;
+const uint8_t *RsnEmu::mTrailer(int trackIdx) const {
+  auto trackData = this->mSpc[trackIdx];
+  long trackSize = this->mSpc[trackIdx + 1] - trackData;
   return trackData + std::min(trackSize, SPC_SIZE);
 }
 
-long RsnEmu::m_trailerSize(int trackIdx) const {
-  long trackSize = this->m_spc[trackIdx + 1] - this->m_spc[trackIdx];
+long RsnEmu::mTrailerSize(int trackIdx) const {
+  long trackSize = this->mSpc[trackIdx + 1] - this->mSpc[trackIdx];
   return std::max(0L, trackSize - SPC_SIZE);
 }
 
@@ -212,12 +212,12 @@ static void get_spc_info(const SpcEmu::header_t &hdr, const uint8_t *xid6, long 
 }
 
 blargg_err_t SpcEmu::mGetTrackInfo(track_info_t *out, int) const {
-  get_spc_info(m_header(), this->m_trailer(), this->m_trailerSize(), out);
+  get_spc_info(mHeader(), this->mTrailer(), this->mTrailerSize(), out);
   return 0;
 }
 
 blargg_err_t RsnEmu::mGetTrackInfo(track_info_t *out, int track) const {
-  get_spc_info(header(track), m_trailer(track), m_trailerSize(track), out);
+  get_spc_info(header(track), mTrailer(track), mTrailerSize(track), out);
   return 0;
 }
 
@@ -269,7 +269,7 @@ static int CALLBACK call_rsn(UINT msg, LPARAM UserData, LPARAM P1, LPARAM P2) {
 #endif
 
 struct RsnFile : SpcFile {
-  blargg_vector<uint8_t *> m_spc;
+  blargg_vector<uint8_t *> mSpc;
 
   RsnFile() : SpcFile(gme_rsn_type) { m_isArchive = true; }
   static MusicEmu *createRsnFile() { return BLARGG_NEW RsnFile; }
@@ -300,7 +300,7 @@ struct RsnFile : SpcFile {
       biggest = std::max(biggest, head.UnpSize);
     }
     xid6.resize(pos);
-    m_spc.resize(count);
+    mSpc.resize(count);
     temp.resize(biggest);
     RARCloseArchive(rar);
 
@@ -313,7 +313,7 @@ struct RsnFile : SpcFile {
       bp = &temp[0];
       RARProcessFile(rar, RAR_TEST, 0, 0);
       if (!check_spc_header(bp - head.UnpSize)) {
-        m_spc[count++] = &xid6[pos];
+        mSpc[count++] = &xid6[pos];
         memcpy(&xid6[pos], &temp[0], HEAD_SIZE);
         pos += HEAD_SIZE;
         long xid6_size = head.UnpSize - SPC_SIZE;
@@ -323,7 +323,7 @@ struct RsnFile : SpcFile {
         }
       }
     }
-    m_spc[count] = &xid6[pos];
+    mSpc[count] = &xid6[pos];
     m_setTrackNum(count);
     RARCloseArchive(rar);
 
@@ -335,10 +335,10 @@ struct RsnFile : SpcFile {
   }
 
   blargg_err_t mGetTrackInfo(track_info_t *out, int track) const {
-    if (static_cast<size_t>(track) >= m_spc.size())
+    if (static_cast<size_t>(track) >= mSpc.size())
       return "Invalid track";
-    long xid6_size = m_spc[track + 1] - (m_spc[track] + HEAD_SIZE);
-    get_spc_info(*(SpcEmu::header_t const *) m_spc[track], m_spc[track] + HEAD_SIZE, xid6_size, out);
+    long xid6_size = mSpc[track + 1] - (mSpc[track] + HEAD_SIZE);
+    get_spc_info(*(SpcEmu::header_t const *) mSpc[track], mSpc[track] + HEAD_SIZE, xid6_size, out);
     return 0;
   }
 };
@@ -357,7 +357,7 @@ blargg_err_t SpcEmu::mSetSampleRate(long sample_rate) {
 
 void SpcEmu::mSetAccuracy(bool b) {
   MusicEmu::mSetAccuracy(b);
-  m_filter.SetEnable(b);
+  mFilter.SetEnable(b);
 }
 
 void SpcEmu::mMuteChannel(int m) {
@@ -367,8 +367,8 @@ void SpcEmu::mMuteChannel(int m) {
 
 blargg_err_t SpcEmu::mLoad(uint8_t const *in, long size) {
   assert(offsetof(header_t, unused2[46]) == HEADER_SIZE);
-  m_fileData = in;
-  m_fileSize = size;
+  mFileData = in;
+  mFileSize = size;
   mSetChannelsNumber(SnesSpc::CHANNELS_NUM);
   if (m_isArchive)
     return 0;
@@ -384,9 +384,9 @@ void SpcEmu::mSetTempo(double t) { mApu.set_tempo((int) (t * mApu.TEMPO_UNIT)); 
 blargg_err_t SpcEmu::mStartTrack(int track) {
   RETURN_ERR(MusicEmu::mStartTrack(track));
   // m_resampler.clear();
-  m_filter.Clear();
-  RETURN_ERR(mApu.load_spc(m_fileData, m_fileSize));
-  m_filter.SetGain((int) (mGetGain() * SpcFilter::GAIN_UNIT));
+  mFilter.Clear();
+  RETURN_ERR(mApu.load_spc(mFileData, mFileSize));
+  mFilter.SetGain((int) (mGetGain() * SpcFilter::GAIN_UNIT));
   mApu.clear_echo();
   track_info_t spc_info;
   RETURN_ERR(mGetTrackInfo(&spc_info, track));
@@ -397,9 +397,9 @@ blargg_err_t SpcEmu::mStartTrack(int track) {
   return 0;
 }
 
-blargg_err_t SpcEmu::m_playAndFilter(long count, sample_t out[]) {
+blargg_err_t SpcEmu::mPlayAndFilter(long count, sample_t out[]) {
   RETURN_ERR(mApu.Play(count, out));
-  m_filter.Run(out, count);
+  mFilter.Run(out, count);
   return 0;
 }
 
@@ -413,7 +413,7 @@ blargg_err_t SpcEmu::mSkipSamples(long count) {
 
   if (count > 0) {
     RETURN_ERR(mApu.SkipSamples(count));
-    m_filter.Clear();
+    mFilter.Clear();
   }
 
   // eliminate pop due to resampler
@@ -423,15 +423,15 @@ blargg_err_t SpcEmu::mSkipSamples(long count) {
 }
 
 blargg_err_t SpcEmu::mPlay(long count, sample_t *out) {
-  if (GetSampleRate() == NATIVE_SAMPLE_RATE)
-    return m_playAndFilter(count, out);
+  // if (GetSampleRate() == NATIVE_SAMPLE_RATE)
+  return mPlayAndFilter(count, out);
 
   // long remain = count;
   // while (remain > 0) {
   // remain -= m_resampler.read(&out[count - remain], remain);
   // if (remain > 0) {
   // long n = m_resampler.getMaxWrite();
-  // RETURN_ERR(m_playAndFilter(n, m_resampler.buffer()));
+  // RETURN_ERR(mPlayAndFilter(n, m_resampler.buffer()));
   // m_resampler.write(n);
   //}
   //}
@@ -458,22 +458,22 @@ blargg_err_t RsnEmu::loadArchive(const char *path) {
     RARProcessFile(rar, RAR_SKIP, 0, 0);
     pos += head.UnpSize;
   }
-  m_rsn.resize(pos);
-  m_spc.resize(count);
+  mRsn.resize(pos);
+  mSpc.resize(count);
   RARCloseArchive(rar);
 
   // copy the stream and index the tracks
-  uint8_t *bp = &m_rsn[0];
+  uint8_t *bp = &mRsn[0];
   data.OpenMode = RAR_OM_EXTRACT;
   rar = RAROpenArchive(&data);
   RARSetCallback(rar, call_rsn, (intptr_t) &bp);
   for (count = 0, pos = 0; RARReadHeader(rar, &head) == ERAR_SUCCESS;) {
     RARProcessFile(rar, RAR_TEST, 0, 0);
     if (!check_spc_header(bp - head.UnpSize))
-      m_spc[count++] = &m_rsn[pos];
+      mSpc[count++] = &mRsn[pos];
     pos += head.UnpSize;
   }
-  m_spc[count] = &m_rsn[pos];
+  mSpc[count] = &mRsn[pos];
   m_setTrackNum(count);
   RARCloseArchive(rar);
 
@@ -485,10 +485,10 @@ blargg_err_t RsnEmu::loadArchive(const char *path) {
 }
 
 blargg_err_t RsnEmu::mStartTrack(int track) {
-  if (static_cast<size_t>(track) >= m_spc.size())
+  if (static_cast<size_t>(track) >= mSpc.size())
     return "Invalid track requested";
-  m_fileData = m_spc[track];
-  m_fileSize = m_spc[track + 1] - m_spc[track];
+  mFileData = mSpc[track];
+  mFileSize = mSpc[track + 1] - mSpc[track];
   return SpcEmu::mStartTrack(track);
 }
 
@@ -502,7 +502,7 @@ static gme_type_t_ const gme_spc_type_ = {
     "Super Nintendo",
     1,
     32000,
-    &gme::emu::snes::SpcEmu::createSpcEmu,
+    &gme::emu::snes::SpcEmu::CreateSpcEmu,
     &gme::emu::snes::SpcFile::createSpcFile,
     "SPC",
     0,
@@ -513,7 +513,7 @@ static gme_type_t_ const gme_rsn_type_ = {
     "Super Nintendo",
     0,
     32000,
-    &gme::emu::snes::RsnEmu::createRsnEmu,
+    &gme::emu::snes::RsnEmu::CreateRsnEmu,
     &gme::emu::snes::RsnFile::createRsnFile,
     "RSN",
     0,

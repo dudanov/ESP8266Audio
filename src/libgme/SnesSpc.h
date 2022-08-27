@@ -70,7 +70,7 @@ struct SnesSpc {
 
   // If true, prevents channels and global volumes from being phase-negated.
   // Only supported by fast DSP.
-  void disableSurround(bool disable = true) { dsp.disableSurround(disable); }
+  void DisableSurround(bool disable = true) { dsp.DisableSurround(disable); }
 
   // Sets tempo, where TEMPO_UNIT = normal, TEMPO_UNIT / 2 = half speed, etc.
   enum { TEMPO_UNIT = 0x100 };

@@ -84,7 +84,7 @@ static void copy_nsf_fields(NsfEmu::Header const &h, track_info_t *out) {
 }
 
 blargg_err_t NsfEmu::mGetTrackInfo(track_info_t *out, int) const {
-  copy_nsf_fields(m_header, out);
+  copy_nsf_fields(mHeader, out);
   return 0;
 }
 
@@ -119,7 +119,7 @@ struct NsfFile : GmeInfo {
 // Setup
 
 void NsfEmu::mSetTempo(double t) {
-  uint16_t playback_rate = get_le16(m_header.ntsc_speed);
+  uint16_t playback_rate = get_le16(mHeader.ntsc_speed);
   uint16_t standard_rate = 0x411A;
   m_clockRate = 1789772.72727f;
   mPlayPeriod = 262 * 341L * 4 - 2;  // two fewer PPU clocks every four frames
@@ -128,7 +128,7 @@ void NsfEmu::mSetTempo(double t) {
     mPlayPeriod = 33247 * CLK_DIV;
     m_clockRate = 1662607.125;
     standard_rate = 0x4E20;
-    playback_rate = get_le16(m_header.pal_speed);
+    playback_rate = get_le16(mHeader.pal_speed);
   }
 
   if (!playback_rate)
@@ -141,7 +141,7 @@ void NsfEmu::mSetTempo(double t) {
 }
 
 blargg_err_t NsfEmu::mInitSound() {
-  if (m_header.chip_flags & ~(NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
+  if (mHeader.chip_flags & ~(NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
     m_setWarning("Uses unsupported audio expansion hardware");
 
   {
@@ -162,13 +162,13 @@ blargg_err_t NsfEmu::mInitSound() {
   double adjusted_gain = mGetGain();
 
 #if NSF_EMU_APU_ONLY
-  if (m_header.chip_flags)
+  if (mHeader.chip_flags)
     m_setWarning("Uses unsupported audio expansion hardware");
 #else
-  if (m_header.chip_flags & (NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
+  if (mHeader.chip_flags & (NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
     mSetChannelsNumber(NesApu::OSCS_NUM + 3);
 
-  if (m_header.chip_flags & NAMCO_FLAG) {
+  if (mHeader.chip_flags & NAMCO_FLAG) {
     namco = BLARGG_NEW NesNamcoApu;
     CHECK_ALLOC(namco);
     adjusted_gain *= 0.75;
@@ -180,7 +180,7 @@ blargg_err_t NsfEmu::mInitSound() {
     mSetChannelsNames(names);
   }
 
-  if (m_header.chip_flags & VRC6_FLAG) {
+  if (mHeader.chip_flags & VRC6_FLAG) {
     vrc6 = BLARGG_NEW NesVrc6Apu;
     CHECK_ALLOC(vrc6);
     adjusted_gain *= 0.75;
@@ -190,7 +190,7 @@ blargg_err_t NsfEmu::mInitSound() {
     mSetChannelsNumber(count);
     mSetChannelsNames(names);
 
-    if (m_header.chip_flags & NAMCO_FLAG) {
+    if (mHeader.chip_flags & NAMCO_FLAG) {
       static const int count = NesApu::OSCS_NUM + NesVrc6Apu::OSCS_NUM + NesNamcoApu::OSCS_NUM;
       static const char *const names[count] = {APU_NAMES, "Saw Wave", "Square 3", "Square 4", "Wave 1", "Wave 2",
                                                "Wave 3",  "Wave 4",   "Wave 5",   "Wave 6",   "Wave 7", "Wave 8"};
@@ -199,7 +199,7 @@ blargg_err_t NsfEmu::mInitSound() {
     }
   }
 
-  if (m_header.chip_flags & FME7_FLAG) {
+  if (mHeader.chip_flags & FME7_FLAG) {
     fme7 = BLARGG_NEW NesFme7Apu;
     CHECK_ALLOC(fme7);
     adjusted_gain *= 0.75;
@@ -225,12 +225,12 @@ blargg_err_t NsfEmu::mInitSound() {
 
 blargg_err_t NsfEmu::mLoad(DataReader &in) {
   assert(offsetof(Header, unused[4]) == HEADER_SIZE);
-  RETURN_ERR(m_rom.load(in, HEADER_SIZE, &m_header, 0));
+  RETURN_ERR(m_rom.load(in, HEADER_SIZE, &mHeader, 0));
 
-  m_setTrackNum(m_header.track_count);
-  RETURN_ERR(check_nsf_header(&m_header));
+  m_setTrackNum(mHeader.track_count);
+  RETURN_ERR(check_nsf_header(&mHeader));
 
-  if (m_header.vers != 1)
+  if (mHeader.vers != 1)
     m_setWarning("Unknown file version");
 
   // sound and memory
@@ -239,9 +239,9 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
     return err;
 
   // set up data
-  nes_addr_t load_addr = get_le16(m_header.load_addr);
-  m_initAddress = get_le16(m_header.init_addr);
-  m_playAddress = get_le16(m_header.play_addr);
+  nes_addr_t load_addr = get_le16(mHeader.load_addr);
+  m_initAddress = get_le16(mHeader.init_addr);
+  m_playAddress = get_le16(mHeader.play_addr);
   if (!load_addr)
     load_addr = ROM_BEGIN;
   if (!m_initAddress)
@@ -266,17 +266,17 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
       bank = 0;
     m_initBanks[i] = bank;
 
-    if (m_header.banks[i]) {
+    if (mHeader.banks[i]) {
       // bank-switched
-      memcpy(m_initBanks.data(), m_header.banks, sizeof m_initBanks);
+      memcpy(m_initBanks.data(), mHeader.banks, sizeof m_initBanks);
       break;
     }
   }
 
-  mPalMode = (m_header.speed_flags & 3) == 1;
+  mPalMode = (mHeader.speed_flags & 3) == 1;
 
 #if !NSF_EMU_EXTRA_FLAGS
-  m_header.speed_flags = 0;
+  mHeader.speed_flags = 0;
 #endif
 
   SetTempo(mGetTempo());
@@ -406,9 +406,9 @@ blargg_err_t NsfEmu::mStartTrack(int track) {
   for (size_t i = 0; i < BANKS_NUM; ++i)
     mCpuWrite(BANK_SELECT_ADDR + i, m_initBanks[i]);
 
-  mApu.Reset(mPalMode, (m_header.speed_flags & 0x20) ? 0x3F : 0);
+  mApu.Reset(mPalMode, (mHeader.speed_flags & 0x20) ? 0x3F : 0);
   mApu.WriteRegister(0, 0x4015, 0x0F);
-  mApu.WriteRegister(0, 0x4017, (m_header.speed_flags & 0x10) ? 0x80 : 0);
+  mApu.WriteRegister(0, 0x4017, (mHeader.speed_flags & 0x10) ? 0x80 : 0);
 #if !NSF_EMU_APU_ONLY
   {
     if (namco)

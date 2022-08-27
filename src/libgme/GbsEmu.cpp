@@ -57,7 +57,7 @@ static void copy_gbs_fields(GbsEmu::Header const &h, track_info_t *out) {
 }
 
 blargg_err_t GbsEmu::mGetTrackInfo(track_info_t *out, int) const {
-  copy_gbs_fields(m_header, out);
+  copy_gbs_fields(mHeader, out);
   return 0;
 }
 
@@ -92,19 +92,19 @@ struct GbsFile : GmeInfo {
 
 blargg_err_t GbsEmu::mLoad(DataReader &in) {
   assert(offsetof(Header, copyright[32]) == HEADER_SIZE);
-  RETURN_ERR(m_rom.load(in, HEADER_SIZE, &m_header, 0));
+  RETURN_ERR(m_rom.load(in, HEADER_SIZE, &mHeader, 0));
 
-  m_setTrackNum(m_header.track_count);
-  RETURN_ERR(check_gbs_header(&m_header));
+  m_setTrackNum(mHeader.track_count);
+  RETURN_ERR(check_gbs_header(&mHeader));
 
-  if (m_header.vers != 1)
+  if (mHeader.vers != 1)
     m_setWarning("Unknown file version");
 
-  if (m_header.timer_mode & 0x78)
+  if (mHeader.timer_mode & 0x78)
     m_setWarning("Invalid timer mode");
 
-  unsigned load_addr = get_le16(m_header.load_addr);
-  if ((m_header.load_addr[1] | m_header.init_addr[1] | m_header.play_addr[1]) > 0x7F || load_addr < 0x400)
+  unsigned load_addr = get_le16(mHeader.load_addr);
+  if ((mHeader.load_addr[1] | mHeader.init_addr[1] | mHeader.play_addr[1]) > 0x7F || load_addr < 0x400)
     m_setWarning("Invalid load/init/play address");
 
   mSetChannelsNumber(GbApu::OSC_NUM);
@@ -137,9 +137,9 @@ void GbsEmu::m_setBank(int n) {
 }
 
 void GbsEmu::m_updateTimer() {
-  if (m_header.timer_mode & 0x04) {
+  if (mHeader.timer_mode & 0x04) {
     static uint8_t const rates[4] = {10, 4, 6, 8};
-    int shift = rates[m_ram[HI_PAGE + 7] & 3] - (m_header.timer_mode >> 7);
+    int shift = rates[m_ram[HI_PAGE + 7] & 3] - (mHeader.timer_mode >> 7);
     mPlayPeriod = (256L - m_ram[HI_PAGE + 6]) << shift;
   } else {
     mPlayPeriod = 70224;  // 59.73 Hz
@@ -158,7 +158,7 @@ static uint8_t const sound_data[GbApu::REGS_NUM] = {0x80, 0xBF, 0x00, 0x00, 0xBF
                                                     0x2C, 0x04, 0xE5, 0x2C, 0xAC, 0xDD, 0xDA, 0x48};
 
 void GbsEmu::m_cpuJsr(gb_addr_t addr) {
-  check(cpu::r.sp == get_le16(m_header.stack_ptr));
+  check(cpu::r.sp == get_le16(mHeader.stack_ptr));
   cpu::r.pc = addr;
   cpu_write(--cpu::r.sp, IDLE_ADDR >> 8);
   cpu_write(--cpu::r.sp, IDLE_ADDR & 0xFF);
@@ -181,7 +181,7 @@ blargg_err_t GbsEmu::mStartTrack(int track) {
   for (int i = 0; i < (int) sizeof sound_data; i++)
     mApu.writeRegister(0, i + GbApu::START_ADDR, sound_data[i]);
 
-  unsigned load_addr = get_le16(m_header.load_addr);
+  unsigned load_addr = get_le16(mHeader.load_addr);
   m_rom.setAddr(load_addr);
   cpu::rst_base = load_addr;
 
@@ -191,16 +191,16 @@ blargg_err_t GbsEmu::mStartTrack(int track) {
   cpu::map_code(0, BANK_SIZE, m_rom.atAddr(0));
   m_setBank(m_rom.size() > BANK_SIZE);
 
-  m_ram[HI_PAGE + 6] = m_header.timer_modulo;
-  m_ram[HI_PAGE + 7] = m_header.timer_mode;
+  m_ram[HI_PAGE + 6] = mHeader.timer_modulo;
+  m_ram[HI_PAGE + 7] = mHeader.timer_mode;
   m_updateTimer();
   mNextPlay = mPlayPeriod;
 
   cpu::r.a = track;
   cpu::r.pc = IDLE_ADDR;
-  cpu::r.sp = get_le16(m_header.stack_ptr);
+  cpu::r.sp = get_le16(mHeader.stack_ptr);
   mCpuTime = 0;
-  m_cpuJsr(get_le16(m_header.init_addr));
+  m_cpuJsr(get_le16(mHeader.init_addr));
 
   return 0;
 }
@@ -223,7 +223,7 @@ blargg_err_t GbsEmu::mRunClocks(blip_clk_time_t &duration, int) {
         if (mCpuTime < mNextPlay)
           mCpuTime = mNextPlay;
         mNextPlay += mPlayPeriod;
-        m_cpuJsr(get_le16(m_header.play_addr));
+        m_cpuJsr(get_le16(mHeader.play_addr));
         GME_FRAME_HOOK(this);
         // TODO: handle timer rates different than 60 Hz
       } else if (cpu::r.pc > 0xFFFF) {

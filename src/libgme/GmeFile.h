@@ -139,7 +139,7 @@ struct GmeFile {
   gme_user_cleanup_t m_userCleanupFn{nullptr};
   M3uPlaylist m_playlist;
   char m_playlistWarning[64];
-  blargg_vector<uint8_t> m_fileData;  // only if loaded into memory using default load
+  blargg_vector<uint8_t> mFileData;  // only if loaded into memory using default load
 
   blargg_err_t m_loadM3u(blargg_err_t);
   blargg_err_t mPostLoad(blargg_err_t err);

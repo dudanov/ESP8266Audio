@@ -583,7 +583,7 @@ void SpcDsp::mute_voices(int mask) {
 void SpcDsp::init(void *ram_64k) {
   m.ram = (uint8_t *) ram_64k;
   mute_voices(0);
-  disableSurround(false);
+  DisableSurround(false);
   set_output(0, 0);
   reset();
 

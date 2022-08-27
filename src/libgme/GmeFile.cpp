@@ -30,7 +30,7 @@ void GmeFile::mUnload() {
   this->clearPlaylist();  // *before* clearing track count
   this->m_trackNum = 0;
   this->m_rawTrackCount = 0;
-  this->m_fileData.clear();
+  this->mFileData.clear();
 }
 
 GmeFile::GmeFile() {
@@ -45,15 +45,15 @@ GmeFile::~GmeFile() {
 }
 
 blargg_err_t GmeFile::mLoad(const uint8_t *data, long size) {
-  require(data != this->m_fileData.begin());  // mLoad() or mLoad() must be overridden
+  require(data != this->mFileData.begin());  // mLoad() or mLoad() must be overridden
   MemFileReader in(data, size);
   return this->mLoad(in);
 }
 
 blargg_err_t GmeFile::mLoad(DataReader &in) {
-  RETURN_ERR(this->m_fileData.resize(in.remain()));
-  RETURN_ERR(in.read(this->m_fileData.begin(), this->m_fileData.size()));
-  return this->mLoad(this->m_fileData.begin(), this->m_fileData.size());
+  RETURN_ERR(this->mFileData.resize(in.remain()));
+  RETURN_ERR(in.read(this->mFileData.begin(), this->mFileData.size()));
+  return this->mLoad(this->mFileData.begin(), this->mFileData.size());
 }
 
 // public load functions call this at beginning

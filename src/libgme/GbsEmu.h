@@ -38,7 +38,7 @@ class GbsEmu : private GbCpu, public ClassicEmu {
   enum { HEADER_SIZE = 112 };
 
   // Header for currently loaded file
-  // Header const &header() const { return m_header; }
+  // Header const &header() const { return mHeader; }
 
   // static gme_type_t static_type() { return gme_gbs_type; }
 
@@ -68,7 +68,7 @@ class GbsEmu : private GbCpu, public ClassicEmu {
   blip_clk_time_t mNextPlay;
   void m_updateTimer();
 
-  Header m_header;
+  Header mHeader;
   void m_cpuJsr(gb_addr_t);
 
  private:

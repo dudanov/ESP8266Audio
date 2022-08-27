@@ -72,7 +72,7 @@ struct SpcDsp {
   void mute_voices(int mask);
 
   // If true, prevents channels and global volumes from being phase-negated
-  void disableSurround(bool disable = true) { m.surround_threshold = disable ? 0 : -0x4000; }
+  void DisableSurround(bool disable = true) { m.surround_threshold = disable ? 0 : -0x4000; }
 
   // State
 

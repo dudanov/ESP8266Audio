@@ -43,7 +43,7 @@ class NsfEmu : private NesCpu, public ClassicEmu {
   static const size_t HEADER_SIZE = 128;
 
   // Header for currently loaded file
-  const Header &header() const { return this->m_header; }
+  const Header &header() const { return this->mHeader; }
 
   static gme_type_t static_type() { return gme_nsf_type; }
 
@@ -105,7 +105,7 @@ class NsfEmu : private NesCpu, public ClassicEmu {
   // NES APU instance
   NesApu mApu;
   // Header of current opened file
-  Header m_header;
+  Header mHeader;
 
   blargg_err_t mInitSound();
 

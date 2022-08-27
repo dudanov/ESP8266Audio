@@ -14,7 +14,7 @@ namespace snes {
 
 class SpcEmu : public MusicEmu {
  public:
-  static MusicEmu *createSpcEmu() { return BLARGG_NEW SpcEmu; }
+  static MusicEmu *CreateSpcEmu() { return BLARGG_NEW SpcEmu; }
   SpcEmu(gme_type_t);
   SpcEmu() : SpcEmu(gme_spc_type) {}
   ~SpcEmu() {}
@@ -47,7 +47,7 @@ class SpcEmu : public MusicEmu {
   };
 
   // Prevents channels and global volumes from being phase-negated
-  void disableSurround(bool b = true) { mApu.disableSurround(b); }
+  void DisableSurround(bool b = true) { mApu.DisableSurround(b); }
 
  protected:
   blargg_err_t mLoad(uint8_t const *, long) override;
@@ -61,39 +61,39 @@ class SpcEmu : public MusicEmu {
   void mSetAccuracy(bool) override;
 
   // Pointer to file data
-  const uint8_t *m_fileData;
+  const uint8_t *mFileData;
   // Size of data
-  long m_fileSize;
+  long mFileSize;
 
  private:
   // FirResampler<24> m_resampler;
-  SpcFilter m_filter;
+  SpcFilter mFilter;
   SnesSpc mApu;
 
-  blargg_err_t m_playAndFilter(long count, sample_t out[]);
+  blargg_err_t mPlayAndFilter(long count, sample_t out[]);
   // Header for currently loaded file
-  const header_t &m_header() const { return *(const header_t *) m_fileData; }
-  const uint8_t *m_trailer() const;
-  long m_trailerSize() const;
+  const header_t &mHeader() const { return *(const header_t *) mFileData; }
+  const uint8_t *mTrailer() const;
+  long mTrailerSize() const;
 };
 
 class RsnEmu : public SpcEmu {
  public:
-  static MusicEmu *createRsnEmu() { return BLARGG_NEW RsnEmu; }
+  static MusicEmu *CreateRsnEmu() { return BLARGG_NEW RsnEmu; }
   RsnEmu() : SpcEmu(gme_rsn_type) { m_isArchive = true; }
   ~RsnEmu();
   blargg_err_t loadArchive(const char *) override;
-  header_t const &header(int track) const { return *(header_t const *) m_spc[track]; }
+  header_t const &header(int track) const { return *(header_t const *) mSpc[track]; }
 
  protected:
   blargg_err_t mGetTrackInfo(track_info_t *, int) const override;
   blargg_err_t mStartTrack(int) override;
 
  private:
-  blargg_vector<uint8_t> m_rsn;
-  blargg_vector<uint8_t *> m_spc;
-  uint8_t const *m_trailer(int) const;
-  long m_trailerSize(int) const;
+  blargg_vector<uint8_t> mRsn;
+  blargg_vector<uint8_t *> mSpc;
+  uint8_t const *mTrailer(int) const;
+  long mTrailerSize(int) const;
 };
 
 }  // namespace snes
