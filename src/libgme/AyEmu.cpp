@@ -313,7 +313,7 @@ void ay_cpu_out(AyCpu *cpu, cpu_time_t time, unsigned addr, int data) {
       emu.mBeeperDelta = -delta;
       emu.mSpectrumMode = true;
       if (emu.mBeeperOutput)
-        emu.mApu.mSynth.Offset(time, delta, emu.mBeeperOutput);
+        emu.mApu.mSynth.Offset(emu.mBeeperOutput, time, delta);
     }
   } else {
     emu.mCpuOutMisc(time, addr, data);

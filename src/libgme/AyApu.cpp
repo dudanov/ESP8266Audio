@@ -229,7 +229,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
         int delta = amp - osc.mLastAmp;
         if (delta) {
           osc.mLastAmp = amp;
-          mSynth.Offset(start_time, delta, osc_output);
+          mSynth.Offset(osc_output, start_time, delta);
         }
       }
 
@@ -256,7 +256,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
               noise_lfsr = (-(noise_lfsr & 1) & 0x12000) ^ (noise_lfsr >> 1);
               if (changed & 2) {
                 delta = -delta;
-                mSynth.Offset(ntime, delta, osc_output);
+                mSynth.Offset(osc_output, ntime, delta);
               }
               ntime += noise_period;
             }
@@ -275,7 +275,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
           if (noise_lfsr & delta_non_zero) {
             while (time < end) {
               delta = -delta;
-              mSynth.Offset(time, delta, osc_output);
+              mSynth.Offset(osc_output, time, delta);
               time += period;
               // phase ^= 1;
             }

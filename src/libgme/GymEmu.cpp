@@ -253,7 +253,7 @@ void GymEmu::run_dac(int dac_count) {
   for (int i = 0; i < dac_count; i++) {
     int delta = dac_buf[i] - dac_amp;
     dac_amp += delta;
-    dac_synth.OffsetResampled(time, delta, &blip_buf);
+    dac_synth.OffsetResampled(&blip_buf, time, delta);
     time += period;
   }
   this->dac_amp = dac_amp;

@@ -41,6 +41,7 @@ typedef int16_t blip_sample_t;
 typedef uint32_t blip_resampled_time_t;
 typedef uint32_t blip_sample_time_t;
 typedef uint32_t blip_clk_time_t;
+typedef uint32_t blip_ms_time_t;
 static const int BLIP_WIDEST_IMPULSE = 16;
 static const int BLIP_BUFFER_EXTRA = BLIP_WIDEST_IMPULSE + 2;
 static const int BLIP_RES = 1 << BLIP_PHASE_BITS;
@@ -65,10 +66,10 @@ class BlipBuffer {
   // defaults to 1/4 second), then clear buffer. Returns NULL on success,
   // otherwise if there isn't enough memory, returns error without affecting
   // current buffer setup.
-  blargg_err_t SetSampleRate(long samples_per_sec, int msec_length = 1000 / 4);
+  blargg_err_t SetSampleRate(long rate, blip_ms_time_t ms = 1000 / 4);
 
   // Set number of source time units per second
-  void SetClockRate(long cps) { mFactor = this->ClockRateFactor(mClockRate = cps); }
+  void SetClockRate(long clk_rate) { mFactor = this->ClockRateFactor(mClockRate = clk_rate); }
 
   // End current time frame of specified duration and make its samples
   // available (along with any still-unread samples) for reading with
@@ -87,14 +88,13 @@ class BlipBuffer {
   // Current output sample rate
   long GetSampleRate() const { return mSampleRate; }
 
-  // Length of buffer, in milliseconds
-  int GetLength() const { return mLength; }
-
   // Number of source time units per second
   long GetClockRate() const { return mClockRate; }
 
-  // Set frequency high-pass filter frequency, where higher values reduce bass
-  // more
+  // Length of buffer, in milliseconds
+  blip_ms_time_t GetLength() const { return mLength; }
+
+  // Set frequency high-pass filter frequency, where higher values reduce bass more
   void SetBassFrequency(int frequency);
 
   // Number of samples delay from synthesis to samples read out
@@ -154,7 +154,7 @@ class BlipBuffer {
   long mSampleRate;
   long mClockRate;
   int mBassFreq;
-  int mLength;
+  blip_ms_time_t mLength;
   bool mModified{false};
 };
 
@@ -204,14 +204,14 @@ template<int quality, int range> class BlipSynth {
   // Add an amplitude transition of specified delta, optionally into specified
   // buffer rather than the one set with output(). Delta can be positive or
   // negative. The actual change in amplitude is delta * (volume / range)
-  void Offset(blip_time_t t, int delta, BlipBuffer *buf) const {
-    OffsetResampled(t * buf->mFactor + buf->mOffset, delta, buf);
+  void Offset(BlipBuffer *dst, blip_clk_time_t clk_time, int delta) const {
+    OffsetResampled(dst, dst->ResampledTime(clk_time), delta);
   }
-  void Offset(blip_time_t t, int delta) const { this->Offset(t, delta, mImpl.mBuf); }
+  void Offset(blip_clk_time_t clk_time, int delta) const { Offset(mImpl.mBuf, clk_time, delta); }
 
   // Works directly in terms of fractional output samples. Contact author for
   // more info.
-  void OffsetResampled(blip_resampled_time_t, int delta, BlipBuffer *) const;
+  void OffsetResampled(BlipBuffer *dst, blip_resampled_time_t time, int delta) const;
 
  private:
   BlipSynthImpl mImpl;
@@ -316,12 +316,12 @@ class BlipReader {
 #include <assert.h>
 
 template<int quality, int range>
-void BlipSynth<quality, range>::OffsetResampled(blip_resampled_time_t time, int delta, BlipBuffer *blip_buf) const {
+void BlipSynth<quality, range>::OffsetResampled(BlipBuffer *dst, blip_resampled_time_t time, int delta) const {
   // Fails if time is beyond end of BlipBuffer, due to a bug in caller code
   // or the need for a longer buffer as set by SetSampleRate().
-  assert((blip_long_t)(time >> BLIP_BUFFER_ACCURACY) < blip_buf->mBufferSize);
+  assert((blip_long_t)(time >> BLIP_BUFFER_ACCURACY) < dst->mBufferSize);
   delta *= mImpl.mDeltaFactor;
-  blip_long_t *buf = blip_buf->mBuffer + (time >> BLIP_BUFFER_ACCURACY);
+  blip_long_t *buf = dst->mBuffer + (time >> BLIP_BUFFER_ACCURACY);
   int phase = (int) (time >> (BLIP_BUFFER_ACCURACY - BLIP_PHASE_BITS) & (BLIP_RES - 1));
 
   blip_long_t left = buf[0] + delta;

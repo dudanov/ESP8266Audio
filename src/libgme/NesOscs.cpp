@@ -107,7 +107,7 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
   const int volume = this->volume();
   if (volume == 0 || period < 8 || (period + offset) >= 0x800) {
     if (mLastAmp) {
-      mSynth.Offset(time, -mLastAmp, mOutput);
+      mSynth.Offset(mOutput, time, -mLastAmp);
       mLastAmp = 0;
     }
 
@@ -128,7 +128,7 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
     {
       int delta = mUpdateAmp(amp);
       if (delta)
-        mSynth.Offset(time, delta, mOutput);
+        mSynth.Offset(mOutput, time, delta);
     }
 
     time += mDelay;
@@ -142,7 +142,7 @@ void NesSquare::run(nes_time_t time, nes_time_t end_time) {
         phase = (phase + 1) & (PHASE_RANGE - 1);
         if (phase == 0 || phase == duty) {
           delta = -delta;
-          synth.Offset(time, delta, output);
+          synth.Offset(output, time, delta);
         }
         time += timer_period;
       } while (time < end_time);
@@ -203,7 +203,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
 
   int delta = mUpdateAmp(this->calc_amp());
   if (delta)
-    mSynth.Offset(time, delta, mOutput);
+    mSynth.Offset(mOutput, time, delta);
 
   time += mDelay;
   if (mLengthCounter == 0 || this->linear_counter == 0 || timer_period < 3) {
@@ -223,7 +223,7 @@ void NesTriangle::run(nes_time_t time, nes_time_t end_time) {
         phase = PHASE_RANGE;
         volume = -volume;
       } else {
-        mSynth.Offset(time, volume, output);
+        mSynth.Offset(output, time, volume);
       }
 
       time += timer_period;
@@ -377,7 +377,7 @@ void NesDmc::mRun(nes_time_t time, nes_time_t end_time) {
   } else {
     mOutput->SetModified();
     if (delta)
-      mSynth.Offset(time, delta, mOutput);
+      mSynth.Offset(mOutput, time, delta);
   }
 
   time += mDelay;
@@ -393,7 +393,7 @@ void NesDmc::mRun(nes_time_t time, nes_time_t end_time) {
           this->bits >>= 1;
           if (unsigned(mDac + step) <= 0x7F) {
             mDac += step;
-            mSynth.Offset(time, step, mOutput);
+            mSynth.Offset(mOutput, time, step);
           }
         }
 
@@ -444,7 +444,7 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
   {
     int delta = mUpdateAmp(amp);
     if (delta)
-      mSynth.Offset(time, delta, mOutput);
+      mSynth.Offset(mOutput, time, delta);
   }
 
   time += mDelay;
@@ -476,7 +476,7 @@ void NesNoise::run(nes_time_t time, nes_time_t end_time) {
         if ((this->noise + 1) & 2) {
           // bits 0 and 1 of noise differ
           delta = -delta;
-          mSynth.OffsetResampled(rtime, delta, mOutput);
+          mSynth.OffsetResampled(mOutput, rtime, delta);
         }
 
         rtime += rperiod;

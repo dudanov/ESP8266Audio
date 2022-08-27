@@ -80,7 +80,7 @@ void NesFme7Apu::run_until(blip_time_t end_time) {
       int delta = amp - oscs[index].last_amp;
       if (delta) {
         oscs[index].last_amp = amp;
-        synth.Offset(last_time, delta, osc_output);
+        synth.Offset(osc_output, last_time, delta);
       }
     }
 
@@ -90,7 +90,7 @@ void NesFme7Apu::run_until(blip_time_t end_time) {
       if (volume) {
         do {
           delta = -delta;
-          synth.Offset(time, delta, osc_output);
+          synth.Offset(osc_output, time, delta);
           time += period;
         } while (time < end_time);
 

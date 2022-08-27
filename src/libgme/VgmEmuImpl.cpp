@@ -105,7 +105,7 @@ void VgmEmuImpl::write_pcm(vgm_time_t vgm_time, int amp) {
   int delta = amp - old;
   dac_amp = amp;
   if (old >= 0)
-    dac_synth.Offset(blip_time, delta, &blip_buf);
+    dac_synth.Offset(&blip_buf, blip_time, delta);
   else
     dac_amp |= dac_disabled;
 }

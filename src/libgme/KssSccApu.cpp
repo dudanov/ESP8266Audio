@@ -51,7 +51,7 @@ void SccApu::run_until(blip_time_t end_time) {
       int delta = amp - osc.mLastAmp;
       if (delta) {
         osc.mLastAmp = amp;
-        m_synth.Offset(m_lastTime, delta, output);
+        m_synth.Offset(output, m_lastTime, delta);
       }
     }
 
@@ -73,7 +73,7 @@ void SccApu::run_until(blip_time_t end_time) {
           int delta = amp - last_wave;
           if (delta) {
             last_wave = amp;
-            m_synth.Offset(time, delta * volume, output);
+            m_synth.Offset(output, time, delta * volume);
           }
           time += period;
         } while (time < end_time);

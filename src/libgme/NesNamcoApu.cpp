@@ -119,7 +119,7 @@ void NesNamcoApu::run_until(blip_time_t nes_end_time) {
         int delta = sample - last_amp;
         if (delta) {
           last_amp = sample;
-          m_synth.OffsetResampled(time, delta, output);
+          m_synth.OffsetResampled(output, time, delta);
         }
 
         // next sample

@@ -72,7 +72,7 @@ void BlipBuffer::Clear(bool entire) {
   }
 }
 
-BlipBuffer::blargg_err_t BlipBuffer::SetSampleRate(long rate, int ms) {
+BlipBuffer::blargg_err_t BlipBuffer::SetSampleRate(long rate, blip_ms_time_t ms) {
   if (mBufferSize == SILENT_BUF_SIZE) {
     assert(0);
     return "Internal (tried to resize SilentBlipBuffer)";

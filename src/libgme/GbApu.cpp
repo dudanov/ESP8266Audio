@@ -158,16 +158,16 @@ void GbApu::m_writeNR50(blip_time_t time) {
     int amp = osc->m_lastAmp;
     osc->m_lastAmp = 0;
     if (amp && osc->m_enabled && osc->mOutput != nullptr)
-      this->m_otherSynth.Offset(time, -amp, osc->mOutput);
+      this->m_otherSynth.Offset(osc->mOutput, time, -amp);
   }
 
   if (this->m_wave.m_outputs[3])
-    this->m_otherSynth.Offset(time, 30, this->m_wave.m_outputs[3]);
+    this->m_otherSynth.Offset(this->m_wave.m_outputs[3], time, 30);
 
   this->m_updateVolume();
 
   if (this->m_wave.m_outputs[3])
-    this->m_otherSynth.Offset(time, -30, this->m_wave.m_outputs[3]);
+    this->m_otherSynth.Offset(this->m_wave.m_outputs[3], time, -30);
 
   // oscs will update with new amplitude when next run
 }
@@ -191,7 +191,7 @@ void GbApu::m_writeNR5152(blip_time_t time) {
     int amp = osc->m_lastAmp;
     osc->m_lastAmp = 0;
     if (amp && oldOutput != nullptr)
-      this->m_otherSynth.Offset(time, -amp, oldOutput);
+      this->m_otherSynth.Offset(oldOutput, time, -amp);
   }
 }
 
