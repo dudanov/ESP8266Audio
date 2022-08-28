@@ -164,6 +164,8 @@ void RsfEmu::mWriteRegisters(blip_clk_time_t time) {
 blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
   blip_clk_time_t start = mNextPlay;
   blip_clk_time_t end = std::min(duration, mPlayPeriod);
+  if (mIt >= mFile.end)
+    mIt = mFile.loop;
   for (; start < end && mIt < mFile.end; ++mIt) {
     if (*mIt != 0xFE) {
       start += mPlayPeriod;
@@ -176,8 +178,6 @@ blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
   duration = end;
   mNextPlay = start - end;
   mApu.EndFrame(end);
-  if (mIt >= mFile.end)
-    mIt = mFile.loop;
   return 0;
 }
 
