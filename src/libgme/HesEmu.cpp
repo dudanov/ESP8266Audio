@@ -458,8 +458,8 @@ static void adjTime(blargg_long &time, hes_time_t delta) {
   }
 }
 
-blargg_err_t HesEmu::mRunClocks(blip_clk_time_t &duration_, int) {
-  blip_time_t const duration = duration_;  // cache
+blargg_err_t HesEmu::mRunClocks(blip_clk_time_t &duration_) {
+  const auto duration = duration_;  // cache
 
   if (cpu::run(duration))
     m_setWarning("Emulation error (illegal instruction)");

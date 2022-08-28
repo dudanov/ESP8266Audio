@@ -348,7 +348,7 @@ inline void SapEmu::call_play() {
   }
 }
 
-blargg_err_t SapEmu::mRunClocks(blip_clk_time_t &duration, int) {
+blargg_err_t SapEmu::mRunClocks(blip_clk_time_t &duration) {
   set_time(0);
   while (time() < duration) {
     if (cpu::run(duration) || r.pc > idle_addr)

@@ -33,7 +33,7 @@ using std::min;
 
 VgmEmu::VgmEmu() {
   disable_oversampling_ = false;
-  m_psgRate = 0;
+  mPsgRate = 0;
   mSetType(gme_vgm_type);
 
   static int const types[8] = {WAVE_TYPE | 1, WAVE_TYPE | 0, WAVE_TYPE | 2, NOISE_TYPE | 0};
@@ -192,19 +192,11 @@ struct VgmFile : GmeInfo {
 // Setup
 
 void VgmEmu::mSetTempo(double t) {
-  if (m_psgRate) {
-    m_vgmRate = (long) (44100 * t + 0.5);
-    mBlipTimeFactor = (long) floor(double(1L << BLIP_TIME_BITS) / m_vgmRate * m_psgRate + 0.5);
-    // debug_printf( "mBlipTimeFactor: %ld\n", mBlipTimeFactor );
-    // debug_printf( "m_vgmRate: %ld\n", m_vgmRate );
-    // TODO: remove? calculates m_vgmRate more accurately (above differs at
-    // most by one Hz only)
-    // mBlipTimeFactor = (long) floor( double (1L << BLIP_TIME_BITS) *
-    // m_psgRate / 44100 / t + 0.5 ); m_vgmRate = (long) floor( double (1L <<
-    // BLIP_TIME_BITS) * m_psgRate / mBlipTimeFactor + 0.5 );
-
-    mFmTimeFactor = 2 + (long) floor(m_fmRate * (1L << FM_TIME_BITS) / m_vgmRate + 0.5);
-  }
+  if (mPsgRate == 0)
+    return;
+  mVgmRate = static_cast<long>(44100 * t + 0.5);
+  mBlipTimeFactor = static_cast<long>(static_cast<double>(1L << BLIP_TIME_BITS) / mVgmRate * mPsgRate + 0.5);
+  mFmTimeFactor = 2 + (long) floor(mFmRate * (1L << FM_TIME_BITS) / mVgmRate + 0.5);
 }
 
 blargg_err_t VgmEmu::mSetSampleRate(long sample_rate) {
@@ -298,13 +290,13 @@ blargg_err_t VgmEmu::mLoad(uint8_t const *new_data, long new_size) {
   check(get_le32(h.version) <= 0x150);
 
   // psg rate
-  m_psgRate = get_le32(h.psg_rate);
-  if (!m_psgRate)
-    m_psgRate = 3579545;
-  mPsgDual = (m_psgRate & 0x40000000) != 0;
-  mPsgT6w28 = (m_psgRate & 0x80000000) != 0;
-  m_psgRate &= 0x0FFFFFFF;
-  mBlipBuf.SetClockRate(m_psgRate);
+  mPsgRate = get_le32(h.psg_rate);
+  if (!mPsgRate)
+    mPsgRate = 3579545;
+  mPsgDual = (mPsgRate & 0x40000000) != 0;
+  mPsgT6w28 = (mPsgRate & 0x80000000) != 0;
+  mPsgRate &= 0x0FFFFFFF;
+  mBlipBuf.SetClockRate(mPsgRate);
 
   mData = new_data;
   mDataEnd = new_data + new_size;
@@ -323,7 +315,7 @@ blargg_err_t VgmEmu::mLoad(uint8_t const *new_data, long new_size) {
   mSetChannelsNames(uses_fm ? FM_NAMES : PSG_NAMES);
 
   // do after FM in case output buffer is changed
-  return ClassicEmu::mSetupBuffer(m_psgRate);
+  return ClassicEmu::mSetupBuffer(mPsgRate);
 }
 
 blargg_err_t VgmEmu::setup_fm() {
@@ -336,18 +328,18 @@ blargg_err_t VgmEmu::setup_fm() {
 
   uses_fm = false;
 
-  m_fmRate = mBlipBuf.GetSampleRate() * OVERSAMPLE_FACTOR;
+  mFmRate = mBlipBuf.GetSampleRate() * OVERSAMPLE_FACTOR;
 
   if (ym2612_rate) {
     ym2612_rate &= ~0xC0000000;
     uses_fm = true;
     if (disable_oversampling_)
-      m_fmRate = ym2612_rate / 144.0;
-    DualResampler::setup(m_fmRate / mBlipBuf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
-    RETURN_ERR(mYm2612[0].set_rate(m_fmRate, ym2612_rate));
+      mFmRate = ym2612_rate / 144.0;
+    DualResampler::setup(mFmRate / mBlipBuf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
+    RETURN_ERR(mYm2612[0].set_rate(mFmRate, ym2612_rate));
     mYm2612[0].enable(true);
     if (ym2612_dual) {
-      RETURN_ERR(mYm2612[1].set_rate(m_fmRate, ym2612_rate));
+      RETURN_ERR(mYm2612[1].set_rate(mFmRate, ym2612_rate));
       mYm2612[1].enable(true);
     }
     mSetChannelsNumber(8);
@@ -357,12 +349,12 @@ blargg_err_t VgmEmu::setup_fm() {
     ym2413_rate &= ~0xC0000000;
     uses_fm = true;
     if (disable_oversampling_)
-      m_fmRate = ym2413_rate / 72.0;
-    DualResampler::setup(m_fmRate / mBlipBuf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
-    RETURN_ERR(mYm2413[0].set_rate(m_fmRate, ym2413_rate));
+      mFmRate = ym2413_rate / 72.0;
+    DualResampler::setup(mFmRate / mBlipBuf.GetSampleRate(), rolloff, FM_GAIN * mGetGain());
+    RETURN_ERR(mYm2413[0].set_rate(mFmRate, ym2413_rate));
     mYm2413[0].enable(true);
     if (ym2413_dual) {
-      RETURN_ERR(mYm2413[1].set_rate(m_fmRate, ym2413_rate));
+      RETURN_ERR(mYm2413[1].set_rate(mFmRate, ym2413_rate));
       mYm2413[1].enable(true);
     }
     mSetChannelsNumber(8);
@@ -426,8 +418,8 @@ blargg_err_t VgmEmu::mStartTrack(int track) {
   return 0;
 }
 
-blargg_err_t VgmEmu::mRunClocks(blip_clk_time_t &time_io, int msec) {
-  time_io = mRunCommands(msec * m_vgmRate / 1000);
+blargg_err_t VgmEmu::mRunClocks(blip_clk_time_t &time_io) {
+  time_io = mRunCommands(time_io * mPsgRate / 1000);
   mPsg[0].EndFrame(time_io);
   if (mPsgDual)
     mPsg[1].EndFrame(time_io);
@@ -447,9 +439,23 @@ blargg_err_t VgmEmu::mPlay(long count, sample_t *out) {
 }  // namespace gme
 
 static gme_type_t_ const gme_vgm_type_ = {
-    "Sega SMS/Genesis", 1, 0, &gme::emu::vgm::VgmEmu::createVgmEmu, &gme::emu::vgm::VgmFile::createVgmFile, "VGM", 1};
+    "Sega SMS/Genesis",
+    1,
+    44100,
+    &gme::emu::vgm::VgmEmu::createVgmEmu,
+    &gme::emu::vgm::VgmFile::createVgmFile,
+    "VGM",
+    1,
+};
 extern gme_type_t const gme_vgm_type = &gme_vgm_type_;
 
 static gme_type_t_ const gme_vgz_type_ = {
-    "Sega SMS/Genesis", 1, 0, &gme::emu::vgm::VgmEmu::createVgmEmu, &gme::emu::vgm::VgmFile::createVgmFile, "VGZ", 1};
+    "Sega SMS/Genesis",
+    1,
+    44100,
+    &gme::emu::vgm::VgmEmu::createVgmEmu,
+    &gme::emu::vgm::VgmFile::createVgmFile,
+    "VGZ",
+    1,
+};
 extern gme_type_t const gme_vgz_type = &gme_vgz_type_;

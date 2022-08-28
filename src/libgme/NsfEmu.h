@@ -66,7 +66,7 @@ class NsfEmu : private NesCpu, public ClassicEmu {
 
   /* ClassicEmu methods */
 
-  blargg_err_t mRunClocks(blip_clk_time_t &, int) override;
+  blargg_err_t mRunClocks(blip_clk_time_t &) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(const BlipEq &) override;
 

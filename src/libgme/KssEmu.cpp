@@ -337,7 +337,7 @@ int kss_cpu_in(KssCpu *, cpu_time_t, unsigned addr) {
 
 // Emulation
 
-blargg_err_t KssEmu::mRunClocks(blip_clk_time_t &duration, int) {
+blargg_err_t KssEmu::mRunClocks(blip_clk_time_t &duration) {
   while (time() < duration) {
     blip_time_t end = min(duration, mNextPlay);
     cpu::run(min(duration, mNextPlay));

@@ -78,7 +78,7 @@ class VgmEmu : public VgmEmuImpl {
   blargg_err_t mSetSampleRate(long sample_rate) override;
   blargg_err_t mStartTrack(int) override;
   blargg_err_t mPlay(long count, sample_t *) override;
-  blargg_err_t mRunClocks(blip_clk_time_t &, int) override;
+  blargg_err_t mRunClocks(blip_clk_time_t &) override;
   void mSetTempo(double) override;
   void mMuteChannel(int mask) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
@@ -87,9 +87,9 @@ class VgmEmu : public VgmEmuImpl {
  private:
   // removed; use disable_oversampling() and set_tempo() instead
   VgmEmu(bool oversample, double tempo = 1.0);
-  double m_fmRate;
-  long m_psgRate;
-  long m_vgmRate;
+  double mFmRate;
+  long mPsgRate;
+  long mVgmRate;
   bool disable_oversampling_;
   bool uses_fm;
   blargg_err_t setup_fm();

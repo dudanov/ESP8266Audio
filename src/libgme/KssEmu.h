@@ -59,7 +59,7 @@ class KssEmu : private KssCpu, public ClassicEmu {
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
   blargg_err_t mLoad(DataReader &) override;
   blargg_err_t mStartTrack(int) override;
-  blargg_err_t mRunClocks(blip_clk_time_t &, int) override;
+  blargg_err_t mRunClocks(blip_clk_time_t &) override;
   void mSetTempo(double) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;

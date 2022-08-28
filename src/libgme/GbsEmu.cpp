@@ -205,7 +205,7 @@ blargg_err_t GbsEmu::mStartTrack(int track) {
   return 0;
 }
 
-blargg_err_t GbsEmu::mRunClocks(blip_clk_time_t &duration, int) {
+blargg_err_t GbsEmu::mRunClocks(blip_clk_time_t &duration) {
   mCpuTime = 0;
   while (mCpuTime < duration) {
     long count = duration - mCpuTime;

@@ -435,7 +435,7 @@ blargg_err_t NsfEmu::mStartTrack(int track) {
   return 0;
 }
 
-blargg_err_t NsfEmu::mRunClocks(blip_clk_time_t &duration, int) {
+blargg_err_t NsfEmu::mRunClocks(blip_clk_time_t &duration) {
   setTime(0);
   while (time() < duration) {
     nes_time_t end = std::min(mNextPlay, duration);
