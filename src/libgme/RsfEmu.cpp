@@ -131,7 +131,7 @@ blargg_err_t RsfEmu::mLoad(const uint8_t *begin, long size) {
   RETURN_ERR(parse_header(begin, size, &mFile));
   mSetTrackNum(1);
   mSetChannelsNumber(AyApu::OSCS_NUM);
-  mApu.SetVolume(mGetGain());
+  mApu.SetVolume(0.5);
   return mSetupBuffer(get_le32(mFile.header->chip_freq));
 }
 
