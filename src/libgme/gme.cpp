@@ -68,6 +68,8 @@ const char *gme_identify_header(void const *header) {
   switch (get_be32(header)) {
     case BLARGG_4CHAR('Z', 'X', 'A', 'Y'):
       return "AY";
+    case BLARGG_4CHAR('R', 'S', 'F', 0x03):
+      return "RSF";
     case BLARGG_4CHAR('G', 'B', 'S', 0x01):
       return "GBS";
     case BLARGG_4CHAR('G', 'Y', 'M', 'X'):
