@@ -150,6 +150,7 @@ blargg_err_t RsfEmu::mStartTrack(int track) {
   mIt = mFile.begin;
   mNextPlay = 0;
   mFrame = 0;
+  mApu.Reset();
   return 0;
 }
 
@@ -166,9 +167,9 @@ blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
   blip_clk_time_t end = std::min(duration, mPlayPeriod);
   for (; start < end && mIt < mFile.end; ++mIt) {
     if (*mIt != 0xFE) {
+      start += mPlayPeriod;
       if (*mIt != 0xFF)
         mWriteRegisters(start);
-      start += mPlayPeriod;
     } else {
       start += *++mIt * mPlayPeriod;
     }
