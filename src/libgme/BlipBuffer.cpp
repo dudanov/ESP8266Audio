@@ -140,13 +140,11 @@ void BlipBuffer::RemoveSilence(long count) {
   mOffset -= (blip_resampled_time_t) count << BLIP_BUFFER_ACCURACY;
 }
 
-blip_clk_time_t BlipBuffer::CountClocks(blip_sample_time_t n) const {
+blip_clk_time_t BlipBuffer::CountClocks(blip_sample_time_t samples) const {
   if (mFactor == 0)
     return 0;
-  if (n > mBufferSize)
-    n = mBufferSize;
-  blip_resampled_time_t time = n << BLIP_BUFFER_ACCURACY;
-  return (blip_time_t)((time - mOffset + mFactor - 1) / mFactor);
+  const blip_resampled_time_t time = std::min(samples, mBufferSize) << BLIP_BUFFER_ACCURACY;
+  return (time - mOffset + mFactor - 1) / mFactor;
 }
 
 void BlipBuffer::RemoveSamples(long count) {

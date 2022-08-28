@@ -144,8 +144,8 @@ class BlipBuffer {
   // current_samples * 65536 in buffer
   blip_resampled_time_t mOffset;
   int32_t *mBuffer;
-  blip_long_t mBufferSize;
-  blip_long_t mReaderAccum;
+  blip_sample_time_t mBufferSize;
+  blip_sample_time_t mReaderAccum;
   int mBassShift;
 
  private:

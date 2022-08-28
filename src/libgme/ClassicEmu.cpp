@@ -79,23 +79,22 @@ blargg_err_t ClassicEmu::mStartTrack(int track) {
   return 0;
 }
 
-blargg_err_t ClassicEmu::mPlay(long count, sample_t *out) {
+blargg_err_t ClassicEmu::mPlay(const long count, sample_t *out) {
   long remain = count;
   while (remain) {
     remain -= mBuf->ReadSamples(&out[count - remain], remain);
-    if (remain) {
-      if (mBufChangedNum != mBuf->GetChangedChannelsNumber()) {
-        mBufChangedNum = mBuf->GetChangedChannelsNumber();
-        mRemuteChannels();
-      }
-      auto ms = mBuf->GetLength();
-      blip_clk_time_t clocks_emulated = ms * mClockRate / 1000;
-      RETURN_ERR(mRunClocks(clocks_emulated, ms));
-      assert(clocks_emulated);
-      mBuf->EndFrame(clocks_emulated);
+    if (remain == 0)
+      return nullptr;
+    if (mBufChangedNum != mBuf->GetChangedChannelsNumber()) {
+      mBufChangedNum = mBuf->GetChangedChannelsNumber();
+      mRemuteChannels();
     }
+    blip_clk_time_t emu_clks = mBuf->GetLength() * mClockRate / 1000;
+    RETURN_ERR(mRunClocks(emu_clks));
+    assert(emu_clks);
+    mBuf->EndFrame(emu_clks);
   }
-  return 0;
+  return nullptr;
 }
 
 // RomData

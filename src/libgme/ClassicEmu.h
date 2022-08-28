@@ -10,9 +10,11 @@ class ClassicEmu : public MusicEmu {
  public:
   ClassicEmu();
   ~ClassicEmu();
-  void SetBuffer(MultiBuffer *pbuf) {
-    assert(mBuf == nullptr && pbuf != nullptr);
-    mBuf = pbuf;
+  // RU: Устанавливает сторонний выходной буфер. Должен вызываться до установки частоты сэмплирования.
+  // EN: Set custom output buffer. Must be call before sample rate setting.
+  void SetBuffer(MultiBuffer *out) {
+    assert(mBuf == nullptr && out != nullptr);
+    mBuf = out;
   }
   blargg_err_t SetMultiChannel(bool is_enabled) override;
 
@@ -22,14 +24,17 @@ class ClassicEmu : public MusicEmu {
   void mSetChannelsTypes(const int *t) { mChannelTypes = t; }
   int mGetChannelType(int idx) const { return (mChannelTypes != nullptr) ? mChannelTypes[idx] : 0; }
   long mGetClockRate() const { return mClockRate; }
-  void mChangeClockRate(long);  // experimental
+  void mChangeClockRate(long);
   blargg_err_t mSetupBuffer(long clock_rate);
 
-  // Overridable
+  // Set channel output buffers. Must be implemented in emulator.
   virtual void mSetChannel(int index, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) = 0;
+  // Update equalizer settings.
   virtual void mUpdateEq(BlipEq const &) = 0;
+  // Setup emulator for playing specified track. May be overrided in emulator.
   virtual blargg_err_t mStartTrack(int track) override;
-  virtual blargg_err_t mRunClocks(blip_clk_time_t &clk_time, int msec) = 0;
+  // Called while playing track. Must be implemented in classic emulator.
+  virtual blargg_err_t mRunClocks(blip_clk_time_t &clk_time) = 0;
 
  protected:
   blargg_err_t mSetSampleRate(long sample_rate) override;
