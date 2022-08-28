@@ -80,9 +80,9 @@ class SpcEmu : public MusicEmu {
 class RsnEmu : public SpcEmu {
  public:
   static MusicEmu *CreateRsnEmu() { return BLARGG_NEW RsnEmu; }
-  RsnEmu() : SpcEmu(gme_rsn_type) { m_isArchive = true; }
+  RsnEmu() : SpcEmu(gme_rsn_type) { mIsArchive = true; }
   ~RsnEmu();
-  blargg_err_t loadArchive(const char *) override;
+  blargg_err_t LoadArchive(const char *) override;
   header_t const &header(int track) const { return *(header_t const *) mSpc[track]; }
 
  protected:

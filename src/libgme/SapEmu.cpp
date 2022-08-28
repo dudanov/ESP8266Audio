@@ -192,7 +192,7 @@ struct SapFile : GmeInfo {
 
   blargg_err_t mLoad(uint8_t const *begin, long size) {
     RETURN_ERR(parse_info(begin, size, &info));
-    m_setTrackNum(info.track_count);
+    mSetTrackNum(info.track_count);
     return 0;
   }
 
@@ -216,8 +216,8 @@ blargg_err_t SapEmu::mLoad(uint8_t const *in, long size) {
   mInfo.fastplay = 312;
   RETURN_ERR(parse_info(in, size, &mInfo));
 
-  m_setWarning(mInfo.warning);
-  m_setTrackNum(mInfo.track_count);
+  mSetWarning(mInfo.warning);
+  mSetTrackNum(mInfo.track_count);
   mSetChannelsNumber(SapApu::OSCS_NUM << mInfo.stereo);
   apu_impl.volume(mGetGain());
 
@@ -288,12 +288,12 @@ blargg_err_t SapEmu::mStartTrack(int track) {
     // debug_printf( "Block $%04X-$%04X\n", start, end );
     in += 4;
     if (end < start) {
-      m_setWarning("Invalid file data block");
+      mSetWarning("Invalid file data block");
       break;
     }
     long len = end - start + 1;
     if (len > mFileEnd - in) {
-      m_setWarning("Invalid file data block");
+      mSetWarning("Invalid file data block");
       break;
     }
 

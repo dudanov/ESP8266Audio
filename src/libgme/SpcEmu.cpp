@@ -236,7 +236,7 @@ struct SpcFile : GmeInfo {
   static MusicEmu *createSpcFile() { return BLARGG_NEW SpcFile; }
 
   blargg_err_t mLoad(DataReader &src) override {
-    if (this->m_isArchive)
+    if (this->mIsArchive)
       return 0;
     long fileSize = src.remain();
     if (fileSize < SnesSpc::SPC_MIN_FILE_SIZE)
@@ -271,10 +271,10 @@ static int CALLBACK call_rsn(UINT msg, LPARAM UserData, LPARAM P1, LPARAM P2) {
 struct RsnFile : SpcFile {
   blargg_vector<uint8_t *> mSpc;
 
-  RsnFile() : SpcFile(gme_rsn_type) { m_isArchive = true; }
+  RsnFile() : SpcFile(gme_rsn_type) { mIsArchive = true; }
   static MusicEmu *createRsnFile() { return BLARGG_NEW RsnFile; }
 
-  blargg_err_t loadArchive(const char *path) {
+  blargg_err_t LoadArchive(const char *path) {
 #ifdef RARDLL
     struct RAROpenArchiveData data = {.ArcName = (char *) path,
                                       .OpenMode = RAR_OM_LIST,
@@ -324,7 +324,7 @@ struct RsnFile : SpcFile {
       }
     }
     mSpc[count] = &xid6[pos];
-    m_setTrackNum(count);
+    mSetTrackNum(count);
     RARCloseArchive(rar);
 
     return 0;
@@ -370,7 +370,7 @@ blargg_err_t SpcEmu::mLoad(uint8_t const *in, long size) {
   mFileData = in;
   mFileSize = size;
   mSetChannelsNumber(SnesSpc::CHANNELS_NUM);
-  if (m_isArchive)
+  if (mIsArchive)
     return 0;
   if (size < SnesSpc::SPC_MIN_FILE_SIZE)
     return gme_wrong_file_type;
@@ -439,7 +439,7 @@ blargg_err_t SpcEmu::mPlay(long count, sample_t *out) {
   // return 0;
 }
 
-blargg_err_t RsnEmu::loadArchive(const char *path) {
+blargg_err_t RsnEmu::LoadArchive(const char *path) {
 #ifdef RARDLL
   struct RAROpenArchiveData data = {.ArcName = (char *) path,
                                     .OpenMode = RAR_OM_LIST,
@@ -474,7 +474,7 @@ blargg_err_t RsnEmu::loadArchive(const char *path) {
     pos += head.UnpSize;
   }
   mSpc[count] = &mRsn[pos];
-  m_setTrackNum(count);
+  mSetTrackNum(count);
   RARCloseArchive(rar);
 
   return 0;

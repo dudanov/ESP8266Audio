@@ -60,11 +60,11 @@ class VgmEmu : public VgmEmuImpl {
 
  public:
   // deprecated
-  using MusicEmu::load;
+  using MusicEmu::Load;
   blargg_err_t load(header_t const &h,
                     DataReader &in)  // use RemainingReader
   {
-    return m_loadRemaining(&h, sizeof h, in);
+    return mLoadRemaining(&h, sizeof h, in);
   }
   uint8_t const *gd3_data(int *size_out = 0) const;  // use GetTrackInfo()
 

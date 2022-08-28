@@ -109,7 +109,7 @@ bool AudioGeneratorGme::mLoad() {
   }
 
   RemainingReader reader(header, sizeof(header), this);
-  gme_err_t err = mEmu->load(reader);
+  gme_err_t err = mEmu->Load(reader);
 
   if (err != nullptr) {
     mEmuDestroy();
@@ -149,7 +149,7 @@ void AudioGeneratorGme::mEmuDestroy() {
 }
 
 bool AudioGeneratorGme::playTrack(unsigned num) {
-  if (mEmu == nullptr || num >= mEmu->getTrackCount())
+  if (mEmu == nullptr || num >= mEmu->GetTrackCount())
     return false;
   blargg_err_t err = mEmu->StartTrack(num);
   if (err != nullptr) {

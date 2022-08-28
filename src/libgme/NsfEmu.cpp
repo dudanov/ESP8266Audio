@@ -104,9 +104,9 @@ struct NsfFile : GmeInfo {
       return (err == in.eof_error ? gme_wrong_file_type : err);
 
     if (hdr.chip_flags & ~(NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
-      m_setWarning("Uses unsupported audio expansion hardware");
+      mSetWarning("Uses unsupported audio expansion hardware");
 
-    m_setTrackNum(hdr.track_count);
+    mSetTrackNum(hdr.track_count);
     return check_nsf_header(&hdr);
   }
 
@@ -142,7 +142,7 @@ void NsfEmu::mSetTempo(double t) {
 
 blargg_err_t NsfEmu::mInitSound() {
   if (mHeader.chip_flags & ~(NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
-    m_setWarning("Uses unsupported audio expansion hardware");
+    mSetWarning("Uses unsupported audio expansion hardware");
 
   {
 #define APU_NAMES "Square 1", "Square 2", "Triangle", "Noise", "DMC"
@@ -163,7 +163,7 @@ blargg_err_t NsfEmu::mInitSound() {
 
 #if NSF_EMU_APU_ONLY
   if (mHeader.chip_flags)
-    m_setWarning("Uses unsupported audio expansion hardware");
+    mSetWarning("Uses unsupported audio expansion hardware");
 #else
   if (mHeader.chip_flags & (NAMCO_FLAG | VRC6_FLAG | FME7_FLAG))
     mSetChannelsNumber(NesApu::OSCS_NUM + 3);
@@ -227,11 +227,11 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
   assert(offsetof(Header, unused[4]) == HEADER_SIZE);
   RETURN_ERR(m_rom.load(in, HEADER_SIZE, &mHeader, 0));
 
-  m_setTrackNum(mHeader.track_count);
+  mSetTrackNum(mHeader.track_count);
   RETURN_ERR(check_nsf_header(&mHeader));
 
   if (mHeader.vers != 1)
-    m_setWarning("Unknown file version");
+    mSetWarning("Unknown file version");
 
   // sound and memory
   blargg_err_t err = mInitSound();
@@ -249,7 +249,7 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
   if (!m_playAddress)
     m_playAddress = ROM_BEGIN;
   if (load_addr < ROM_BEGIN || m_initAddress < ROM_BEGIN) {
-    const char *w = warning();
+    const char *w = GetWarning();
     if (!w)
       w = "Corrupt file (invalid load/init/play address)";
     return w;
@@ -442,7 +442,7 @@ blargg_err_t NsfEmu::mRunClocks(blip_clk_time_t &duration) {
     end = std::min(end, time() + 32767);  // allows CPU to use 16-bit time delta
     if (cpu::run(end)) {
       if (m_regs.pc != BADOP_ADDR) {
-        m_setWarning("Emulation error (illegal instruction)");
+        mSetWarning("Emulation error (illegal instruction)");
         m_regs.pc++;
       } else {
         m_playReady = 1;
@@ -474,7 +474,7 @@ blargg_err_t NsfEmu::mRunClocks(blip_clk_time_t &duration) {
 
   if (cpu::getErrorsNum()) {
     cpu::clearErrors();
-    m_setWarning("Emulation error (illegal instruction)");
+    mSetWarning("Emulation error (illegal instruction)");
   }
 
   duration = time();

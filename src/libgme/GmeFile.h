@@ -44,6 +44,11 @@ enum { GME_MAX_FIELD = 255 };
 
 struct GmeFile {
  public:
+  GmeFile();
+  virtual ~GmeFile();
+  GmeFile(const GmeFile &) = delete;
+  GmeFile &operator=(const GmeFile &) = delete;
+
   // File loading
 
   // Each loads game music data from a file and returns an error if
@@ -51,42 +56,42 @@ struct GmeFile {
   // string for minor problems.
 
   // Load from file on disk
-  blargg_err_t loadFile(const char *path);
+  blargg_err_t LoadFile(const char *path);
 
   // Load from custom data source (see DataReader.h)
-  blargg_err_t load(DataReader &);
+  blargg_err_t Load(DataReader &);
 
   // Load from file already read into memory. Keeps pointer to data, so you
   // must not free it until you're done with the file.
-  blargg_err_t loadMem(void const *data, long size);
+  blargg_err_t LoadMem(void const *data, long size);
 
   // Load an m3u playlist. Must be done after loading main music file.
-  blargg_err_t loadM3u(const char *path);
-  blargg_err_t loadM3u(DataReader &in);
+  blargg_err_t LoadM3u(const char *path);
+  blargg_err_t LoadM3u(DataReader &in);
 
-  virtual blargg_err_t loadArchive(const char *) { return gme_wrong_file_type; }
-  bool m_isArchive = false;
+  virtual blargg_err_t LoadArchive(const char *) { return gme_wrong_file_type; }
+  bool mIsArchive = false;
 
   // Clears any loaded m3u playlist and any internal playlist that the music
   // format supports (NSFE for example).
-  void clearPlaylist();
+  void ClearPlaylist();
 
   // Informational
 
   // Type of emulator. For example if this returns gme_nsfe_type, this object
   // is an NSFE emulator, and you can cast to an NsfeEmu* if necessary.
-  gme_type_t type() const { return this->m_type; }
+  gme_type_t GetType() const { return mType; }
 
   // Most recent warning string, or NULL if none. Clears current warning after
   // returning.
-  const char *warning() {
-    const char *s = this->m_warning;
-    this->m_warning = nullptr;
+  const char *GetWarning() {
+    const char *s = mWarning;
+    mWarning = nullptr;
     return s;
   }
 
   // Number of tracks or 0 if no file has been loaded
-  int getTrackCount() const { return this->m_trackNum; }
+  int GetTrackCount() const { return mTrackNum; }
 
   // Get information for a track (length, name, author, etc.)
   // See gme.h for definition of struct track_info_t.
@@ -96,23 +101,19 @@ struct GmeFile {
 
   // Set/get pointer to data you want to associate with this emulator.
   // You can use this for whatever you want.
-  void setUserData(void *data) { this->m_userData = data; }
-  void *getUserData() const { return this->m_userData; }
+  void SetUserData(void *data) { mUserData = data; }
+  void *GetUserData() const { return mUserData; }
 
   // Register cleanup function to be called when deleting emulator, or NULL to
   // clear it. Passes user_data to cleanup function.
-  void setUserCleanupFn(gme_user_cleanup_t func) { this->m_userCleanupFn = func; }
-
- public:
-  GmeFile();
-  virtual ~GmeFile();
+  void SetUserCleanupFn(gme_user_cleanup_t func) { mUserCleanupFn = func; }
 
  protected:
   // Services
-  void m_setTrackNum(int n) { m_trackNum = m_rawTrackCount = n; }
-  void m_setWarning(const char *s) { m_warning = s; }
-  void mSetType(gme_type_t t) { m_type = t; }
-  blargg_err_t m_loadRemaining(void const *header, long header_size, DataReader &remaining);
+  void mSetTrackNum(int n) { mTrackNum = mRawTrackCount = n; }
+  void mSetWarning(const char *s) { mWarning = s; }
+  void mSetType(gme_type_t t) { mType = t; }
+  blargg_err_t mLoadRemaining(void const *header, long header_size, DataReader &remaining);
 
   // Unload file. Called before loading file and if loading fails.
   virtual void mUnload();
@@ -122,23 +123,19 @@ struct GmeFile {
   virtual blargg_err_t mGetTrackInfo(track_info_t *out, int track) const = 0;
   virtual void mPreLoad();
   virtual void mPostLoad();
-  virtual void m_clearPlaylist() {}
+  virtual void mClearPlaylist() {}
 
  public:
-  blargg_err_t remapTrack(int *track_io) const;  // need by MusicEmu
+  blargg_err_t RemapTrack(int *track_io) const;  // need by MusicEmu
  private:
-  // noncopyable
-  GmeFile(const GmeFile &);
-  GmeFile &operator=(const GmeFile &);
-
-  gme_type_t m_type{0};
-  int m_trackNum;
-  int m_rawTrackCount;
-  const char *m_warning;
-  void *m_userData{nullptr};
-  gme_user_cleanup_t m_userCleanupFn{nullptr};
-  M3uPlaylist m_playlist;
-  char m_playlistWarning[64];
+  gme_type_t mType{0};
+  int mTrackNum;
+  int mRawTrackCount;
+  const char *mWarning;
+  void *mUserData{nullptr};
+  gme_user_cleanup_t mUserCleanupFn{nullptr};
+  M3uPlaylist mPlaylist;
+  char mPlaylistWarning[64];
   blargg_vector<uint8_t> mFileData;  // only if loaded into memory using default load
 
   blargg_err_t m_loadM3u(blargg_err_t);
@@ -162,4 +159,4 @@ MusicEmu *gmeNew(MusicEmu *, long sample_rate);
 #include GME_FILE_READER_INCLUDE
 #endif
 
-// inline int GmeFile::error_count() const { return m_warning != 0; }
+// inline int GmeFile::error_count() const { return mWarning != 0; }

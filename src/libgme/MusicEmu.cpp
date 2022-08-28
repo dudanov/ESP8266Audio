@@ -36,7 +36,7 @@ void MusicEmu::mClearTrackVars() {
   mSilenceTime = 0;
   mSilenceCount = 0;
   mBufRemain = 0;
-  this->warning();  // clear warning
+  this->GetWarning();  // clear warning
 }
 
 void MusicEmu::mUnload() {
@@ -136,7 +136,7 @@ blargg_err_t MusicEmu::StartTrack(int track) {
   mClearTrackVars();
 
   int remapped = track;
-  RETURN_ERR(remapTrack(&remapped));
+  RETURN_ERR(RemapTrack(&remapped));
   mCurrentTrack = track;
   RETURN_ERR(mStartTrack(remapped));
 
@@ -156,13 +156,13 @@ blargg_err_t MusicEmu::StartTrack(int track) {
     mSilenceTime = 0;
     mSilenceCount = 0;
   }
-  return this->IsTrackEnded() ? this->warning() : nullptr;
+  return this->IsTrackEnded() ? this->GetWarning() : nullptr;
 }
 
 void MusicEmu::mEndTrackIfError(blargg_err_t err) {
   if (err != nullptr) {
     mEmuTrackEnded = true;
-    m_setWarning(err);
+    mSetWarning(err);
   }
 }
 

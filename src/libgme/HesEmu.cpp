@@ -131,13 +131,13 @@ blargg_err_t HesEmu::mLoad(DataReader &in) {
   RETURN_ERR(check_hes_header(header_.tag));
 
   if (header_.vers != 0)
-    m_setWarning("Unknown file version");
+    mSetWarning("Unknown file version");
 
   if (memcmp(header_.data_tag, "DATA", 4))
-    m_setWarning("Data header missing");
+    mSetWarning("Data header missing");
 
   if (memcmp(header_.unused, "\0\0\0\0", 4))
-    m_setWarning("Unknown header data");
+    mSetWarning("Unknown header data");
 
   // File spec supports multiple blocks, but I haven't found any, and
   // many files have bad sizes in the only block, so it's simpler to
@@ -147,19 +147,19 @@ blargg_err_t HesEmu::mLoad(DataReader &in) {
   long size = get_le32(header_.size);
   long const rom_max = 0x100000;
   if (addr & ~(rom_max - 1)) {
-    m_setWarning("Invalid address");
+    mSetWarning("Invalid address");
     addr &= rom_max - 1;
   }
   if ((unsigned long) (addr + size) > (unsigned long) rom_max)
-    m_setWarning("Invalid size");
+    mSetWarning("Invalid size");
 
   if (size != rom.fileSize()) {
     if (size <= rom.fileSize() - 4 && !memcmp(rom.begin() + size, "DATA", 4))
-      m_setWarning("Multiple DATA not supported");
+      mSetWarning("Multiple DATA not supported");
     else if (size < rom.fileSize())
-      m_setWarning("Extra file data");
+      mSetWarning("Extra file data");
     else
-      m_setWarning("Missing file data");
+      mSetWarning("Missing file data");
   }
 
   rom.setAddr(addr);
@@ -237,7 +237,7 @@ void HesEmu::cpu_write_vdp(int addr, int data) {
     case 2:
       if (vdp.latch == 5) {
         if (data & 0x04)
-          m_setWarning("Scanline interrupt unsupported");
+          mSetWarning("Scanline interrupt unsupported");
         mRunUntil(time());
         vdp.control = data;
         irq_changed();
@@ -462,7 +462,7 @@ blargg_err_t HesEmu::mRunClocks(blip_clk_time_t &duration_) {
   const auto duration = duration_;  // cache
 
   if (cpu::run(duration))
-    m_setWarning("Emulation error (illegal instruction)");
+    mSetWarning("Emulation error (illegal instruction)");
 
   check(time() >= duration);
   // check( time() - duration < 20 ); // Txx instruction could cause going way

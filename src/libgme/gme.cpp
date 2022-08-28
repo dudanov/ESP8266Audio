@@ -188,11 +188,11 @@ gme_err_t gme_open_file(const char *path, MusicEmu **out, int sample_rate) {
 
   // optimization: avoids seeking/re-reading header
   RemainingReader rem(header, header_size, &in);
-  gme_err_t err = emu->load(rem);
+  gme_err_t err = emu->Load(rem);
   in.close();
 
-  if (emu->m_isArchive)
-    err = emu->loadArchive(path);
+  if (emu->mIsArchive)
+    err = emu->LoadArchive(path);
 
   if (err)
     delete emu;
@@ -217,7 +217,7 @@ MusicEmu *m_gmeInternalNewEmu(gme_type_t type, int rate, bool multi_channel) {
     MusicEmu *me = type->new_emu();
     if (me) {
       if (!me->SetSampleRate(rate)) {
-        check(me->type() == type);
+        check(me->GetType() == type);
         return me;
       }
       delete me;
@@ -236,25 +236,25 @@ MusicEmu *gme_new_emu_multi_channel(gme_type_t type, int rate) {
   return m_gmeInternalNewEmu(type, rate, true /* multichannel */);
 }
 
-gme_err_t gme_load_file(MusicEmu *me, const char *path) { return me->loadFile(path); }
+gme_err_t gme_load_file(MusicEmu *me, const char *path) { return me->LoadFile(path); }
 
 gme_err_t gme_load_data(MusicEmu *me, void const *data, long size) {
   MemFileReader in(data, size);
-  return me->load(in);
+  return me->Load(in);
 }
 
 gme_err_t gme_load_custom(MusicEmu *me, gme_reader_t func, long size, void *data) {
   CallbackReader in(func, size, data);
-  return me->load(in);
+  return me->Load(in);
 }
 
 void gme_delete(MusicEmu *me) { delete me; }
 
-gme_type_t gme_type(MusicEmu const *me) { return me->type(); }
+gme_type_t gme_type(MusicEmu const *me) { return me->GetType(); }
 
-const char *gme_warning(MusicEmu *me) { return me->warning(); }
+const char *gme_warning(MusicEmu *me) { return me->GetWarning(); }
 
-int gme_track_count(MusicEmu const *me) { return me->getTrackCount(); }
+int gme_track_count(MusicEmu const *me) { return me->GetTrackCount(); }
 
 struct gme_info_t_ : gme_info_t {
   track_info_t info;
@@ -324,9 +324,9 @@ gme_err_t gme_track_info(MusicEmu const *me, gme_info_t **out, int track) {
 }
 
 void gme_free_info(gme_info_t *info) { delete STATIC_CAST(gme_info_t_ *, info); }
-void *gme_user_data(MusicEmu const *me) { return me->getUserData(); }
-void gme_set_user_data(MusicEmu *me, void *new_user_data) { me->setUserData(new_user_data); }
-void gme_set_user_cleanup(MusicEmu *me, gme_user_cleanup_t func) { me->setUserCleanupFn(func); }
+void *gme_user_data(MusicEmu const *me) { return me->GetUserData(); }
+void gme_set_user_data(MusicEmu *me, void *new_user_data) { me->SetUserData(new_user_data); }
+void gme_set_user_cleanup(MusicEmu *me, gme_user_cleanup_t func) { me->SetUserCleanupFn(func); }
 
 gme_err_t gme_start_track(MusicEmu *me, int index) { return me->StartTrack(index); }
 gme_err_t gme_play(MusicEmu *me, int n, short *p) { return me->Play(n, p); }
@@ -342,7 +342,7 @@ void gme_set_tempo(MusicEmu *me, double t) { me->SetTempo(t); }
 void gme_mute_voice(MusicEmu *me, int index, int mute) { me->MuteChannel(index, mute != 0); }
 void gme_mute_voices(MusicEmu *me, int mask) { me->MuteChannels(mask); }
 void gme_enable_accuracy(MusicEmu *me, int enabled) { me->SetAccuracy(enabled); }
-void gme_clear_playlist(MusicEmu *me) { me->clearPlaylist(); }
+void gme_clear_playlist(MusicEmu *me) { me->ClearPlaylist(); }
 int gme_type_multitrack(gme_type_t t) { return t->track_count != 1; }
 int gme_multi_channel(MusicEmu const *me) { return me->IsMultiChannel(); }
 

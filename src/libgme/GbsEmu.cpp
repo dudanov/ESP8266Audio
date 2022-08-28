@@ -78,7 +78,7 @@ struct GbsFile : GmeInfo {
     if (err)
       return (err == in.eof_error ? gme_wrong_file_type : err);
 
-    m_setTrackNum(h.track_count);
+    mSetTrackNum(h.track_count);
     return check_gbs_header(&h);
   }
 
@@ -94,18 +94,18 @@ blargg_err_t GbsEmu::mLoad(DataReader &in) {
   assert(offsetof(Header, copyright[32]) == HEADER_SIZE);
   RETURN_ERR(m_rom.load(in, HEADER_SIZE, &mHeader, 0));
 
-  m_setTrackNum(mHeader.track_count);
+  mSetTrackNum(mHeader.track_count);
   RETURN_ERR(check_gbs_header(&mHeader));
 
   if (mHeader.vers != 1)
-    m_setWarning("Unknown file version");
+    mSetWarning("Unknown file version");
 
   if (mHeader.timer_mode & 0x78)
-    m_setWarning("Invalid timer mode");
+    mSetWarning("Invalid timer mode");
 
   unsigned load_addr = get_le16(mHeader.load_addr);
   if ((mHeader.load_addr[1] | mHeader.init_addr[1] | mHeader.play_addr[1]) > 0x7F || load_addr < 0x400)
-    m_setWarning("Invalid load/init/play address");
+    mSetWarning("Invalid load/init/play address");
 
   mSetChannelsNumber(GbApu::OSC_NUM);
 
@@ -230,7 +230,7 @@ blargg_err_t GbsEmu::mRunClocks(blip_clk_time_t &duration) {
         debug_printf("PC wrapped around\n");
         cpu::r.pc &= 0xFFFF;
       } else {
-        m_setWarning("Emulation error (illegal/unsupported instruction)");
+        mSetWarning("Emulation error (illegal/unsupported instruction)");
         debug_printf("Bad opcode $%.2x at $%.4x\n", (int) *cpu::get_code(cpu::r.pc), (int) cpu::r.pc);
         cpu::r.pc = (cpu::r.pc + 1) & 0xFFFF;
         mCpuTime += 6;

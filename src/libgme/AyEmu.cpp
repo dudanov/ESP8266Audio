@@ -99,7 +99,7 @@ struct AyFile : GmeInfo {
 
   blargg_err_t mLoad(uint8_t const *begin, long size) override {
     RETURN_ERR(parse_header(begin, size, &file));
-    m_setTrackNum(file.header->max_track + 1);
+    mSetTrackNum(file.header->max_track + 1);
     return 0;
   }
 
@@ -115,10 +115,10 @@ blargg_err_t AyEmu::mLoad(const uint8_t *in, long size) {
   assert(offsetof(header_t, track_info[2]) == HEADER_SIZE);
 
   RETURN_ERR(parse_header(in, size, &mFile));
-  m_setTrackNum(mFile.header->max_track + 1);
+  mSetTrackNum(mFile.header->max_track + 1);
 
   if (mFile.header->vers > 2)
-    m_setWarning("Unknown file version");
+    mSetWarning("Unknown file version");
 
   mSetChannelsNumber(OSCS_NUM);
   mApu.SetVolume(mGetGain());
@@ -183,14 +183,14 @@ blargg_err_t AyEmu::mStartTrack(int track) {
     unsigned len = get_be16(blocks);
     blocks += 2;
     if (addr + len > 0x10000) {
-      m_setWarning("Bad data block size");
+      mSetWarning("Bad data block size");
       len = 0x10000 - addr;
     }
     check(len);
     uint8_t const *in = get_data(mFile, blocks, 0);
     blocks += 2;
     if (len > blargg_ulong(mFile.end - in)) {
-      m_setWarning("Missing file data");
+      mSetWarning("Missing file data");
       len = mFile.end - in;
     }
     // debug_printf( "addr: $%04X, len: $%04X\n", addr, len );
@@ -199,7 +199,7 @@ blargg_err_t AyEmu::mStartTrack(int track) {
     memcpy(&mMem.ram[addr], in, len);
 
     if (mFile.end - blocks < 8) {
-      m_setWarning("Missing file data");
+      mSetWarning("Missing file data");
       break;
     }
   } while ((addr = get_be16(blocks)) != 0);

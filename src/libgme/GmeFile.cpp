@@ -20,81 +20,81 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 const char *const gme_wrong_file_type = "Wrong file type for this emulator";
 
-void GmeFile::clearPlaylist() {
-  this->m_playlist.clear();
-  this->m_clearPlaylist();
-  this->m_trackNum = this->m_rawTrackCount;
+void GmeFile::ClearPlaylist() {
+  mPlaylist.clear();
+  mClearPlaylist();
+  mTrackNum = mRawTrackCount;
 }
 
 void GmeFile::mUnload() {
-  this->clearPlaylist();  // *before* clearing track count
-  this->m_trackNum = 0;
-  this->m_rawTrackCount = 0;
-  this->mFileData.clear();
+  this->ClearPlaylist();  // *before* clearing track count
+  mTrackNum = 0;
+  mRawTrackCount = 0;
+  mFileData.clear();
 }
 
 GmeFile::GmeFile() {
-  this->mUnload();            // clears fields
+  mUnload();                   // clears fields
   blargg_verify_byte_order();  // used by most emulator types, so save them the
                                // trouble
 }
 
 GmeFile::~GmeFile() {
-  if (this->m_userCleanupFn != nullptr)
-    this->m_userCleanupFn(this->m_userData);
+  if (mUserCleanupFn != nullptr)
+    mUserCleanupFn(mUserData);
 }
 
 blargg_err_t GmeFile::mLoad(const uint8_t *data, long size) {
-  require(data != this->mFileData.begin());  // mLoad() or mLoad() must be overridden
+  require(data != mFileData.begin());  // mLoad() or mLoad() must be overridden
   MemFileReader in(data, size);
-  return this->mLoad(in);
+  return mLoad(in);
 }
 
 blargg_err_t GmeFile::mLoad(DataReader &in) {
-  RETURN_ERR(this->mFileData.resize(in.remain()));
-  RETURN_ERR(in.read(this->mFileData.begin(), this->mFileData.size()));
-  return this->mLoad(this->mFileData.begin(), this->mFileData.size());
+  RETURN_ERR(mFileData.resize(in.remain()));
+  RETURN_ERR(in.read(mFileData.begin(), mFileData.size()));
+  return mLoad(mFileData.begin(), mFileData.size());
 }
 
 // public load functions call this at beginning
-void GmeFile::mPreLoad() { this->mUnload(); }
+void GmeFile::mPreLoad() { mUnload(); }
 
 void GmeFile::mPostLoad() {}
 
 // public load functions call this at end
 blargg_err_t GmeFile::mPostLoad(blargg_err_t err) {
-  if (!this->getTrackCount())
-    this->m_setTrackNum(this->type()->track_count);
+  if (!this->GetTrackCount())
+    mSetTrackNum(this->GetType()->track_count);
   if (!err)
-    this->mPostLoad();
+    mPostLoad();
   else
-    this->mUnload();
+    mUnload();
 
   return err;
 }
 
 // Public load functions
 
-blargg_err_t GmeFile::loadMem(void const *in, long size) {
-  this->mPreLoad();
-  return this->mPostLoad(this->mLoad((uint8_t const *) in, size));
+blargg_err_t GmeFile::LoadMem(void const *in, long size) {
+  mPreLoad();
+  return mPostLoad(mLoad((uint8_t const *) in, size));
 }
 
-blargg_err_t GmeFile::load(DataReader &in) {
-  this->mPreLoad();
-  return this->mPostLoad(this->mLoad(in));
+blargg_err_t GmeFile::Load(DataReader &in) {
+  mPreLoad();
+  return mPostLoad(mLoad(in));
 }
 
-blargg_err_t GmeFile::loadFile(const char *path) {
-  this->mPreLoad();
+blargg_err_t GmeFile::LoadFile(const char *path) {
+  mPreLoad();
   GME_FILE_READER in;
   RETURN_ERR(in.open(path));
-  return this->mPostLoad(this->mLoad(in));
+  return mPostLoad(mLoad(in));
 }
 
-blargg_err_t GmeFile::m_loadRemaining(void const *h, long s, DataReader &in) {
+blargg_err_t GmeFile::mLoadRemaining(void const *h, long s, DataReader &in) {
   RemainingReader rem(h, s, &in);
-  return this->load(rem);
+  return this->Load(rem);
 }
 
 // Track info
@@ -133,28 +133,28 @@ void GmeFile::copyField(char *out, const char *in, int in_size) {
 
 void GmeFile::copyField(char *out, const char *in) { copyField(out, in, MAX_FIELD); }
 
-blargg_err_t GmeFile::remapTrack(int *track_io) const {
-  if ((unsigned) *track_io >= (unsigned) getTrackCount())
+blargg_err_t GmeFile::RemapTrack(int *track_io) const {
+  if ((unsigned) *track_io >= (unsigned) GetTrackCount())
     return "Invalid track";
 
-  if ((unsigned) *track_io < (unsigned) m_playlist.size()) {
-    M3uPlaylist::entry_t const &e = m_playlist[*track_io];
+  if ((unsigned) *track_io < (unsigned) mPlaylist.size()) {
+    M3uPlaylist::entry_t const &e = mPlaylist[*track_io];
     *track_io = 0;
     if (e.track >= 0) {
       *track_io = e.track;
-      if (!(m_type->flags_ & 0x02))
+      if (!(mType->flags_ & 0x02))
         *track_io -= e.decimal_track;
     }
-    if (*track_io >= m_rawTrackCount)
+    if (*track_io >= mRawTrackCount)
       return "Invalid track in m3u playlist";
   } else {
-    check(!m_playlist.size());
+    check(!mPlaylist.size());
   }
   return 0;
 }
 
 blargg_err_t GmeFile::GetTrackInfo(track_info_t *out, int track) const {
-  out->track_count = getTrackCount();
+  out->track_count = GetTrackCount();
   out->length = -1;
   out->loop_length = -1;
   out->intro_length = -1;
@@ -168,21 +168,21 @@ blargg_err_t GmeFile::GetTrackInfo(track_info_t *out, int track) const {
   out->dumper[0] = 0;
   out->system[0] = 0;
 
-  copyField(out->system, type()->system);
+  copyField(out->system, GetType()->system);
 
   int remapped = track;
-  RETURN_ERR(remapTrack(&remapped));
+  RETURN_ERR(RemapTrack(&remapped));
   RETURN_ERR(mGetTrackInfo(out, remapped));
 
   // override with m3u info
-  if (m_playlist.size()) {
-    M3uPlaylist::info_t const &i = m_playlist.info();
+  if (mPlaylist.size()) {
+    M3uPlaylist::info_t const &i = mPlaylist.info();
     copyField(out->game, i.title);
     copyField(out->author, i.engineer);
     copyField(out->author, i.composer);
     copyField(out->dumper, i.ripping);
 
-    M3uPlaylist::entry_t const &e = m_playlist[track];
+    M3uPlaylist::entry_t const &e = mPlaylist[track];
     copyField(out->song, e.name);
     if (e.length >= 0)
       out->length = e.length;

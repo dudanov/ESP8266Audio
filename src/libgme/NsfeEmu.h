@@ -50,11 +50,11 @@ class NsfeEmu : public NsfEmu {
   struct header_t {
     char tag[4];
   };
-  using MusicEmu::load;
+  using MusicEmu::Load;
   blargg_err_t load(header_t const &h,
                     DataReader &in)  // use RemainingReader
   {
-    return m_loadRemaining(&h, sizeof h, in);
+    return mLoadRemaining(&h, sizeof h, in);
   }
   void disable_playlist(bool = true);  // use clear_playlist()
 
@@ -68,7 +68,7 @@ class NsfeEmu : public NsfEmu {
   blargg_err_t mGetTrackInfo(track_info_t *, int track) const override;
   blargg_err_t mStartTrack(int) override;
   void mUnload() override;
-  void m_clearPlaylist() override;
+  void mClearPlaylist() override;
 
  private:
   NsfeInfo info;

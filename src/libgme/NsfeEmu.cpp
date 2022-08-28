@@ -215,7 +215,7 @@ blargg_err_t NsfeInfo::load(DataReader &in, NsfEmu *nsf_emu) {
         } else {
           SubsetReader sub(&in, size);  // limit emu to nsf data
           RemainingReader rem(&header, NsfEmu::HEADER_SIZE, &sub);
-          RETURN_ERR(nsf_emu->load(rem));
+          RETURN_ERR(nsf_emu->Load(rem));
           check(rem.remain() == 0);
         }
         break;
@@ -278,7 +278,7 @@ struct NsfeFile : GmeInfo {
   blargg_err_t mLoad(DataReader &in) override {
     RETURN_ERR(info.load(in, 0));
     info.disable_playlist(false);
-    m_setTrackNum(info.info.track_count);
+    mSetTrackNum(info.info.track_count);
     return 0;
   }
 
@@ -299,12 +299,12 @@ blargg_err_t NsfeEmu::mLoad(DataReader &in) {
 
 void NsfeEmu::disable_playlist(bool b) {
   info.disable_playlist(b);
-  m_setTrackNum(info.info.track_count);
+  mSetTrackNum(info.info.track_count);
 }
 
-void NsfeEmu::m_clearPlaylist() {
+void NsfeEmu::mClearPlaylist() {
   disable_playlist();
-  NsfEmu::m_clearPlaylist();
+  NsfEmu::mClearPlaylist();
 }
 
 blargg_err_t NsfeEmu::mStartTrack(int track) { return NsfEmu::mStartTrack(info.remap_track(track)); }

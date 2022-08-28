@@ -21,16 +21,16 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 // gme functions defined here to avoid linking in m3u code unless it's used
 
 blargg_err_t GmeFile::m_loadM3u(blargg_err_t err) {
-  require(m_rawTrackCount);  // file must be loaded first
+  require(mRawTrackCount);  // file must be loaded first
 
   if (!err) {
-    if (m_playlist.size())
-      m_trackNum = m_playlist.size();
+    if (mPlaylist.size())
+      mTrackNum = mPlaylist.size();
 
-    int line = m_playlist.first_error();
+    int line = mPlaylist.first_error();
     if (line) {
       // avoid using bloated printf()
-      char *out = &m_playlistWarning[sizeof m_playlistWarning];
+      char *out = &mPlaylistWarning[sizeof mPlaylistWarning];
       *--out = 0;
       do {
         *--out = line % 10 + '0';
@@ -39,21 +39,21 @@ blargg_err_t GmeFile::m_loadM3u(blargg_err_t err) {
       static const char str[] = "Problem in m3u at line ";
       out -= sizeof str - 1;
       memcpy(out, str, sizeof str - 1);
-      m_setWarning(out);
+      mSetWarning(out);
     }
   }
   return err;
 }
 
-blargg_err_t GmeFile::loadM3u(const char *path) { return m_loadM3u(m_playlist.load(path)); }
+blargg_err_t GmeFile::LoadM3u(const char *path) { return m_loadM3u(mPlaylist.load(path)); }
 
-blargg_err_t GmeFile::loadM3u(DataReader &in) { return m_loadM3u(m_playlist.load(in)); }
+blargg_err_t GmeFile::LoadM3u(DataReader &in) { return m_loadM3u(mPlaylist.load(in)); }
 
-gme_err_t gme_load_m3u(MusicEmu *me, const char *path) { return me->loadM3u(path); }
+gme_err_t gme_load_m3u(MusicEmu *me, const char *path) { return me->LoadM3u(path); }
 
 gme_err_t gme_load_m3u_data(MusicEmu *me, const void *data, long size) {
   MemFileReader in(data, size);
-  return me->loadM3u(in);
+  return me->LoadM3u(in);
 }
 
 static char *skip_white(char *in) {

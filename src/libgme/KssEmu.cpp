@@ -117,21 +117,21 @@ blargg_err_t KssEmu::mLoad(DataReader &in) {
   if (header_.tag[3] == 'C') {
     if (header_.extra_header) {
       header_.extra_header = 0;
-      m_setWarning("Unknown data in header");
+      mSetWarning("Unknown data in header");
     }
     if (header_.device_flags & ~0x0F) {
       header_.device_flags &= 0x0F;
-      m_setWarning("Unknown data in header");
+      mSetWarning("Unknown data in header");
     }
   } else {
     ext_header_t &ext = header_;
     memcpy(&ext, m_rom.begin(), min((int) EXT_HEADER_SIZE, (int) header_.extra_header));
     if (header_.extra_header > 0x10)
-      m_setWarning("Unknown data in header");
+      mSetWarning("Unknown data in header");
   }
 
   if (header_.device_flags & 0x09)
-    m_setWarning("FM sound not supported");
+    mSetWarning("FM sound not supported");
 
   scc_enabled = 0xC000;
   if (header_.device_flags & 0x04)
@@ -193,7 +193,7 @@ blargg_err_t KssEmu::mStartTrack(int track) {
   long load_size = min(orig_load_size, m_rom.fileSize());
   load_size = min(load_size, long(mem_size - load_addr));
   if (load_size != orig_load_size)
-    m_setWarning("Excessive data size");
+    mSetWarning("Excessive data size");
   memcpy(ram + load_addr, m_rom.begin() + header_.extra_header, load_size);
 
   m_rom.setAddr(-load_size - header_.extra_header);
@@ -204,7 +204,7 @@ blargg_err_t KssEmu::mStartTrack(int track) {
   bank_count = header_.bank_mode & 0x7F;
   if (bank_count > max_banks) {
     bank_count = max_banks;
-    m_setWarning("Bank data missing");
+    mSetWarning("Bank data missing");
   }
   // debug_printf( "load_size : $%X\n", load_size );
   // debug_printf( "bank_size : $%X\n", bank_size );
