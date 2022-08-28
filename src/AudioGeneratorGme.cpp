@@ -25,7 +25,7 @@ inline long AudioGeneratorGme::size() const { return this->file->getSize(); }
 
 inline long AudioGeneratorGme::tell() const { return this->file->getPos(); }
 
-blargg_err_t AudioGeneratorGme::seek(long pos) { return this->file->seek(pos, SEEK_SET) ? nullptr : eof_error; }
+inline blargg_err_t AudioGeneratorGme::seek(long pos) { return this->file->seek(pos, SEEK_SET) ? nullptr : eof_error; }
 
 blargg_err_t AudioGeneratorGme::read(void *dst, long size) {
   if (this->remain() < size)
@@ -54,7 +54,7 @@ AudioGeneratorGme::~AudioGeneratorGme() {
 
 bool AudioGeneratorGme::loop() {
   while (this->running) {
-    for (; mPos != mBuf.end(); mPos++) { // += 2)
+    for (; mPos != mBuf.end(); mPos++) {  // += 2)
       int16_t b[2];
       b[0] = b[1] = *mPos;
       if (!this->output->ConsumeSample(b))

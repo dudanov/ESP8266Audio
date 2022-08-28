@@ -53,5 +53,5 @@ class AudioGeneratorGme : public AudioGenerator, public FileReader {
   blargg_err_t read(void *dst, long size) override;
   long size() const override;
   long tell() const override;
-  blargg_err_t seek(long) override;
+  blargg_err_t seek(long pos) override;
 };
