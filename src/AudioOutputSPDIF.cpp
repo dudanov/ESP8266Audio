@@ -75,14 +75,14 @@ AudioOutputSPDIF::AudioOutputSPDIF(int dout_pin, int port, int dma_buf_count) {
 #if defined(ESP32)
   // Configure ESP32 I2S to roughly compatible to ESP8266 peripheral
   i2s_config_t i2s_config_spdif = {
-    .mode = (i2s_mode_t) (I2S_MODE_MASTER | I2S_MODE_TX),
+    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
     .sample_rate = 88200,                          // 2 x sampling_rate
     .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,  // 32bit words
     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,  // Right than left
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 2, 0)
-    .communication_format = (i2s_comm_format_t) (I2S_COMM_FORMAT_STAND_I2S),
+    .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_STAND_I2S),
 #else
-    .communication_format = (i2s_comm_format_t) (I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+    .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
 #endif
     .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,  // lowest interrupt priority
     .dma_buf_count = dma_buf_count,
@@ -90,8 +90,10 @@ AudioOutputSPDIF::AudioOutputSPDIF(int dout_pin, int port, int dma_buf_count) {
     .use_apll = true,                     // Audio PLL is needed for low clock jitter
     .tx_desc_auto_clear = true,           // Silence on underflow
     .fixed_mclk = 0,                      // Unused
-    //.mclk_multiple = I2S_MCLK_MULTIPLE_DEFAULT, // Unused
-    //.bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT // Use bits per sample
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 0)
+    .mclk_multiple = I2S_MCLK_MULTIPLE_DEFAULT,  // Unused
+    .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT,  // Use bits per sample
+#endif
   };
   if (i2s_driver_install((i2s_port_t) portNo, &i2s_config_spdif, 0, NULL) != ESP_OK) {
     audioLogger->println(F("ERROR: Unable to install I2S drivers"));
@@ -134,11 +136,14 @@ AudioOutputSPDIF::~AudioOutputSPDIF() {
 
 bool AudioOutputSPDIF::SetPinout(int bclk, int wclk, int dout) {
 #if defined(ESP32)
-  i2s_pin_config_t pins = {//.mck_io_num = 0, // unused
-                           .bck_io_num = bclk,
-                           .ws_io_num = wclk,
-                           .data_out_num = dout,
-                           .data_in_num = I2S_PIN_NO_CHANGE};
+  i2s_pin_config_t pins = {
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 0)
+    .mck_io_num = 0,  // unused
+#endif.bck_io_num = bclk,
+    .ws_io_num = wclk,
+    .data_out_num = dout,
+    .data_in_num = I2S_PIN_NO_CHANGE,
+  };
   if (i2s_set_pin((i2s_port_t) portNo, &pins) != ESP_OK) {
     audioLogger->println("ERROR setting up S/PDIF I2S pins\n");
     return false;
@@ -229,14 +234,14 @@ bool AudioOutputSPDIF::ConsumeSample(int16_t sample[2]) {
 
   uint16_t sample_left = Amplify(ms[LEFTCHANNEL]);
   // BMC encode and flip left channel bits
-  hi = pgm_read_word(&spdif_bmclookup[(uint8_t) (sample_left >> 8)]);
+  hi = pgm_read_word(&spdif_bmclookup[(uint8_t)(sample_left >> 8)]);
   lo = pgm_read_word(&spdif_bmclookup[(uint8_t) sample_left]);
   // Low word is inverted depending on first bit of high word
   lo ^= (~((int16_t) hi) >> 16);
   buf[0] = ((uint32_t) lo << 16) | hi;
   // Fixed 4 bits auxillary-audio-databits, the first used as parity
   // Depending on first bit of low word, invert the bits
-  aux = 0xb333 ^ (((uint32_t) ((int16_t) lo)) >> 17);
+  aux = 0xb333 ^ (((uint32_t)((int16_t) lo)) >> 17);
   // Send 'B' preamble only for the first frame of data-block
   if (frame_num == 0) {
     buf[1] = VUCP_PREAMBLE_B | aux;
@@ -246,11 +251,11 @@ bool AudioOutputSPDIF::ConsumeSample(int16_t sample[2]) {
 
   uint16_t sample_right = Amplify(ms[RIGHTCHANNEL]);
   // BMC encode right channel, similar as above
-  hi = pgm_read_word(&spdif_bmclookup[(uint8_t) (sample_right >> 8)]);
+  hi = pgm_read_word(&spdif_bmclookup[(uint8_t)(sample_right >> 8)]);
   lo = pgm_read_word(&spdif_bmclookup[(uint8_t) sample_right]);
   lo ^= (~((int16_t) hi) >> 16);
   buf[2] = ((uint32_t) lo << 16) | hi;
-  aux = 0xb333 ^ (((uint32_t) ((int16_t) lo)) >> 17);
+  aux = 0xb333 ^ (((uint32_t)((int16_t) lo)) >> 17);
   buf[3] = VUCP_PREAMBLE_W | aux;
 
 #if defined(ESP32)
