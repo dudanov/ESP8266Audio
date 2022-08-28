@@ -47,8 +47,6 @@ blargg_err_t GmeFile::m_loadM3u(blargg_err_t err) {
 
 blargg_err_t GmeFile::LoadM3u(DataReader &in) { return m_loadM3u(mPlaylist.load(in)); }
 
-gme_err_t gme_load_m3u(MusicEmu *me, const char *path) { return me->LoadM3u(path); }
-
 gme_err_t gme_load_m3u_data(MusicEmu *me, const void *data, long size) {
   MemFileReader in(data, size);
   return me->LoadM3u(in);
