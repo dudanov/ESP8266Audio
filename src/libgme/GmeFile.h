@@ -140,8 +140,7 @@ struct GmeFile {
  public:
   // track_info field copying
   enum { MAX_FIELD = 255 };
-  static void copyField(char *out, const char *in);
-  static void copyField(char *out, const char *in, int len);
+  static const char *copyField(char *out, const char *in, int len = MAX_FIELD);
 };
 
 MusicEmu *gmeNew(MusicEmu *, long sample_rate);

@@ -1,13 +1,8 @@
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
-#define GME_DISABLE_STEREO_DEPTH 1
-
 #include "MusicEmu.h"
 
 #include "gme_types.h"
-#if !GME_DISABLE_STEREO_DEPTH
-#include "EffectsBuffer.h"
-#endif
 #include "blargg_endian.h"
 #include <ctype.h>
 #include <string.h>
@@ -32,6 +27,7 @@ gme_type_t const *gme_type_list() {
 #else
 #ifdef USE_GME_AY
       gme_ay_type,
+      gme_rsf_type,
 #endif
 #ifdef USE_GME_GBS
       gme_gbs_type,

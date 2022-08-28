@@ -65,14 +65,14 @@ class AyApu {
 
   struct Square {
     BlipBuffer *mOutput;
-    blip_time_t mPeriod;
-    blip_time_t mDelay;
+    blip_clk_time_t mPeriod;
+    blip_clk_time_t mDelay;
     short mLastAmp;
     short mPhase;
   };
 
   struct Noise {
-    blip_time_t mDelay;
+    blip_clk_time_t mDelay;
     blargg_ulong mLfsr;
   };
 

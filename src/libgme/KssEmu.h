@@ -66,7 +66,7 @@ class KssEmu : private KssCpu, public ClassicEmu {
   void mUnload() override;
 
  private:
-  RomData<PAGE_SIZE> m_rom;
+  RomData<PAGE_SIZE> mRom;
   composite_header_t header_;
 
   bool scc_accessed;

@@ -69,7 +69,7 @@ void NsfEmu::mUnload() {
   }
 #endif
 
-  m_rom.clear();
+  mRom.clear();
   MusicEmu::mUnload();
 }
 
@@ -225,7 +225,7 @@ blargg_err_t NsfEmu::mInitSound() {
 
 blargg_err_t NsfEmu::mLoad(DataReader &in) {
   assert(offsetof(Header, unused[4]) == HEADER_SIZE);
-  RETURN_ERR(m_rom.load(in, HEADER_SIZE, &mHeader, 0));
+  RETURN_ERR(mRom.load(in, HEADER_SIZE, &mHeader, 0));
 
   mSetTrackNum(mHeader.track_count);
   RETURN_ERR(check_nsf_header(&mHeader));
@@ -255,8 +255,8 @@ blargg_err_t NsfEmu::mLoad(DataReader &in) {
     return w;
   }
 
-  m_rom.setAddr(load_addr % BANK_SIZE);
-  int total_banks = m_rom.size() / BANK_SIZE;
+  mRom.setAddr(load_addr % BANK_SIZE);
+  int total_banks = mRom.size() / BANK_SIZE;
 
   // bank switching
   int first_bank = (load_addr - ROM_BEGIN) / BANK_SIZE;

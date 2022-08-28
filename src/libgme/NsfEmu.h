@@ -88,7 +88,7 @@ class NsfEmu : private NesCpu, public ClassicEmu {
   static const nes_addr_t ROM_BEGIN = 0x8000;
   static const nes_addr_t BANK_SELECT_ADDR = 0x5FF8;
   static const nes_addr_t BANK_SIZE = 0x1000;
-  RomData<BANK_SIZE> m_rom;
+  RomData<BANK_SIZE> mRom;
 
  private:
   friend class NesCpu;

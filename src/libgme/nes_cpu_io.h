@@ -66,10 +66,10 @@ void NsfEmu::mCpuWrite(nes_addr_t addr, uint8_t data) {
 
   unsigned bank = addr - BANK_SELECT_ADDR;
   if (bank < BANKS_NUM) {
-    blargg_long offset = m_rom.maskAddr(data * (blargg_long) BANK_SIZE);
-    if (offset >= m_rom.size())
+    blargg_long offset = mRom.maskAddr(data * (blargg_long) BANK_SIZE);
+    if (offset >= mRom.size())
       mSetWarning("Invalid bank");
-    cpu::mapCode((bank + 8) * BANK_SIZE, BANK_SIZE, m_rom.atAddr(offset));
+    cpu::mapCode((bank + 8) * BANK_SIZE, BANK_SIZE, mRom.atAddr(offset));
     return;
   }
 

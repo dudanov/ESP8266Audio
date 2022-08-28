@@ -44,7 +44,7 @@ GbsEmu::GbsEmu() {
 GbsEmu::~GbsEmu() {}
 
 void GbsEmu::mUnload() {
-  m_rom.clear();
+  mRom.clear();
   MusicEmu::mUnload();
 }
 
@@ -92,7 +92,7 @@ struct GbsFile : GmeInfo {
 
 blargg_err_t GbsEmu::mLoad(DataReader &in) {
   assert(offsetof(Header, copyright[32]) == HEADER_SIZE);
-  RETURN_ERR(m_rom.load(in, HEADER_SIZE, &mHeader, 0));
+  RETURN_ERR(mRom.load(in, HEADER_SIZE, &mHeader, 0));
 
   mSetTrackNum(mHeader.track_count);
   RETURN_ERR(check_gbs_header(&mHeader));
@@ -130,10 +130,10 @@ void GbsEmu::m_setBank(int n) {
   }
 
   blargg_long addr = n * (blargg_long) BANK_SIZE;
-  if (addr > m_rom.size()) {
+  if (addr > mRom.size()) {
     return;
   }
-  cpu::map_code(BANK_SIZE, BANK_SIZE, m_rom.atAddr(m_rom.maskAddr(addr)));
+  cpu::map_code(BANK_SIZE, BANK_SIZE, mRom.atAddr(mRom.maskAddr(addr)));
 }
 
 void GbsEmu::m_updateTimer() {
@@ -182,14 +182,14 @@ blargg_err_t GbsEmu::mStartTrack(int track) {
     mApu.writeRegister(0, i + GbApu::START_ADDR, sound_data[i]);
 
   unsigned load_addr = get_le16(mHeader.load_addr);
-  m_rom.setAddr(load_addr);
+  mRom.setAddr(load_addr);
   cpu::rst_base = load_addr;
 
-  cpu::reset(m_rom.unmapped());
+  cpu::reset(mRom.unmapped());
 
   cpu::map_code(RAM_ADDR, 0x10000 - RAM_ADDR, m_ram.data());
-  cpu::map_code(0, BANK_SIZE, m_rom.atAddr(0));
-  m_setBank(m_rom.size() > BANK_SIZE);
+  cpu::map_code(0, BANK_SIZE, mRom.atAddr(0));
+  m_setBank(mRom.size() > BANK_SIZE);
 
   m_ram[HI_PAGE + 6] = mHeader.timer_modulo;
   m_ram[HI_PAGE + 7] = mHeader.timer_mode;

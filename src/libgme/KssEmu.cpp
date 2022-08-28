@@ -110,7 +110,7 @@ blargg_err_t KssEmu::mLoad(DataReader &in) {
   memset(&header_, 0, sizeof header_);
   assert(offsetof(header_t, device_flags) == HEADER_SIZE - 1);
   assert(offsetof(ext_header_t, msx_audio_vol) == EXT_HEADER_SIZE - 1);
-  RETURN_ERR(m_rom.load(in, HEADER_SIZE, STATIC_CAST(header_t *, &header_), 0));
+  RETURN_ERR(mRom.load(in, HEADER_SIZE, STATIC_CAST(header_t *, &header_), 0));
 
   RETURN_ERR(check_kss_header(header_.tag));
 
@@ -125,7 +125,7 @@ blargg_err_t KssEmu::mLoad(DataReader &in) {
     }
   } else {
     ext_header_t &ext = header_;
-    memcpy(&ext, m_rom.begin(), min((int) EXT_HEADER_SIZE, (int) header_.extra_header));
+    memcpy(&ext, mRom.begin(), min((int) EXT_HEADER_SIZE, (int) header_.extra_header));
     if (header_.extra_header > 0x10)
       mSetWarning("Unknown data in header");
   }
@@ -190,17 +190,17 @@ blargg_err_t KssEmu::mStartTrack(int track) {
   // copy non-banked data into RAM
   unsigned load_addr = get_le16(header_.load_addr);
   long orig_load_size = get_le16(header_.load_size);
-  long load_size = min(orig_load_size, m_rom.fileSize());
+  long load_size = min(orig_load_size, mRom.fileSize());
   load_size = min(load_size, long(mem_size - load_addr));
   if (load_size != orig_load_size)
     mSetWarning("Excessive data size");
-  memcpy(ram + load_addr, m_rom.begin() + header_.extra_header, load_size);
+  memcpy(ram + load_addr, mRom.begin() + header_.extra_header, load_size);
 
-  m_rom.setAddr(-load_size - header_.extra_header);
+  mRom.setAddr(-load_size - header_.extra_header);
 
   // check available bank data
   blargg_long const bank_size = this->bank_size();
-  int max_banks = (m_rom.fileSize() - load_size + bank_size - 1) / bank_size;
+  int max_banks = (mRom.fileSize() - load_size + bank_size - 1) / bank_size;
   bank_count = header_.bank_mode & 0x7F;
   if (bank_count > max_banks) {
     bank_count = max_banks;
@@ -247,7 +247,7 @@ void KssEmu::set_bank(int logical, int physical) {
   } else {
     long phys = physical * (blargg_long) bank_size;
     for (unsigned offset = 0; offset < bank_size; offset += PAGE_SIZE)
-      cpu::map_mem(addr + offset, PAGE_SIZE, unmapped_write, m_rom.atAddr(phys + offset));
+      cpu::map_mem(addr + offset, PAGE_SIZE, unmapped_write, mRom.atAddr(phys + offset));
   }
 }
 

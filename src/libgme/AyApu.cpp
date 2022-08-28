@@ -151,14 +151,14 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
     uint8_t mode = mRegs[R7] >> idx;
 
     // output
-    BlipBuffer *const osc_output = osc.mOutput;
-    if (osc_output == nullptr)
+    BlipBuffer *const out = osc.mOutput;
+    if (out == nullptr)
       continue;
-    osc_output->SetModified();
+    out->SetModified();
 
     // period
     bool half_vol = false;
-    blip_time_t inaudible_period = (blargg_ulong)(osc_output->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
+    const blip_clk_time_t inaudible_period = out->GetRateClocks(INAUDIBLE_FREQ) / 2;
     if (osc.mPeriod <= inaudible_period && !(mode & TONE_OFF)) {
       half_vol = true;  // Actually around 60%, but 50% is close enough
       mode |= TONE_OFF;
@@ -229,7 +229,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
         int delta = amp - osc.mLastAmp;
         if (delta) {
           osc.mLastAmp = amp;
-          mSynth.Offset(osc_output, start_time, delta);
+          mSynth.Offset(out, start_time, delta);
         }
       }
 
@@ -256,7 +256,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
               noise_lfsr = (-(noise_lfsr & 1) & 0x12000) ^ (noise_lfsr >> 1);
               if (changed & 2) {
                 delta = -delta;
-                mSynth.Offset(osc_output, ntime, delta);
+                mSynth.Offset(out, ntime, delta);
               }
               ntime += noise_period;
             }
@@ -275,7 +275,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
           if (noise_lfsr & delta_non_zero) {
             while (time < end) {
               delta = -delta;
-              mSynth.Offset(osc_output, time, delta);
+              mSynth.Offset(out, time, delta);
               time += period;
               // phase ^= 1;
             }

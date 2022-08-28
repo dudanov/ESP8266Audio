@@ -59,7 +59,7 @@ class GbsEmu : private GbCpu, public ClassicEmu {
  private:
   // rom
   enum { BANK_SIZE = 0x4000 };
-  RomData<BANK_SIZE> m_rom;
+  RomData<BANK_SIZE> mRom;
   void m_setBank(int);
 
   // timer

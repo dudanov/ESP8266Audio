@@ -92,9 +92,9 @@ blargg_err_t GmeFile::mLoadRemaining(void const *h, long s, DataReader &in) {
 
 // Track info
 
-void GmeFile::copyField(char *out, const char *in, int in_size) {
+const char *GmeFile::copyField(char *const out, const char *in, int in_size) {
   if (!in || !*in)
-    return;
+    return in;
 
   // remove spaces/junk from beginning
   while (in_size && unsigned(*in - 1) <= ' ' - 1) {
@@ -111,6 +111,8 @@ void GmeFile::copyField(char *out, const char *in, int in_size) {
   while (len < in_size && in[len])
     len++;
 
+  const auto next = in + len + 1;
+
   // remove spaces/junk from end
   while (len && unsigned(in[len - 1]) <= ' ')
     len--;
@@ -122,9 +124,9 @@ void GmeFile::copyField(char *out, const char *in, int in_size) {
   // strip out stupid fields that should have been left blank
   if (!strcmp(out, "?") || !strcmp(out, "<?>") || !strcmp(out, "< ? >"))
     out[0] = 0;
+  
+  return next;
 }
-
-void GmeFile::copyField(char *out, const char *in) { copyField(out, in, MAX_FIELD); }
 
 blargg_err_t GmeFile::RemapTrack(int *track_io) const {
   if ((unsigned) *track_io >= (unsigned) GetTrackCount())
