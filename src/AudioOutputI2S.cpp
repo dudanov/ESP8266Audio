@@ -87,7 +87,8 @@ bool AudioOutputI2S::SetPinout() {
   i2s_pin_config_t pins = {
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 0)
     .mck_io_num = 0,  // Unused
-#endif.bck_io_num = bclkPin,
+#endif
+    .bck_io_num = bclkPin,
     .ws_io_num = wclkPin,
     .data_out_num = doutPin,
     .data_in_num = I2S_PIN_NO_CHANGE,
