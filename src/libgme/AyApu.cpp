@@ -127,6 +127,8 @@ inline void AyApu::mPeriodUpdate(unsigned channel) {
 }
 
 void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
+  if (end_clk_time == mLastClkTime)
+    return;
   require(end_clk_time >= mLastClkTime);
 
   // noise period and initial values

@@ -55,7 +55,7 @@ class AyApu {
   }
 
   // Set overall volume (default is 1.0)
-  void SetVolume(double v) { mSynth.SetVolume(0.7 / OSCS_NUM / AMP_RANGE / 2 * v); }
+  void SetVolume(double v) { mSynth.SetVolume(0.7 / OSCS_NUM / AMP_RANGE * v); }
 
   // Set treble equalization (see documentation)
   void SetTrebleEq(BlipEq const &eq) { mSynth.SetTrebleEq(eq); }
