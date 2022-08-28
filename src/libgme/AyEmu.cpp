@@ -129,7 +129,7 @@ blargg_err_t AyEmu::mLoad(const uint8_t *in, long size) {
   return mSetupBuffer(CLK_SPECTRUM);
 }
 
-void AyEmu::mUpdateEq(BlipEq const &eq) { mApu.setTrebleEq(eq); }
+void AyEmu::mUpdateEq(BlipEq const &eq) { mApu.SetTrebleEq(eq); }
 
 void AyEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) {
   if (i >= AyApu::OSCS_NUM)

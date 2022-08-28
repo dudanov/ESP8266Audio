@@ -157,7 +157,7 @@ void SmsApu::setVolume(double vol) {
   m_noise.synth.SetVolume(vol);
 }
 
-void SmsApu::setTrebleEq(const BlipEq &eq) {
+void SmsApu::SetTrebleEq(const BlipEq &eq) {
   m_squareSynth.SetTrebleEq(eq);
   m_noise.synth.SetTrebleEq(eq);
 }

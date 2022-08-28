@@ -143,7 +143,7 @@ extern gme_type_t const gme_gym_type = &gme_gym_type_;
 
 blargg_err_t GymEmu::mSetSampleRate(long sample_rate) {
   BlipEq eq(-32, 8000, sample_rate);
-  mApu.setTrebleEq(eq);
+  mApu.SetTrebleEq(eq);
   dac_synth.SetTrebleEq(eq);
   mApu.setVolume(0.135 * FM_GAIN * mGetGain());
   dac_synth.SetVolume(0.125 / 256 * FM_GAIN * mGetGain());

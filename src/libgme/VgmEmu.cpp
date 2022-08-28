@@ -232,9 +232,9 @@ blargg_err_t VgmEmu::SetMultiChannel(bool is_enabled) {
 }
 
 void VgmEmu::mUpdateEq(BlipEq const &eq) {
-  mPsg[0].setTrebleEq(eq);
+  mPsg[0].SetTrebleEq(eq);
   if (mPsgDual)
-    mPsg[1].setTrebleEq(eq);
+    mPsg[1].SetTrebleEq(eq);
   mDacSynth.SetTrebleEq(eq);
 }
 

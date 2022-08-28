@@ -114,7 +114,7 @@ blargg_err_t GbsEmu::mLoad(DataReader &in) {
   return mSetupBuffer(4194304);
 }
 
-void GbsEmu::mUpdateEq(BlipEq const &eq) { mApu.setTrebleEq(eq); }
+void GbsEmu::mUpdateEq(BlipEq const &eq) { mApu.SetTrebleEq(eq); }
 
 void GbsEmu::mSetChannel(int i, BlipBuffer *c, BlipBuffer *l, BlipBuffer *r) { mApu.setOscOutput(i, c, l, r); }
 

@@ -14,38 +14,38 @@ namespace ay {
 class AyApu {
  public:
   AyApu();
-  static const unsigned CLOCK_PSC = 16;
+
   static const unsigned OSCS_NUM = 3;
   static const unsigned AMP_RANGE = 255;
+
   // Set buffer to generate all sound into, or disable sound if NULL
   void SetOutput(BlipBuffer *out) {
     SetOscOutput(0, out);
     SetOscOutput(1, out);
     SetOscOutput(2, out);
   }
+
   // Reset sound chip
   void Reset();
 
-  // EN: 16 internal control registers
-  // RU: 16 внутренних регистров управления
-  enum Reg { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, RNUM };
-
   // Write to register at specified time
-  void Write(blip_time_t time, unsigned address, uint8_t data) {
-    mRunUntil(time);
+  void Write(blip_clk_time_t clk_time, unsigned address, uint8_t data) {
+    mRunUntil(clk_time);
     mWriteRegister(address, data);
   }
+
   // Run sound to specified time, end current time frame, then start a new
   // time frame at time 0. Time frames have no effect on emulation and each
   // can be whatever length is convenient.
-  void EndFrame(blip_time_t time) {
-    if (time > mLastTime)
-      mRunUntil(time);
+  void EndFrame(blip_clk_time_t end_clk_time) {
+    if (end_clk_time > mLastClkTime)
+      mRunUntil(end_clk_time);
 
-    assert(mLastTime >= time);
-    mLastTime -= time;
+    assert(mLastClkTime >= end_clk_time);
+    mLastClkTime -= end_clk_time;
   }
-  // Additional features
+
+  /* Additional features */
 
   // Set sound output of specific oscillator to buffer, where index is
   // 0, 1, or 2. If buffer is NULL, the specified oscillator is muted.
@@ -53,18 +53,15 @@ class AyApu {
     assert(idx < OSCS_NUM);
     mSquare[idx].mOutput = out;
   }
+
   // Set overall volume (default is 1.0)
   void SetVolume(double v) { mSynth.SetVolume(0.7 / OSCS_NUM / AMP_RANGE * v); }
 
   // Set treble equalization (see documentation)
-  void setTrebleEq(BlipEq const &eq) { mSynth.SetTrebleEq(eq); }
+  void SetTrebleEq(BlipEq const &eq) { mSynth.SetTrebleEq(eq); }
 
  private:
-  std::array<uint8_t, RNUM> mRegs;
-  void mWriteRegister(unsigned address, uint8_t data);
-  void mPeriodUpdate(unsigned channel);
-
-  void mRunUntil(blip_time_t);
+  static const unsigned CLOCK_PSC = 16;
 
   struct Square {
     BlipBuffer *mOutput;
@@ -81,7 +78,6 @@ class AyApu {
 
   struct Envelope {
     blip_time_t mDelay;
-
     void SetMode(uint8_t mode);
     Envelope &Advance();
     bool InRampPhase() const { return std::distance(mIt, mEnd) > 32; }
@@ -94,12 +90,21 @@ class AyApu {
     const uint8_t *mEnd;
   };
 
-  blip_time_t mLastTime;
+  void mWriteRegister(unsigned address, uint8_t data);
+  void mPeriodUpdate(unsigned channel);
+  void mRunUntil(blip_clk_time_t end_clk_time);
+
+  // EN: 16 internal control registers
+  // RU: 16 внутренних регистров управления
+  enum Reg { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, RNUM };
+  std::array<uint8_t, RNUM> mRegs;
+
   // EN: 3 square generators
   // RU: 3 генератора прямоугольных сигналов
   std::array<Square, OSCS_NUM> mSquare;
   Noise mNoise;
   Envelope mEnvelope;
+  blip_clk_time_t mLastClkTime;
 
  public:
   BlipSynth<BLIP_GOOD_QUALITY, 1> mSynth;

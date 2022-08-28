@@ -121,7 +121,7 @@ void AyCpu::Reset(void *m) {
 #define CASE8(a, b, c, d, e, f, g, h) CASE7(a, b, c, d, e, f, g) : case 0x##h
 
 // high four bits are $ED time - 8, low four bits are $DD/$FD time - 8
-static uint8_t const ed_dd_timing[0x100] = {
+static const uint8_t ed_dd_timing[0x100] PROGMEM = {
     // 0    1    2    3    4    5    6    7    8    9    A    B    C    D    E F
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x0C, 0x02, 0x00, 0x00,
@@ -1089,7 +1089,7 @@ almost_out_of_time:
       {
         case 0xED:
           pc++;
-          s_time += ed_dd_timing[data] >> 4;
+          s_time += pgm_read_byte(&ed_dd_timing[data]) >> 4;
           switch (data) {
             {
               blargg_ulong temp;
@@ -1366,7 +1366,7 @@ almost_out_of_time:
         ix_prefix:
           pc++;
           unsigned data2 = READ_PROG(pc);
-          s_time += ed_dd_timing[data] & 0x0F;
+          s_time += pgm_read_byte(&ed_dd_timing[data]) & 0x0F;
           switch (data) {
 // TODO: more efficient way of avoid negative address
 #define IXY_DISP(ixy, disp) uint16_t((ixy) + (disp))

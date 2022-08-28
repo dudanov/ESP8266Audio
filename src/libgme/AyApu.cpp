@@ -85,7 +85,7 @@ AyApu::AyApu() {
 }
 
 void AyApu::Reset() {
-  mLastTime = 0;
+  mLastClkTime = 0;
   mNoise.mDelay = 0;
   mNoise.mLfsr = 0b1;
   for (auto &osc : mSquare) {
@@ -126,8 +126,8 @@ inline void AyApu::mPeriodUpdate(unsigned channel) {
   osc.mPeriod = period;
 }
 
-void AyApu::mRunUntil(const blip_time_t final_end_time) {
-  require(final_end_time >= mLastTime);
+void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
+  require(end_clk_time >= mLastClkTime);
 
   // noise period and initial values
   const blip_time_t NOISE_PSC = CLOCK_PSC * 2;  // verified
@@ -165,8 +165,8 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
     }
 
     // envelope
-    blip_time_t start_time = mLastTime;
-    blip_time_t end_time = final_end_time;
+    blip_time_t start_time = mLastClkTime;
+    blip_time_t end_time = end_clk_time;
     const uint8_t amp_ctrl = mRegs[R8 + idx];
     int volume = Envelope::GetAmp(amp_ctrl & 0b1111, half_vol);
     // int osc_env_pos = mEnvelope.mPos;
@@ -175,8 +175,8 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
       // use envelope only if it's a repeating wave or a ramp that hasn't finished
       if (!(mRegs[R13] & 1) || mEnvelope.InRampPhase()) {
         end_time = start_time + mEnvelope.mDelay;
-        if (end_time >= final_end_time)
-          end_time = final_end_time;
+        if (end_time >= end_clk_time)
+          end_time = end_clk_time;
 
         // if ( !(mRegs [12] | mRegs [11]) )
         //  debug_printf( "Used envelope period 0\n" );
@@ -192,13 +192,13 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
     blip_time_t time = start_time + osc.mDelay;
     // maintain tone's phase when off
     if (mode & TONE_OFF) {
-      blargg_long count = (final_end_time - time + period - 1) / period;
+      blargg_long count = (end_clk_time - time + period - 1) / period;
       time += count * period;
       osc.mPhase ^= count & 1;
     }
 
     // noise time
-    blip_time_t ntime = final_end_time;
+    blip_time_t ntime = end_clk_time;
     blargg_ulong noise_lfsr = 1;
     if (!(mode & NOISE_OFF)) {
       ntime = start_time + old_noise_delay;
@@ -299,7 +299,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
           osc.mPhase = phase;
       }
 
-      if (end_time >= final_end_time)
+      if (end_time >= end_clk_time)
         break;  // breaks first time when envelope is disabled
 
       // next envelope step
@@ -307,13 +307,13 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
 
       start_time = end_time;
       end_time += env_period;
-      if (end_time > final_end_time)
-        end_time = final_end_time;
+      if (end_time > end_clk_time)
+        end_time = end_clk_time;
     }
-    osc.mDelay = time - final_end_time;
+    osc.mDelay = time - end_clk_time;
 
     if (!(mode & NOISE_OFF)) {
-      mNoise.mDelay = ntime - final_end_time;
+      mNoise.mDelay = ntime - end_clk_time;
       mNoise.mLfsr = noise_lfsr;
     }
   }
@@ -321,7 +321,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
   // TODO: optimized saw wave envelope?
 
   // maintain envelope phase
-  blip_time_t remain = final_end_time - mLastTime - mEnvelope.mDelay;
+  blip_time_t remain = end_clk_time - mLastClkTime - mEnvelope.mDelay;
   if (remain >= 0) {
     blargg_long count = (remain + env_period) / env_period;
     // mEnvelope.mPos += count;
@@ -334,7 +334,7 @@ void AyApu::mRunUntil(const blip_time_t final_end_time) {
   assert(mEnvelope.mDelay > 0);
   // assert(mEnvelope.mPos < 0);
 
-  mLastTime = final_end_time;
+  mLastClkTime = end_clk_time;
 }
 
 }  // namespace ay

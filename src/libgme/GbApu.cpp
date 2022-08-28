@@ -44,7 +44,7 @@ GbApu::GbApu() {
   this->reset();
 }
 
-void GbApu::setTrebleEq(const BlipEq &eq) {
+void GbApu::SetTrebleEq(const BlipEq &eq) {
   this->m_squareSynth.SetTrebleEq(eq);
   this->m_otherSynth.SetTrebleEq(eq);
 }

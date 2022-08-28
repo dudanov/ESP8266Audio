@@ -14,7 +14,7 @@ class SmsApu {
   void setVolume(double);
 
   // Set treble equalization
-  void setTrebleEq(const BlipEq &);
+  void SetTrebleEq(const BlipEq &);
 
   // Outputs can be assigned to a single buffer for mono output, or to three
   // buffers for stereo output (using StereoBuffer to do the mixing).

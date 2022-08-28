@@ -146,10 +146,10 @@ blargg_err_t KssEmu::mLoad(DataReader &in) {
 }
 
 void KssEmu::mUpdateEq(BlipEq const &eq) {
-  ay.setTrebleEq(eq);
+  ay.SetTrebleEq(eq);
   scc.treble_eq(eq);
   if (sn)
-    sn->setTrebleEq(eq);
+    sn->SetTrebleEq(eq);
 }
 
 void KssEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *left, BlipBuffer *right) {
