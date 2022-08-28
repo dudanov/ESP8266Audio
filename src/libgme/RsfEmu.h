@@ -45,13 +45,15 @@ class RsfEmu : public ClassicEmu {
   void mSetTempo(double) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
+  void mWriteRegisters(blip_clk_time_t time);
 
  private:
   AyApu mApu;
   file_t mFile;
-  const uint8_t *mPos;
+  const uint8_t *mIt;
   blip_clk_time_t mPlayPeriod;
   blip_clk_time_t mNextPlay;
+  uint32_t mFrame;
 };
 
 }  // namespace ay
