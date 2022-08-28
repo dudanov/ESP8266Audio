@@ -63,7 +63,6 @@ struct GmeFile {
   blargg_err_t LoadMem(void const *data, long size);
 
   // Load an m3u playlist. Must be done after loading main music file.
-  blargg_err_t LoadM3u(const char *path);
   blargg_err_t LoadM3u(DataReader &in);
 
   virtual blargg_err_t LoadArchive(const char *) { return gme_wrong_file_type; }

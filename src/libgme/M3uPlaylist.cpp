@@ -45,8 +45,6 @@ blargg_err_t GmeFile::m_loadM3u(blargg_err_t err) {
   return err;
 }
 
-blargg_err_t GmeFile::LoadM3u(const char *path) { return m_loadM3u(mPlaylist.load(path)); }
-
 blargg_err_t GmeFile::LoadM3u(DataReader &in) { return m_loadM3u(mPlaylist.load(in)); }
 
 gme_err_t gme_load_m3u(MusicEmu *me, const char *path) { return me->LoadM3u(path); }
@@ -389,12 +387,6 @@ blargg_err_t M3uPlaylist::load(DataReader &in) {
   RETURN_ERR(data.resize(in.remain() + 1));
   RETURN_ERR(in.read(data.begin(), data.size() - 1));
   return parse();
-}
-
-blargg_err_t M3uPlaylist::load(const char *path) {
-  GME_FILE_READER in;
-  RETURN_ERR(in.open(path));
-  return load(in);
 }
 
 blargg_err_t M3uPlaylist::load(void const *in, long size) {

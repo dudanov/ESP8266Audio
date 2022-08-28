@@ -10,7 +10,6 @@
 class M3uPlaylist {
  public:
   // Load playlist data
-  blargg_err_t load(const char *path);
   blargg_err_t load(DataReader &in);
   blargg_err_t load(void const *data, long size);
 
