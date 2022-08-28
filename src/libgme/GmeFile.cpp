@@ -85,13 +85,6 @@ blargg_err_t GmeFile::Load(DataReader &in) {
   return mPostLoad(mLoad(in));
 }
 
-blargg_err_t GmeFile::LoadFile(const char *path) {
-  mPreLoad();
-  GME_FILE_READER in;
-  RETURN_ERR(in.open(path));
-  return mPostLoad(mLoad(in));
-}
-
 blargg_err_t GmeFile::mLoadRemaining(void const *h, long s, DataReader &in) {
   RemainingReader rem(h, s, &in);
   return this->Load(rem);

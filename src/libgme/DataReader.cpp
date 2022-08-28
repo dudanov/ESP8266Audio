@@ -28,9 +28,6 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 static const unsigned char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 #endif                                                 /* HAVE_ZLIB_H */
 
-using std::max;
-using std::min;
-
 const char DataReader::eof_error[] = "Unexpected end of file";
 
 #define RETURN_VALIDITY_CHECK(cond) \
@@ -83,13 +80,13 @@ SubsetReader::SubsetReader(DataReader *dr, long size) {
   in = dr;
   remain_ = dr->remain();
   if (remain_ > size)
-    remain_ = max(0l, size);
+    remain_ = std::max(0l, size);
 }
 
 long SubsetReader::remain() const { return remain_; }
 
 long SubsetReader::read_avail(void *p, long s) {
-  s = max(0l, s);
+  s = std::max(0l, s);
   if (s > remain_)
     s = remain_;
   remain_ -= s;
@@ -100,14 +97,14 @@ long SubsetReader::read_avail(void *p, long s) {
 
 RemainingReader::RemainingReader(void const *h, long size, DataReader *r) {
   header = (char const *) h;
-  header_end = header + max(0l, size);
+  header_end = header + std::max(0l, size);
   in = r;
 }
 
 long RemainingReader::remain() const { return header_end - header + in->remain(); }
 
 long RemainingReader::read_first(void *out, long count) {
-  count = max(0l, count);
+  count = std::max(0l, count);
   long first = header_end - header;
   if (first) {
     if (first > count || first < 0)
@@ -120,9 +117,9 @@ long RemainingReader::read_first(void *out, long count) {
 }
 
 long RemainingReader::read_avail(void *out, long count) {
-  count = max(0l, count);
+  count = std::max(0l, count);
   long first = read_first(out, count);
-  long second = max(0l, count - first);
+  long second = std::max(0l, count - first);
   if (second) {
     second = in->read_avail((char *) out + first, second);
     if (second <= 0)
@@ -132,9 +129,9 @@ long RemainingReader::read_avail(void *out, long count) {
 }
 
 blargg_err_t RemainingReader::read(void *out, long count) {
-  count = max(0l, count);
+  count = std::max(0l, count);
   long first = read_first(out, count);
-  long second = max(0l, count - first);
+  long second = std::max(0l, count - first);
   if (!second)
     return 0;
   return in->read((char *) out + first, second);
@@ -142,7 +139,7 @@ blargg_err_t RemainingReader::read(void *out, long count) {
 
 // MemFileReader
 
-MemFileReader::MemFileReader(const void *p, long s) : m_begin((const char *) p), m_size(max(0l, s)), m_pos(0l) {
+MemFileReader::MemFileReader(const void *p, long s) : m_begin((const char *) p), m_size(std::max(0l, s)), m_pos(0l) {
 #ifdef HAVE_ZLIB_H
   if (!m_begin)
     return;
@@ -252,7 +249,7 @@ bool MemFileReader::gz_decompress() {
 
 // CallbackReader
 
-CallbackReader::CallbackReader(callback_t c, long size, void *d) : callback(c), data(d) { remain_ = max(0l, size); }
+CallbackReader::CallbackReader(callback_t c, long size, void *d) : callback(c), data(d) { remain_ = std::max(0l, size); }
 
 long CallbackReader::remain() const { return remain_; }
 
@@ -269,139 +266,4 @@ blargg_err_t CallbackReader::read(void *out, long count) {
   if (count > remain_)
     return eof_error;
   return callback(data, out, (int) count);
-}
-
-// StdFileReader
-
-#ifdef HAVE_ZLIB_H
-
-static const char *get_gzip_eof(const char *path, long *eof) {
-  FILE *file = fopen(path, "rb");
-  if (!file)
-    return "Couldn't open file";
-
-  unsigned char buf[4];
-  bool found_eof = false;
-  if (fread(buf, 2, 1, file) > 0 && buf[0] == 0x1F && buf[1] == 0x8B) {
-    fseek(file, -4, SEEK_END);
-    if (fread(buf, 4, 1, file) > 0) {
-      *eof = get_le32(buf);
-      found_eof = true;
-    }
-  }
-  if (!found_eof) {
-    fseek(file, 0, SEEK_END);
-    *eof = ftell(file);
-  }
-  const char *err = (ferror(file) || feof(file)) ? "Couldn't get file size" : nullptr;
-  fclose(file);
-  return err;
-}
-#endif
-
-StdFileReader::StdFileReader()
-    : file_(nullptr)
-#ifdef HAVE_ZLIB_H
-      ,
-      size_(0)
-#endif
-{
-}
-
-StdFileReader::~StdFileReader() { close(); }
-
-blargg_err_t StdFileReader::open(const char *path) {
-#ifdef HAVE_ZLIB_H
-  // zlib transparently handles uncompressed data if magic header
-  // not present but we still need to grab size
-  RETURN_ERR(get_gzip_eof(path, &size_));
-  file_ = gzopen(path, "rb");
-#else
-  file_ = fopen(path, "rb");
-#endif
-
-  if (!file_)
-    return "Couldn't open file";
-  return nullptr;
-}
-
-long StdFileReader::size() const {
-#ifdef HAVE_ZLIB_H
-  if (file_)
-    return size_;  // Set for both compressed and uncompressed modes
-#endif
-  long pos = tell();
-  fseek((FILE *) file_, 0, SEEK_END);
-  long result = tell();
-  fseek((FILE *) file_, pos, SEEK_SET);
-  return result;
-}
-
-long StdFileReader::read_avail(void *p, long s) {
-#ifdef HAVE_ZLIB_H
-  if (file_ && s > 0 && static_cast<unsigned long>(s) <= UINT_MAX) {
-    return gzread(reinterpret_cast<gzFile>(file_), p, static_cast<unsigned>(s));
-  }
-  return 0l;
-#else
-  const size_t readLength = static_cast<size_t>(max(0l, s));
-  const auto result = fread(p, 1, readLength, reinterpret_cast<FILE *>(file_));
-  return static_cast<long>(result);
-#endif /* HAVE_ZLIB_H */
-}
-
-blargg_err_t StdFileReader::read(void *p, long s) {
-  RETURN_VALIDITY_CHECK(s > 0 && static_cast<unsigned long>(s) <= UINT_MAX);
-#ifdef HAVE_ZLIB_H
-  if (file_) {
-    const auto &gzfile = reinterpret_cast<gzFile>(file_);
-    if (s == gzread(gzfile, p, static_cast<unsigned>(s)))
-      return nullptr;
-    if (gzeof(gzfile))
-      return eof_error;
-    return "Couldn't read from GZ file";
-  }
-#endif
-  const auto &file = reinterpret_cast<FILE *>(file_);
-  if (s == static_cast<long>(fread(p, 1, static_cast<size_t>(s), file)))
-    return 0;
-  if (feof(file))
-    return eof_error;
-  return "Couldn't read from file";
-}
-
-long StdFileReader::tell() const {
-#ifdef HAVE_ZLIB_H
-  if (file_)
-    return gztell(reinterpret_cast<gzFile>(file_));
-#endif
-  return ftell(reinterpret_cast<FILE *>(file_));
-}
-
-blargg_err_t StdFileReader::seek(long n) {
-#ifdef HAVE_ZLIB_H
-  if (file_) {
-    if (gzseek(reinterpret_cast<gzFile>(file_), n, SEEK_SET) >= 0)
-      return nullptr;
-    if (n > size_)
-      return eof_error;
-    return "Error seeking in GZ file";
-  }
-#endif
-  if (!fseek(reinterpret_cast<FILE *>(file_), n, SEEK_SET))
-    return nullptr;
-  if (n > size())
-    return eof_error;
-  return "Error seeking in file";
-}
-
-void StdFileReader::close() {
-  if (file_) {
-#ifdef HAVE_ZLIB_H
-    gzclose(reinterpret_cast<gzFile>(file_));
-#else
-    fclose(reinterpret_cast<FILE *>(file_));
-#endif
-    file_ = nullptr;
-  }
 }

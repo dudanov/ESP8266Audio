@@ -55,9 +55,6 @@ struct GmeFile {
   // file is wrong type or is seriously corrupt. They also set warning
   // string for minor problems.
 
-  // Load from file on disk
-  blargg_err_t LoadFile(const char *path);
-
   // Load from custom data source (see DataReader.h)
   blargg_err_t Load(DataReader &);
 
@@ -153,10 +150,3 @@ MusicEmu *gmeNew(MusicEmu *, long sample_rate);
 #define GME_COPY_FIELD(in, out, name) \
   { GmeFile::copyField(out->name, in.name, sizeof in.name); }
 
-#ifndef GME_FILE_READER
-#define GME_FILE_READER StdFileReader
-#elif defined(GME_FILE_READER_INCLUDE)
-#include GME_FILE_READER_INCLUDE
-#endif
-
-// inline int GmeFile::error_count() const { return mWarning != 0; }

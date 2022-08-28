@@ -1,8 +1,5 @@
 // Data reader interface for uniform access
-
-// File_Extractor 0.4.0
-#ifndef DATA_READER_H
-#define DATA_READER_H
+#pragma once
 
 #include "blargg_common.h"
 
@@ -41,28 +38,6 @@ class FileReader : public DataReader {
 
   long remain() const;
   blargg_err_t skip(long n);
-};
-
-// Disk file reader
-class StdFileReader : public FileReader {
- public:
-  blargg_err_t open(const char *path);
-  void close();
-
- public:
-  StdFileReader();
-  ~StdFileReader();
-  long size() const;
-  blargg_err_t read(void *, long);
-  long read_avail(void *, long);
-  long tell() const;
-  blargg_err_t seek(long);
-
- private:
-  void *file_;  // Either FILE* or zlib's gzFile
-#ifdef HAVE_ZLIB_H
-  long size_;  // TODO: Fix ABI compat
-#endif         /* HAVE_ZLIB_H */
 };
 
 // Treats range of memory as a file
@@ -106,8 +81,7 @@ class SubsetReader : public DataReader {
   long remain_;
 };
 
-// Joins already-read header and remaining data into original file (to avoid
-// seeking)
+// Joins already-read header and remaining data into original file (to avoid seeking)
 class RemainingReader : public DataReader {
  public:
   RemainingReader(void const *header, long size, DataReader *);
@@ -141,5 +115,3 @@ class CallbackReader : public DataReader {
   void *const data;
   long remain_;
 };
-
-#endif

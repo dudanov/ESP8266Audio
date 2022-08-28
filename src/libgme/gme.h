@@ -20,10 +20,6 @@ typedef struct MusicEmu MusicEmu;
 
 /******** Basic operations ********/
 
-/* Create emulator and load game music file/data into it. Sets *out to new
- * emulator. */
-BLARGG_EXPORT gme_err_t gme_open_file(const char path[], MusicEmu **out, int sample_rate);
-
 /* Number of tracks available */
 BLARGG_EXPORT int gme_track_count(MusicEmu const *);
 
@@ -224,10 +220,6 @@ BLARGG_EXPORT gme_type_t gme_identify_extension(const char path_or_extension[]);
  */
 BLARGG_EXPORT const char *gme_type_extension(gme_type_t music_type);
 
-/* Determine file type based on file's extension or header (if extension isn't
-recognized). Sets *type_out to type, or 0 if unrecognized or error. */
-BLARGG_EXPORT gme_err_t gme_identify_file(const char path[], gme_type_t *type_out);
-
 /* Create new emulator and set sample rate. Returns NULL if out of memory. If
 you only need track information, pass gme_info_only for sample_rate. */
 BLARGG_EXPORT MusicEmu *gme_new_emu(gme_type_t, int sample_rate);
@@ -239,9 +231,6 @@ BLARGG_EXPORT MusicEmu *gme_new_emu(gme_type_t, int sample_rate);
  * @since 0.6.2
  */
 BLARGG_EXPORT MusicEmu *gme_new_emu_multi_channel(gme_type_t, int sample_rate);
-
-/* Load music file into emulator */
-BLARGG_EXPORT gme_err_t gme_load_file(MusicEmu *, const char path[]);
 
 /* Load music file from memory into emulator. Makes a copy of data passed. */
 BLARGG_EXPORT gme_err_t gme_load_data(MusicEmu *, void const *data, long size);

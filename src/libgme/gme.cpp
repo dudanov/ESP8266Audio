@@ -128,19 +128,6 @@ const char *gme_type_extension(gme_type_t music_type) {
   return "";
 }
 
-gme_err_t gme_identify_file(const char *path, gme_type_t *type_out) {
-  *type_out = gme_identify_extension(path);
-  // TODO: don't examine header if file has extension?
-  if (!*type_out) {
-    char header[4];
-    GME_FILE_READER in;
-    RETURN_ERR(in.open(path));
-    RETURN_ERR(in.read(header, sizeof header));
-    *type_out = gme_identify_extension(gme_identify_header(header));
-  }
-  return 0;
-}
-
 gme_err_t gme_open_data(void const *data, long size, MusicEmu **out, int sample_rate) {
   require((data || !size) && out);
   *out = 0;
@@ -155,44 +142,6 @@ gme_err_t gme_open_data(void const *data, long size, MusicEmu **out, int sample_
   CHECK_ALLOC(emu);
 
   gme_err_t err = gme_load_data(emu, data, size);
-
-  if (err)
-    delete emu;
-  else
-    *out = emu;
-
-  return err;
-}
-
-gme_err_t gme_open_file(const char *path, MusicEmu **out, int sample_rate) {
-  require(path && out);
-  *out = 0;
-
-  GME_FILE_READER in;
-  RETURN_ERR(in.open(path));
-
-  char header[4];
-  int header_size = 0;
-
-  gme_type_t file_type = gme_identify_extension(path);
-  if (!file_type) {
-    header_size = sizeof header;
-    RETURN_ERR(in.read(header, sizeof header));
-    file_type = gme_identify_extension(gme_identify_header(header));
-  }
-  if (!file_type)
-    return gme_wrong_file_type;
-
-  MusicEmu *emu = gme_new_emu(file_type, sample_rate);
-  CHECK_ALLOC(emu);
-
-  // optimization: avoids seeking/re-reading header
-  RemainingReader rem(header, header_size, &in);
-  gme_err_t err = emu->Load(rem);
-  in.close();
-
-  if (emu->mIsArchive)
-    err = emu->LoadArchive(path);
 
   if (err)
     delete emu;
@@ -235,8 +184,6 @@ MusicEmu *gme_new_emu_multi_channel(gme_type_t type, int rate) {
   // multi-channel)
   return m_gmeInternalNewEmu(type, rate, true /* multichannel */);
 }
-
-gme_err_t gme_load_file(MusicEmu *me, const char *path) { return me->LoadFile(path); }
 
 gme_err_t gme_load_data(MusicEmu *me, void const *data, long size) {
   MemFileReader in(data, size);
