@@ -25,7 +25,7 @@
 #include "libgme/gme.h"
 #include <array>
 
-class AudioGeneratorGme : public AudioGenerator, public DataReader {
+class AudioGeneratorGme : public AudioGenerator, public FileReader {
  public:
   AudioGeneratorGme() : mPos(mBuf.end()) {}
   ~AudioGeneratorGme();
@@ -47,10 +47,11 @@ class AudioGeneratorGme : public AudioGenerator, public DataReader {
   void mCbInfo(const char *name, long value);
   void mCbTrackInfo();
 
-  /* DataReader interface implementation */
+  /* GME FileReader interface implementation */
 
   long read_avail(void *dst, long size) override;
   blargg_err_t read(void *dst, long size) override;
-  long remain() const override;
-  blargg_err_t skip(long count) override;
+  long size() const override;
+  long tell() const override;
+  blargg_err_t seek(long) override;
 };

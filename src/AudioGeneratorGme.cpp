@@ -21,11 +21,15 @@
 #include "AudioGeneratorGme.h"
 #include "libgme/MusicEmu.h"
 
-inline long AudioGeneratorGme::remain() const { return this->file->getSize() - this->file->getPos(); }
+inline long AudioGeneratorGme::size() const { return this->file->getSize(); }
 
-blargg_err_t AudioGeneratorGme::skip(long count) { return this->file->seek(count, SEEK_CUR) ? nullptr : eof_error; }
+inline long AudioGeneratorGme::tell() const { return this->file->getPos(); }
+
+blargg_err_t AudioGeneratorGme::seek(long pos) { return this->file->seek(pos, SEEK_SET) ? nullptr : eof_error; }
 
 blargg_err_t AudioGeneratorGme::read(void *dst, long size) {
+  if (this->remain() < size)
+    return eof_error;
   uint8_t *p = static_cast<uint8_t *>(dst);
   while (size > 0) {
     auto len = this->file->read(p, size);
@@ -38,8 +42,7 @@ blargg_err_t AudioGeneratorGme::read(void *dst, long size) {
 }
 
 long AudioGeneratorGme::read_avail(void *dst, long size) {
-  if (size > this->remain())
-    size = this->remain();
+  size = std::min(size, this->remain());
   return this->read(dst, size) ? 0 : size;
 }
 
@@ -89,7 +92,7 @@ bool AudioGeneratorGme::begin(AudioFileSource *src, AudioOutput *out) {
 bool AudioGeneratorGme::mLoad() {
   char header[4];
 
-  this->file->seek(0, SEEK_SET);
+  this->seek(0);
   this->read(header, sizeof(header));
   gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
 
