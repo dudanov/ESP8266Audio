@@ -10,6 +10,7 @@ emulator.
 #include "AyCpu.h"
 
 #include "blargg_endian.h"
+#include <pgmspace.h>
 #include <string.h>
 
 //#include "z80_cpu_log.h"
