@@ -30,9 +30,6 @@ static const uint32_t CLK_CPC = 2000000;
 static const uint16_t RAM_START = 0x4000;
 static const uint8_t OSCS_NUM = AyApu::OSCS_NUM + 1;
 
-using std::max;
-using std::min;
-
 AyEmu::AyEmu() {
   static const char *const CHANNELS_NAMES[OSCS_NUM] = {"Wave 1", "Wave 2", "Wave 3", "Beeper"};
   static int const CHANNELS_TYPES[OSCS_NUM] = {WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2, MIXED_TYPE | 0};
@@ -335,7 +332,7 @@ blargg_err_t AyEmu::mRunClocks(blip_clk_time_t &duration, int) {
     duration /= 2;  // until mode is set, leave room for halved clock rate
 
   while (Time() < duration) {
-    cpu::Run(min(duration, (blip_clk_time_t) mNextPlay));
+    cpu::Run(std::min(duration, (blip_clk_time_t) mNextPlay));
 
     if (Time() >= mNextPlay) {
       mNextPlay += mPlayPeriod;
