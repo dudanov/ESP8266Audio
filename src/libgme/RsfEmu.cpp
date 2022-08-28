@@ -63,7 +63,7 @@ static const uint8_t *find_frame(const RsfEmu::file_t *file, const uint32_t fram
       if (*it != 0xFF)
         it += count_bits(get_be16(it)) + 1;
     } else {
-      current += *++it;
+      current += *(++it);
     }
   }
 
@@ -157,7 +157,7 @@ void RsfEmu::mWriteRegisters(blip_clk_time_t time) {
   uint16_t mask = get_be16(mIt++);
   for (unsigned addr = 0; mask != 0; mask >>= 1, addr++) {
     if (mask & 1)
-      mApu.Write(time, addr, *++mIt);
+      mApu.Write(time, addr, *(++mIt));
   }
 }
 
@@ -172,7 +172,7 @@ blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
       if (*mIt != 0xFF)
         mWriteRegisters(start);
     } else {
-      start += *++mIt * mPlayPeriod;
+      start += *(++mIt) * mPlayPeriod;
     }
   }
   duration = end;
