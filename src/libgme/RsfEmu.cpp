@@ -83,8 +83,8 @@ static blargg_err_t parse_header(const uint8_t *in, long size, RsfEmu::file_t *o
 
   const uint32_t loop_frame = get_le32(out->header->loop);
 
-  if (loop_frame >= get_le32(out->header->frames))
-    return gme_wrong_file_type;
+  //if (loop_frame >= get_le32(out->header->frames))
+    //return gme_wrong_file_type;
 
   const uint8_t *it = out->header->info;
 
@@ -93,13 +93,13 @@ static blargg_err_t parse_header(const uint8_t *in, long size, RsfEmu::file_t *o
       ++it;
   }
 
-  if (std::distance(out->header->tag, it) != get_le16(out->header->song_offset))
-    return gme_wrong_file_type;
+  //if (std::distance(out->header->tag, it) != get_le16(out->header->song_offset))
+    //return gme_wrong_file_type;
 
   out->begin = it;
 
-  if (std::distance(out->begin, out->end) <= 0)
-    return gme_wrong_file_type;
+  //if (std::distance(out->begin, out->end) <= 0)
+    //return gme_wrong_file_type;
 
   out->loop = find_frame(out, loop_frame);
   return nullptr;
