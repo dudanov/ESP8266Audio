@@ -51,9 +51,9 @@ class VgmEmuImpl : public ClassicEmu, private DualResampler {
   uint8_t const *mDataEnd;
   void mUpdateFmRates(long *ym2413_rate, long *ym2612_rate) const;
 
-  blip_clk_time_t mVgmTime;
   const uint8_t *mPos;
-  blip_time_t mRunCommands(blip_clk_time_t);
+  blip_sample_time_t mVgmTime;
+  blip_time_t mRunCommands(blip_sample_time_t);
   int mPlayFrame(blip_time_t blip_time, int sample_count, sample_t *buf) override;
 
   uint8_t const *mPcmData;

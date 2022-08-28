@@ -110,7 +110,7 @@ void VgmEmuImpl::mWritePcm(vgm_time_t vgm_time, int amp) {
     mDacAmp |= mDacDisabled;
 }
 
-blip_time_t VgmEmuImpl::mRunCommands(blip_clk_time_t end_time) {
+blip_time_t VgmEmuImpl::mRunCommands(blip_sample_time_t end_time) {
   auto vgm_time = this->mVgmTime;
   const uint8_t *pos = this->mPos;
   if (pos >= mDataEnd) {

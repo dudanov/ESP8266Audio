@@ -132,7 +132,7 @@ class BlipBuffer {
   // SampleDuration
   blip_resampled_time_t ResampledDuration(blip_clk_time_t clk_time) const { return clk_time * mFactor; }
   // Number of raw samples that can be mixed within frame of specified duration.
-  long ClocksToSamples(blip_clk_time_t clk_time) const { return ResampledDuration(clk_time) >> BLIP_BUFFER_ACCURACY; }
+  blip_sample_time_t ClocksToSamples(blip_clk_time_t clk_time) const { return ResampledDuration(clk_time) >> BLIP_BUFFER_ACCURACY; }
   // SampleTime * 65536
   blip_resampled_time_t ResampledTime(blip_clk_time_t clk_time) const { return ResampledDuration(clk_time) + mOffset; }
   // SamplesPerClock * 65536
