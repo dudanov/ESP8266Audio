@@ -149,7 +149,6 @@ blargg_err_t RsfEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
   mIt = mFile.begin;
   mNextPlay = 0;
-  mFrame = 0;
   mApu.Reset();
   return 0;
 }
@@ -164,7 +163,7 @@ void RsfEmu::mWriteRegisters(blip_clk_time_t time) {
 
 blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
   blip_clk_time_t start = mNextPlay;
-  blip_clk_time_t end = duration;
+  blip_clk_time_t end = std::min(duration, mPlayPeriod);
   for (; start < end && mIt < mFile.end; ++mIt) {
     if (*mIt != 0xFE) {
       start += mPlayPeriod;
@@ -174,8 +173,7 @@ blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
       start += *++mIt * mPlayPeriod;
     }
   }
-  mFrame++;
-  //duration = end;
+  duration = end;
   mNextPlay = start - end;
   mApu.EndFrame(end);
   if (mIt >= mFile.end)
