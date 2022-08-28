@@ -178,6 +178,8 @@ blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
   duration = end;
   mNextPlay = start - end;
   mApu.EndFrame(end);
+  if (mIt >= mFile.end)
+    mIt = mFile.loop;
   return 0;
 }
 
