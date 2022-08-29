@@ -147,7 +147,7 @@ void RsfEmu::mSetTempo(double t) {
 
 blargg_err_t RsfEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
-  mNextPlay = mPlayPeriod;
+  mNextPlay = 0;
   mIt = mFile.begin;
   mApu.Reset();
   return nullptr;
