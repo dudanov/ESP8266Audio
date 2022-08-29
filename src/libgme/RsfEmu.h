@@ -53,7 +53,6 @@ class RsfEmu : public ClassicEmu {
   const uint8_t *mIt;
   blip_clk_time_t mPlayPeriod;
   blip_clk_time_t mNextPlay;
-  uint32_t mFrame;
 };
 
 }  // namespace ay

@@ -63,7 +63,7 @@ static const uint8_t *find_frame(const RsfEmu::file_t *file, const uint32_t fram
       if (*it != 0xFF)
         it += count_bits(get_be16(it)) + 1;
     } else {
-      current += *(++it);
+      current += *++it;
     }
   }
 
@@ -147,37 +147,38 @@ void RsfEmu::mSetTempo(double t) {
 
 blargg_err_t RsfEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
+  mNextPlay = mPlayPeriod;
   mIt = mFile.begin;
-  mNextPlay = 0;
   mApu.Reset();
-  return 0;
+  return nullptr;
 }
 
 void RsfEmu::mWriteRegisters(blip_clk_time_t time) {
   uint16_t mask = get_be16(mIt++);
   for (unsigned addr = 0; mask != 0; mask >>= 1, addr++) {
     if (mask & 1)
-      mApu.Write(time += 20, addr, *(++mIt));
+      mApu.Write(time, addr, *++mIt);
   }
 }
 
 blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
-  blip_clk_time_t start = mNextPlay;
-  blip_clk_time_t end = std::min(duration, mPlayPeriod);
-  if (mIt >= mFile.end)
-    mIt = mFile.begin;
-  for (; start < end && mIt < mFile.end; ++mIt) {
+  blip_clk_time_t time = 0;
+  while (time < duration) {
+    time = std::min(duration, mNextPlay);
+    if (time < mNextPlay)
+      continue;
     if (*mIt != 0xFE) {
       if (*mIt != 0xFF)
-        mWriteRegisters(start);
-      start += mPlayPeriod;
+        mWriteRegisters(time);
+      mNextPlay += mPlayPeriod;
     } else {
-      start += *(++mIt) * mPlayPeriod;
+      mNextPlay += *++mIt * mPlayPeriod;
     }
+    if (++mIt >= mFile.end)
+      mIt = mFile.loop;
   }
-  duration = end;
-  mNextPlay = start - end;
-  mApu.EndFrame(end);
+  mNextPlay -= time;
+  mApu.EndFrame(time);
   return 0;
 }
 
