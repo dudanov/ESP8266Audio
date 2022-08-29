@@ -168,9 +168,9 @@ blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
     mIt = mFile.begin;
   for (; start < end && mIt < mFile.end; ++mIt) {
     if (*mIt != 0xFE) {
+      start += mPlayPeriod;
       if (*mIt != 0xFF)
         mWriteRegisters(start);
-      start += mPlayPeriod;
     } else {
       start += *(++mIt) * mPlayPeriod;
     }
