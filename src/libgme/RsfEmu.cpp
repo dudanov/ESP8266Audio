@@ -163,6 +163,7 @@ void RsfEmu::mWriteRegisters(blip_clk_time_t time) {
 
 blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
   blip_clk_time_t time = 0;
+  duration -= 10;
   while (time < duration) {
     time = std::min(duration, mNextPlay);
     if (time < mNextPlay)
