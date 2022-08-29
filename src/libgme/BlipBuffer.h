@@ -322,7 +322,7 @@ template<int quality, int range>
 void BlipSynth<quality, range>::OffsetResampled(BlipBuffer *dst, blip_resampled_time_t time, int delta) const {
   // Fails if time is beyond end of BlipBuffer, due to a bug in caller code
   // or the need for a longer buffer as set by SetSampleRate().
-  assert((blip_long_t)(time >> BLIP_BUFFER_ACCURACY) < dst->mBufferSize);
+  assert((time >> BLIP_BUFFER_ACCURACY) < dst->mBufferSize);
   delta *= mImpl.mDeltaFactor;
   int32_t *buf = dst->mBuffer + (time >> BLIP_BUFFER_ACCURACY);
   int phase = (int) (time >> (BLIP_BUFFER_ACCURACY - BLIP_PHASE_BITS) & (BLIP_RES - 1));
