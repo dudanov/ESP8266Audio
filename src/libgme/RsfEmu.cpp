@@ -47,18 +47,19 @@ static unsigned count_bits(unsigned value) {
 static const uint8_t *find_frame(const RsfEmu::file_t &file, const uint32_t frame) {
   if (frame >= get_le32(file.header->frames))
     return file.begin;
-  const uint8_t *it = file.begin;
-  uint32_t current = 0;
-  for (; current < frame && it < file.end; ++it) {
+  auto it = file.begin;
+  for (uint32_t n = 0; it < file.end; ++it) {
     if (*it != 0xFE) {
-      current++;
       if (*it != 0xFF)
         it += count_bits(get_be16(it)) + 1;
+      n++;
     } else {
-      current += *++it;
+      n += *++it;
     }
+    if (n >= frame)
+      return it;
   }
-  return (current >= frame) ? it : file.begin;
+  return file.begin;
 }
 
 static blargg_err_t parse_header(const uint8_t *in, long size, RsfEmu::file_t &out) {
