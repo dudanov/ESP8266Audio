@@ -48,7 +48,7 @@ static const uint8_t *find_frame(const RsfEmu::file_t &file, const uint32_t fram
   if (frame >= get_le32(file.header->frames))
     return file.begin;
   auto it = file.begin;
-  for (uint32_t n = 0; it < file.end; ++it) {
+  for (uint32_t n = 0; n < frame;) {
     if (*it != 0xFE) {
       ++n;
       if (*it != 0xFF)
@@ -56,10 +56,10 @@ static const uint8_t *find_frame(const RsfEmu::file_t &file, const uint32_t fram
     } else {
       n += *++it;
     }
-    if (n >= frame)
-      return it;
+    if (++it >= file.end)
+      return file.begin;
   }
-  return file.begin;
+  return it;
 }
 
 static blargg_err_t parse_header(const uint8_t *in, long size, RsfEmu::file_t &out) {
