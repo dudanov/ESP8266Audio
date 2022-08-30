@@ -152,24 +152,20 @@ blargg_err_t RsfEmu::mStartTrack(int track) {
   return nullptr;
 }
 
-inline void RsfEmu::mWriteRegisters(blip_clk_time_t time) {
+inline void RsfEmu::mWriteRegisters() {
   uint16_t mask = get_be16(mIt++);
   assert(!(mask & 0xC000));
   for (unsigned addr = 0; mask != 0; mask >>= 1, addr++) {
     if (mask & 1)
-      mApu.Write(time, addr, *++mIt);
+      mApu.Write(mNextPlay, addr, *++mIt);
   }
 }
 
 blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
-  blip_clk_time_t time = 0;
-  while (time != duration) {
-    time = std::min(duration, mNextPlay);
-    if (time != mNextPlay)
-      continue;
+  while (mNextPlay <= duration) {
     if (*mIt != 0xFE) {
       if (*mIt != 0xFF)
-        mWriteRegisters(time);
+        mWriteRegisters();
       mNextPlay += mPlayPeriod;
     } else {
       mNextPlay += *++mIt * mPlayPeriod;
