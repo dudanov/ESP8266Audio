@@ -142,7 +142,7 @@ void RsfEmu::mSetTempo(double t) {
 
 blargg_err_t RsfEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
-  mNextPlay = 0;
+  mNextPlay = mPlayPeriod;
   mIt = mFile.begin;
   mApu.Reset();
   SetTempo(mGetTempo());
