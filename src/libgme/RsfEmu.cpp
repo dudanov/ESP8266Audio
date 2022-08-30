@@ -89,6 +89,9 @@ static blargg_err_t parse_header(const uint8_t *in, long size, RsfEmu::file_t &o
 
 static void copy_rsf_fields(const RsfEmu::file_t &file, track_info_t &out) {
   out.track_count = 1;
+  const unsigned period = 1000 / get_le16(file.header->framerate);
+  out.length = period * get_le32(file.header->frames);
+  out.loop_length = period * get_le32(file.header->loop);
   auto p = GmeFile::copyField(out.song, (const char *) file.header->info);
   p = GmeFile::copyField(out.author, p);
   GmeFile::copyField(out.comment, p);
@@ -134,7 +137,7 @@ void RsfEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 // Emulation
 
 void RsfEmu::mSetTempo(double t) {
-  mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / get_le16(mFile.header->frame_freq) / t);
+  mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / get_le16(mFile.header->framerate) / t);
 }
 
 blargg_err_t RsfEmu::mStartTrack(int track) {

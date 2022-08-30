@@ -21,7 +21,7 @@ class RsfEmu : public ClassicEmu {
   struct header_t {
     uint8_t tag[3];
     uint8_t vers;
-    uint8_t frame_freq[2];
+    uint8_t framerate[2];
     uint8_t song_offset[2];
     uint8_t frames[4];
     uint8_t loop[4];
