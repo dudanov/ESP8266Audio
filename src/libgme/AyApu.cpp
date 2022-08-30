@@ -192,7 +192,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
     blip_clk_time_t time = start_time + osc.mDelay;
     // maintain tone's phase when off
     if (mode & TONE_OFF) {
-      blargg_long count = (end_clk_time - time + period - 1) / period;
+      blip_clk_time_t count = (end_clk_time - time + period - 1) / period;
       time += count * period;
       osc.mPhase ^= count & 1;
     }
@@ -321,7 +321,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
   // TODO: optimized saw wave envelope?
 
   // maintain envelope phase
-  blip_clk_time_t remain = end_clk_time - mLastClkTime - mEnvelope.mDelay;
+  long remain = end_clk_time - mLastClkTime - mEnvelope.mDelay;
   if (remain >= 0) {
     blargg_long count = (remain + env_period) / env_period;
     // mEnvelope.mPos += count;
