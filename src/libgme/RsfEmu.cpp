@@ -25,8 +25,6 @@ namespace gme {
 namespace emu {
 namespace ay {
 
-static const uint32_t CLK_SPECTRUM = 3546900;
-
 RsfEmu::RsfEmu() {
   static const char *const CHANNELS_NAMES[] = {"Wave 1", "Wave 2", "Wave 3"};
   static int const CHANNELS_TYPES[] = {WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2};
@@ -132,7 +130,7 @@ blargg_err_t RsfEmu::mLoad(const uint8_t *begin, long size) {
   mSetTrackNum(1);
   mSetChannelsNumber(AyApu::OSCS_NUM);
   mApu.SetVolume(0.5);
-  return mSetupBuffer(get_le32(mFile.header->chip_freq));
+  return mSetupBuffer(get_le32(mFile.header->chip_freq) * 2);
 }
 
 void RsfEmu::mUpdateEq(BlipEq const &eq) { mApu.SetTrebleEq(eq); }
@@ -153,7 +151,7 @@ blargg_err_t RsfEmu::mStartTrack(int track) {
   return nullptr;
 }
 
-void RsfEmu::mWriteRegisters(blip_clk_time_t time) {
+inline void RsfEmu::mWriteRegisters(blip_clk_time_t time) {
   uint16_t mask = get_be16(mIt++);
   for (unsigned addr = 0; mask != 0; mask >>= 1, addr++) {
     if (mask & 1)
@@ -162,7 +160,6 @@ void RsfEmu::mWriteRegisters(blip_clk_time_t time) {
 }
 
 blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
-  duration /= 2;
   blip_clk_time_t time = 0;
   while (time != duration) {
     time = std::min(duration, mNextPlay);
