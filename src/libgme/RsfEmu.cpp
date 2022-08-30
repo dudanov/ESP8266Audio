@@ -50,9 +50,9 @@ static const uint8_t *find_frame(const RsfEmu::file_t &file, const uint32_t fram
   auto it = file.begin;
   for (uint32_t n = 0; it < file.end; ++it) {
     if (*it != 0xFE) {
+      ++n;
       if (*it != 0xFF)
         it += count_bits(get_be16(it)) + 1;
-      n++;
     } else {
       n += *++it;
     }
