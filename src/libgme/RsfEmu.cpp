@@ -6,8 +6,6 @@
 #include <string.h>
 #include <pgmspace.h>
 
-#include <algorithm>  // min, max
-
 /* Copyright (C) 2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
 General Public License as published by the Free Software Foundation; either
@@ -36,8 +34,6 @@ RsfEmu::RsfEmu() {
 
 RsfEmu::~RsfEmu() {}
 
-// Track info
-
 static unsigned count_bits(unsigned value) {
   unsigned nbits = 0;
   if (value != 0) {
@@ -48,14 +44,12 @@ static unsigned count_bits(unsigned value) {
   return nbits;
 }
 
-static const uint8_t *find_frame(const RsfEmu::file_t *file, const uint32_t frame) {
-  if (frame >= get_le32(file->header->frames))
-    return file->begin;
-
-  const uint8_t *it = file->begin;
+static const uint8_t *find_frame(const RsfEmu::file_t &file, const uint32_t frame) {
+  if (frame >= get_le32(file.header->frames))
+    return file.begin;
+  const uint8_t *it = file.begin;
   uint32_t current = 0;
-
-  for (; current < frame && it < file->end; ++it) {
+  for (; current < frame && it < file.end; ++it) {
     if (*it != 0xFE) {
       current++;
       if (*it != 0xFF)
@@ -64,44 +58,43 @@ static const uint8_t *find_frame(const RsfEmu::file_t *file, const uint32_t fram
       current += *++it;
     }
   }
-
-  return (current >= frame) ? it : file->begin;
+  return (current >= frame) ? it : file.begin;
 }
 
-static blargg_err_t parse_header(const uint8_t *in, long size, RsfEmu::file_t *out) {
+static blargg_err_t parse_header(const uint8_t *in, long size, RsfEmu::file_t &out) {
   typedef RsfEmu::header_t header_t;
-  out->header = (const header_t *) in;
-  out->end = in + size;
+  out.header = (const header_t *) in;
+  out.end = in + size;
 
   if (size <= RsfEmu::HEADER_SIZE)
     return gme_wrong_file_type;
 
-  if (memcmp_P(out->header->tag, PSTR("RSF\x03"), 4))
+  if (memcmp_P(out.header->tag, PSTR("RSF\x03"), 4))
     return gme_wrong_file_type;
 
-  const uint32_t loop_frame = get_le32(out->header->loop);
+  const uint32_t loop_frame = get_le32(out.header->loop);
 
-  if (loop_frame >= get_le32(out->header->frames))
+  if (loop_frame >= get_le32(out.header->frames))
     return gme_wrong_file_type;
 
-  out->begin = in + get_le16(out->header->song_offset);
+  out.begin = in + get_le16(out.header->song_offset);
 
-  if (std::distance(out->begin, out->end) <= 0)
+  if (std::distance(out.begin, out.end) <= 0)
     return gme_wrong_file_type;
 
-  out->loop = find_frame(out, loop_frame);
+  out.loop = find_frame(out, loop_frame);
   return nullptr;
 }
 
-static void copy_rsf_fields(const RsfEmu::file_t &file, track_info_t *out) {
-  out->track_count = 1;
-  auto p = GmeFile::copyField(out->song, (const char *) file.header->info);
-  p = GmeFile::copyField(out->author, p);
-  GmeFile::copyField(out->comment, p);
+static void copy_rsf_fields(const RsfEmu::file_t &file, track_info_t &out) {
+  out.track_count = 1;
+  auto p = GmeFile::copyField(out.song, (const char *) file.header->info);
+  p = GmeFile::copyField(out.author, p);
+  GmeFile::copyField(out.comment, p);
 }
 
 blargg_err_t RsfEmu::mGetTrackInfo(track_info_t *out, int track) const {
-  copy_rsf_fields(mFile, out);
+  copy_rsf_fields(mFile, *out);
   return nullptr;
 }
 
@@ -112,13 +105,13 @@ struct RsfFile : GmeInfo {
   static MusicEmu *createRsfFile() { return BLARGG_NEW RsfFile; }
 
   blargg_err_t mLoad(uint8_t const *begin, long size) override {
-    RETURN_ERR(parse_header(begin, size, &file));
+    RETURN_ERR(parse_header(begin, size, file));
     mSetTrackNum(1);
     return 0;
   }
 
   blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override {
-    copy_rsf_fields(file, out);
+    copy_rsf_fields(file, *out);
     return nullptr;
   }
 };
@@ -126,7 +119,7 @@ struct RsfFile : GmeInfo {
 // Setup
 
 blargg_err_t RsfEmu::mLoad(const uint8_t *begin, long size) {
-  RETURN_ERR(parse_header(begin, size, &mFile));
+  RETURN_ERR(parse_header(begin, size, mFile));
   mSetTrackNum(1);
   mSetChannelsNumber(AyApu::OSCS_NUM);
   mApu.SetVolume(mGetGain());
@@ -151,6 +144,8 @@ blargg_err_t RsfEmu::mStartTrack(int track) {
   SetTempo(mGetTempo());
   return nullptr;
 }
+
+void RsfEmu::mSeekFrame(uint32_t frame) { mIt = find_frame(mFile, frame); }
 
 inline void RsfEmu::mWriteRegisters() {
   uint16_t mask = get_be16(mIt++);
