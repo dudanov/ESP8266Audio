@@ -116,7 +116,7 @@ void AyApu::mWriteRegister(unsigned addr, uint8_t data) {
 }
 
 inline void AyApu::mPeriodUpdate(unsigned channel) {
-  blip_time_t period = get_le16(&mRegs[R0 + channel * 2]) % 4096 * CLOCK_PSC;
+  blip_clk_time_t period = get_le16(&mRegs[R0 + channel * 2]) % 4096 * CLOCK_PSC;
   if (period == 0)
     period = CLOCK_PSC;
   // adjust time of next timer expiration based on change in period
@@ -130,16 +130,16 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
   require(end_clk_time >= mLastClkTime);
 
   // noise period and initial values
-  const blip_time_t NOISE_PSC = CLOCK_PSC * 2;  // verified
-  blip_time_t noise_period = mRegs[R6] % 32 * NOISE_PSC;
+  const blip_clk_time_t NOISE_PSC = CLOCK_PSC * 2;  // verified
+  blip_clk_time_t noise_period = mRegs[R6] % 32 * NOISE_PSC;
   if (noise_period == 0)
     noise_period = NOISE_PSC;
-  const blip_time_t old_noise_delay = mNoise.mDelay;
+  const blip_clk_time_t old_noise_delay = mNoise.mDelay;
   const blargg_ulong old_noise_lfsr = mNoise.mLfsr;
 
   // envelope period
-  const blip_time_t ENVELOPE_PSC = CLOCK_PSC * 2;  // verified
-  blip_time_t env_period = get_le16(&mRegs[R11]) * ENVELOPE_PSC;
+  const blip_clk_time_t ENVELOPE_PSC = CLOCK_PSC * 2;  // verified
+  blip_clk_time_t env_period = get_le16(&mRegs[R11]) * ENVELOPE_PSC;
   if (env_period == 0)
     env_period = ENVELOPE_PSC;  // same as period 1 on my AY chip
   if (mEnvelope.mDelay == 0)
@@ -165,8 +165,8 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
     }
 
     // envelope
-    blip_time_t start_time = mLastClkTime;
-    blip_time_t end_time = end_clk_time;
+    blip_clk_time_t start_time = mLastClkTime;
+    blip_clk_time_t end_time = end_clk_time;
     const uint8_t amp_ctrl = mRegs[R8 + idx];
     int volume = Envelope::GetAmp(amp_ctrl & 0b1111, half_vol);
     // int osc_env_pos = mEnvelope.mPos;
@@ -188,8 +188,8 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
     }
 
     // tone time
-    const blip_time_t period = osc.mPeriod;
-    blip_time_t time = start_time + osc.mDelay;
+    const blip_clk_time_t period = osc.mPeriod;
+    blip_clk_time_t time = start_time + osc.mDelay;
     // maintain tone's phase when off
     if (mode & TONE_OFF) {
       blargg_long count = (end_clk_time - time + period - 1) / period;
@@ -198,7 +198,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
     }
 
     // noise time
-    blip_time_t ntime = end_clk_time;
+    blip_clk_time_t ntime = end_clk_time;
     blargg_ulong noise_lfsr = 1;
     if (!(mode & NOISE_OFF)) {
       ntime = start_time + old_noise_delay;
@@ -246,7 +246,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
         assert(TONE_OFF == 0x01);
         do {
           // run noise
-          blip_time_t end = end_time;
+          blip_clk_time_t end = end_time;
           if (end_time > time)
             end = time;
           if (phase & delta_non_zero) {
@@ -321,7 +321,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
   // TODO: optimized saw wave envelope?
 
   // maintain envelope phase
-  blip_time_t remain = end_clk_time - mLastClkTime - mEnvelope.mDelay;
+  blip_clk_time_t remain = end_clk_time - mLastClkTime - mEnvelope.mDelay;
   if (remain >= 0) {
     blargg_long count = (remain + env_period) / env_period;
     // mEnvelope.mPos += count;
