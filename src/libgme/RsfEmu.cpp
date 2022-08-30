@@ -148,6 +148,7 @@ blargg_err_t RsfEmu::mStartTrack(int track) {
   mNextPlay = mPlayPeriod;
   mIt = mFile.begin;
   mApu.Reset();
+  SetTempo(mGetTempo());
   return nullptr;
 }
 
