@@ -121,7 +121,7 @@ inline void AyApu::mPeriodUpdate(unsigned channel) {
     period = CLOCK_PSC;
   // adjust time of next timer expiration based on change in period
   Square &osc = mSquare[channel];
-  if ((osc.mDelay += period - osc.mPeriod) < 0)
+  //if ((osc.mDelay += period - osc.mPeriod) < 0)
     osc.mDelay = 0;
   osc.mPeriod = period;
 }
