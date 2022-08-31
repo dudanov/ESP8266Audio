@@ -151,20 +151,22 @@ blargg_err_t RsfEmu::mStartTrack(int track) {
 
 void RsfEmu::mSeekFrame(uint32_t frame) { mIt = find_frame(mFile, frame); }
 
-inline void RsfEmu::mWriteRegisters() {
+inline blargg_err_t RsfEmu::mWriteRegisters() {
   uint16_t mask = get_be16(mIt++);
-  assert(!(mask & 0xC000));
+  if (mask & 0xC000)
+    return gme_wrong_file_type;
   for (unsigned addr = 0; mask != 0; mask >>= 1, addr++) {
     if (mask & 1)
       mApu.Write(mNextPlay, addr, *++mIt);
   }
+  return nullptr;
 }
 
 blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
   while (mNextPlay <= duration) {
     if (*mIt != 0xFE) {
       if (*mIt != 0xFF)
-        mWriteRegisters();
+        RETURN_ERR(mWriteRegisters());
       mNextPlay += mPlayPeriod;
     } else {
       mNextPlay += *++mIt * mPlayPeriod;

@@ -46,7 +46,7 @@ class RsfEmu : public ClassicEmu {
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
   void mSeekFrame(uint32_t frame);
-  void mWriteRegisters();
+  blargg_err_t mWriteRegisters();
 
  private:
   AyApu mApu;
