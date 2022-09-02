@@ -4,7 +4,7 @@
 #pragma once
 #include "AyCpu.h"
 #include "AyApu.h"
-#include "ClassicEmu.h"
+#include "../ClassicEmu.h"
 
 namespace gme {
 namespace emu {

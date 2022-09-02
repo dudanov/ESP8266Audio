@@ -2,8 +2,9 @@
 
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #pragma once
+
 #include "AyApu.h"
-#include "ClassicEmu.h"
+#include "../ClassicEmu.h"
 
 namespace gme {
 namespace emu {

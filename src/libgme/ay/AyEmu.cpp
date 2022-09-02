@@ -1,11 +1,11 @@
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "AyEmu.h"
+#include "../blargg_endian.h"
+#include "../blargg_source.h"
 
-#include "blargg_endian.h"
 #include <string.h>
 #include <pgmspace.h>
-
 #include <algorithm>  // min, max
 
 /* Copyright (C) 2006 Shay Green. This module is free software; you
@@ -18,8 +18,6 @@ FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 details. You should have received a copy of the GNU Lesser General Public
 License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
-
-#include "blargg_source.h"
 
 namespace gme {
 namespace emu {

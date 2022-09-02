@@ -2,7 +2,7 @@
 
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #pragma once
-#include "blargg_endian.h"
+#include "../blargg_endian.h"
 
 namespace gme {
 namespace emu {

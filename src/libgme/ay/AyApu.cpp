@@ -1,6 +1,8 @@
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "AyApu.h"
+#include "../blargg_source.h"
+
 #include <pgmspace.h>
 
 /* Copyright (C) 2006 Shay Green. This module is free software; you
@@ -13,8 +15,6 @@ FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 details. You should have received a copy of the GNU Lesser General Public
 License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
-
-#include "blargg_source.h"
 
 // Emulation inaccuracies:
 // * Noise isn't run when not in use

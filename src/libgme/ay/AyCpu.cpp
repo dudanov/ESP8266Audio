@@ -8,12 +8,11 @@ emulator.
 */
 
 #include "AyCpu.h"
+#include "../blargg_endian.h"
+#include "../blargg_source.h"
 
-#include "blargg_endian.h"
 #include <pgmspace.h>
 #include <string.h>
-
-//#include "z80_cpu_log.h"
 
 /* Copyright (C) 2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -34,8 +33,6 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #define CPU_OUT(cpu, addr, data, TIME) ay_cpu_out(cpu, TIME, addr, data)
 
 #define CPU_IN(cpu, addr, TIME) ay_cpu_in(cpu, addr)
-
-#include "blargg_source.h"
 
 namespace gme {
 namespace emu {
