@@ -3,7 +3,7 @@
 // Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #pragma once
 
-#include "AyApu.h"
+#include "ay/AyApu.h"
 #include "ClassicEmu.h"
 #include "KssCpu.h"
 #include "KssSccApu.h"
