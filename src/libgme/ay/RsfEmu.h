@@ -1,7 +1,6 @@
-// Sinclair Spectrum AY music file emulator
-
-// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #pragma once
+
+// Sinclair Spectrum RSF music file emulator
 
 #include "AyApu.h"
 #include "../ClassicEmu.h"

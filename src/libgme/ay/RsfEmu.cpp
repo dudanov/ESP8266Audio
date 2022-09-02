@@ -1,5 +1,3 @@
-// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
-
 #include "RsfEmu.h"
 #include "../blargg_endian.h"
 #include "../blargg_source.h"
@@ -7,16 +5,18 @@
 #include <string.h>
 #include <pgmspace.h>
 
-/* Copyright (C) 2006 Shay Green. This module is free software; you
-can redistribute it and/or modify it under the terms of the GNU Lesser
-General Public License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version. This
-module is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-details. You should have received a copy of the GNU Lesser General Public
-License along with this module; if not, write to the Free Software Foundation,
-Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
+/*
+  Copyright (C) 2022 Sergey Dudanov. This module is free software; you
+  can redistribute it and/or modify it under the terms of the GNU Lesser
+  General Public License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version. This
+  module is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+  details. You should have received a copy of the GNU Lesser General Public
+  License along with this module; if not, write to the Free Software Foundation,
+  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+*/
 
 namespace gme {
 namespace emu {
@@ -51,7 +51,7 @@ static const uint8_t *find_frame(const RsfEmu::file_t &file, const uint32_t fram
     if (*it != 0xFE) {
       ++n;
       if (*it != 0xFF)
-        it += count_bits(get_be16(it)) + 1;
+        it += count_bits(get_be16(it++));
     } else {
       n += *++it;
     }
