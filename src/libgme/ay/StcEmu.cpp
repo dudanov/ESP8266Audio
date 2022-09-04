@@ -22,6 +22,8 @@ namespace gme {
 namespace emu {
 namespace ay {
 
+static const uint32_t CLK_SPECTRUM = 3546900;
+
 static const uint16_t PERIODS[] PROGMEM = {
     0x0EF8, 0x0E10, 0x0D60, 0x0C80, 0x0BD8, 0x0B28, 0x0A88, 0x09F0, 0x0960, 0x08E0, 0x0858, 0x07E0, 0x077C, 0x0708,
     0x06B0, 0x0640, 0x05EC, 0x0594, 0x0544, 0x04F8, 0x04B0, 0x0470, 0x042C, 0x03F0, 0x03BE, 0x0384, 0x0358, 0x0320,
@@ -134,11 +136,13 @@ struct StcFile : GmeInfo {
 // Setup
 
 blargg_err_t StcEmu::mLoad(const uint8_t *begin, long size) {
-  RETURN_ERR(parse_header(begin, size, mFile));
+  mModule = reinterpret_cast<const STCModule *>(begin);
+  if (!mModule->CheckIntegrity(size))
+    return gme_wrong_file_type;
   mSetTrackNum(1);
   mSetChannelsNumber(AyApu::OSCS_NUM);
   mApu.SetVolume(mGetGain());
-  return mSetupBuffer(get_le32(mFile.header->chip_freq) * 2);
+  return mSetupBuffer(CLK_SPECTRUM);
 }
 
 void StcEmu::mUpdateEq(BlipEq const &eq) { mApu.SetTrebleEq(eq); }
@@ -153,6 +157,8 @@ void StcEmu::mSetTempo(double t) {
 
 blargg_err_t StcEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
+  mPositionIt = mModule->GetPositionBegin();
+  mPositionEnd = mModule->GetPositionEnd();
   mNextPlay = 0;
   mApu.Reset();
   SetTempo(mGetTempo());
@@ -266,7 +272,11 @@ bool StcEmu::STCModule::mCheckSongData() const {
   return true;
 }
 
-bool StcEmu::STCModule::CheckIntegrity() const {
+bool StcEmu::STCModule::CheckIntegrity(size_t size) const {
+  // Header size
+  if (size <= sizeof(STCModule))
+    return false;
+
   // Checking samples section
   constexpr uint16_t SamplesBlockOffset = sizeof(STCModule);
   const uint16_t PositionsTableOffset = get_le16(mPositions);
@@ -295,6 +305,9 @@ bool StcEmu::STCModule::CheckIntegrity() const {
   if (OrnamentsBlockSize % sizeof(Ornament))
     return false;
 
+  if (size <= OrnamentsBlockOffset)
+    return false;
+
   // Checking pattern and song data
   if (!mCheckPatternTable() || !mCheckSongData())
     return false;
@@ -307,43 +320,38 @@ unsigned StcEmu::STCModule::CountSongLength() const {
   return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount();
 }
 
-void StcEmu::PatternInterpreter(AyApu &apu, blip_clk_time_t time) {
+void StcEmu::PatternInterpreter(blip_clk_time_t time) {
   for (auto &chan : mChannel) {
     while (true) {
-      uint8_t val = *chan.PatternDataIt;
+      const uint8_t val = *chan.PatternDataIt;
       if (val < 0x60) {
-        // note in semitones (00=C-1)
-        chan.Note = val;
-        chan.SampleTikCounter = 32;
-        chan.PositionInSample = 0;
-        chan.PatternDataIt++;
+        // Note in semitones (00=C-1). End position.
+        chan.SetNote(val);
         break;
       } else if (val < 0x70) {
-        // bits 0-3 = sample number
-        chan.SamplePointer = mModule->GetSample(val & 0b1111);
+        // Bits 0-3 = sample number
+        chan.SetSample(mModule->GetSample(val & 0b1111));
       } else if (val < 0x80) {
-        // bits 0-3 = ornament number
-        chan.OrnamentPointer = mModule->GetOrnamentData(val & 0b1111);
-        chan.EnvelopeEnabled = false;
+        // Bits 0-3 = ornament number
+        chan.SetOrnamentData(mModule->GetOrnamentData(val & 0b1111));
       } else if (val == 0x80) {
-        // rest (shuts channel)
-        chan.SampleTikCounter = -1;
+        // Rest (shuts channel). End position.
+        chan.SampleOff();
         chan.PatternDataIt++;
         break;
       } else if (val == 0x81) {
-        // empty location
+        // Empty location. End position.
         chan.PatternDataIt++;
         break;
       } else if (val == 0x82) {
-        // select ornament 0
-        chan.OrnamentPointer = mModule->GetOrnamentData(0);
-        chan.EnvelopeEnabled = false;
+        // Select ornament 0.
+        chan.SetOrnamentData(mModule->GetOrnamentData(0));
       } else if (val < 0x8F) {
-        // select envelope effect
-        apu.Write(time, AyApu::R13, val - 0x80);
-        apu.Write(time, AyApu::R11, *++chan.PatternDataIt);
+        // Select envelope effect.
+        mApu.Write(time, AyApu::R13, val & 0b1111);
+        mApu.Write(time, AyApu::R11, *++chan.PatternDataIt);
+        chan.Ornament = mModule->GetOrnamentData(0);
         chan.EnvelopeEnabled = true;
-        chan.OrnamentPointer = mModule->GetOrnamentData(0);
       } else {
         // number of empty locations after the subsequent code
         chan.NumberOfNotesToSkip = val - 0xA1;
@@ -358,20 +366,20 @@ void StcEmu::GetRegisters(Channel &chan, uint8_t &TempMixer) {
   // unsigned short i;
   unsigned char j;
   const STCModule *stc = mFile.header;
-  if (chan.SampleTikCounter >= 0) {
-    chan.SampleTikCounter--;
-    chan.PositionInSample = (chan.PositionInSample + 1) % 32;
-    if (chan.SampleTikCounter == 0) {
-      if (chan.SamplePointer->number != 0) {
-        chan.PositionInSample = chan.SamplePointer->repeat_pos % 32;
-        chan.SampleTikCounter = chan.SamplePointer->repeat_len + 1;
+  if (chan.SampleCounter >= 0) {
+    chan.SampleCounter--;
+    chan.SamplePosition = (chan.SamplePosition + 1) % 32;
+    if (chan.SampleCounter == 0) {
+      if (chan.Sample->number != 0) {
+        chan.SamplePosition = chan.Sample->repeat_pos % 32;
+        chan.SampleCounter = chan.Sample->repeat_len + 1;
       } else {
-        chan.SampleTikCounter = -1;
+        chan.SampleCounter = -1;
       }
     }
   }
-  if (chan.SampleTikCounter >= 0) {
-    auto data = &chan.SamplePointer->data[chan.PositionInSample];
+  if (chan.SampleCounter >= 0) {
+    auto data = &chan.Sample->data[chan.SamplePosition];
     if (data->GetNoiseMask())
       TempMixer |= 64;
     else
@@ -380,13 +388,13 @@ void StcEmu::GetRegisters(Channel &chan, uint8_t &TempMixer) {
       TempMixer |= 8;
     chan.Amplitude = data->GetVolume();
 
-    j = chan.Note + chan.OrnamentPointer[chan.PositionInSample] + ;
+    j = chan.Note + chan.Ornament[chan.SamplePosition] + ;
     if (j > 95)
       j = 95;
     if ((module[i + 1] & 0x20) != 0)
-      chan.Ton = (ST_Table[j] + module[i + 2] + (((unsigned short) (module[i] & 0xf0)) << 4)) & 0xFFF;
+      chan.Tone = (ST_Table[j] + module[i + 2] + (((unsigned short) (module[i] & 0xf0)) << 4)) & 0xFFF;
     else
-      chan.Ton = (ST_Table[j] - module[i + 2] - (((unsigned short) (module[i] & 0xf0)) << 4)) & 0xFFF;
+      chan.Tone = (ST_Table[j] - module[i + 2] - (((unsigned short) (module[i] & 0xf0)) << 4)) & 0xFFF;
     if (chan.EnvelopeEnabled)
       chan.Amplitude = chan.Amplitude | 16;
   } else
@@ -395,7 +403,12 @@ void StcEmu::GetRegisters(Channel &chan, uint8_t &TempMixer) {
   TempMixer = TempMixer >> 1;
 }
 
-blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) { return nullptr; }
+blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
+  while (mNextPlay <= duration) {
+
+  }
+  return nullptr;
+}
 
 }  // namespace ay
 }  // namespace emu

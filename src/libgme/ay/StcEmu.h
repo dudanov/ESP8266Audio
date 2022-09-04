@@ -28,6 +28,9 @@ class StcEmu : public ClassicEmu {
   };
 
   struct Sample {
+    uint8_t GetRepeatPosition() const { return repeat_pos; }
+    const uint8_t GetRepeatLength() const { return repeat_len; }
+    bool IsRepeatable() const { return repeat_pos; }
     uint8_t number;
     SampleData data[32];
     uint8_t repeat_pos;
@@ -56,13 +59,66 @@ class StcEmu : public ClassicEmu {
   };
 
   struct Channel {
-    const Sample *SamplePointer;
-    const uint8_t *OrnamentPointer, *PatternDataIt;
-    uint16_t Ton;
-    uint8_t Amplitude, Note, PositionInSample, NumberOfNotesToSkip;
-    char SampleTikCounter, NoteSkipCounter;
+    void SampleOff() { SampleCounter = 0; }
+    void SetNote(uint8_t note) {
+      Note = note;
+      SampleCounter = 32;
+      SamplePosition = 0;
+      PatternDataIt++;
+    }
+    void SetSample(const Sample *sample) { Sample = sample; }
+    bool IsSampleOn() const { return SampleCounter; }
+    void SetOrnamentData(const uint8_t *data) {
+      Ornament = data;
+      EnvelopeEnabled = false;
+    }
+    const SampleData *GetSampleData() const { return Sample->data + SamplePosition; }
+    uint8_t GetOrnamentData() const { return Ornament[SamplePosition]; }
+    bool SampleAdvance() {
+      if (!IsSampleOn())
+        return;
+      if (--SampleCounter) {
+        ++SamplePosition;
+      } else if (Sample->IsRepeatable()) {
+        SamplePosition = Sample->GetRepeatPosition();
+        SampleCounter = Sample->GetRepeatLength();
+      }
+    }
+    void Reset() { mPlayNext = 0; }
+    blip_clk_time_t mPlayNext;
+    const Sample *Sample;
+    const uint8_t *Ornament, *PatternDataIt;
+    uint16_t Tone;
+    uint8_t Amplitude, Note, NumberOfNotesToSkip;
+    uint8_t SamplePosition;
+    uint8_t SampleCounter, NoteSkipCounter;
     bool EnvelopeEnabled;
   };
+
+  void mPlaySample(Channel &channel) {
+    if (!channel.IsSampleOn())
+      return;
+    auto data = channel.GetSampleData();
+    if (data->GetNoiseMask())
+      ;  // tunoff chip
+    else
+      mApu.Write(0, AyApu::R6, data->GetNoise());
+
+    if (data->GetToneMask())
+      ;  // turn | 8
+
+    channel.Amplitude = data->GetVolume();
+    uint8_t note = channel.Note + channel.GetOrnamentData() + mPositionTransposition();
+    if (note > 95)
+      note = 95;
+    channel.Tone = pgm_read_word(&PERIODS[note]) + data->GetTransposition();
+    if (channel.EnvelopeEnabled)
+      channel.Amplitude |= 16;
+    else
+      channel.Amplitude = 0;
+
+    TempMixer = TempMixer >> 1;
+  }
 
   enum { HEADER_SIZE = 27 };
 
@@ -95,7 +151,7 @@ class StcEmu : public ClassicEmu {
     unsigned CountSongLength() const;
 
     // Check file integrity.
-    bool CheckIntegrity() const;
+    bool CheckIntegrity(size_t size) const;
 
    private:
     template<typename T> const T *ptr(const uint8_t *offset) const {
@@ -131,15 +187,6 @@ class StcEmu : public ClassicEmu {
     Sample mSamples[0];
   };
 
-  bool Load(const uint8_t *data, size_t size) {
-    mModule = reinterpret_cast<const STCModule *>(data);
-    if (!mModule->CheckIntegrity())
-      return false;
-    mPositionIt = mModule->GetPositionBegin();
-    mPositionEnd = mModule->GetPositionEnd();
-    return mUpdate();
-  }
-
   // Update pattern data pointers for current position.
   bool mUpdate() {
     auto pattern = mModule->GetPattern(mPositionIt->pattern);
@@ -152,15 +199,13 @@ class StcEmu : public ClassicEmu {
 
   uint8_t mPositionTransposition() const { return mPositionIt->transposition; }
 
-  bool CheckIntegrity() const { return mModule->CheckIntegrity(); }
-
   bool mAdvancePosition() {
-    if (++mPositionIt < mPositionEnd)
+    if (++mPositionIt != mPositionEnd)
       return mUpdate();
     return false;
   }
 
-  void PatternInterpreter(AyApu &apu, blip_clk_time_t time);
+  void PatternInterpreter(blip_clk_time_t time);
 
  protected:
   blargg_err_t mLoad(const uint8_t *data, long size) override;
@@ -182,7 +227,7 @@ class StcEmu : public ClassicEmu {
   const Position *mPositionIt, *mPositionEnd;
   blip_clk_time_t mPlayPeriod;
   blip_clk_time_t mNextPlay;
-};
+};  // namespace ay
 
 }  // namespace ay
 }  // namespace emu
