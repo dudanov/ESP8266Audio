@@ -159,6 +159,55 @@ blargg_err_t StcEmu::mStartTrack(int track) {
   return nullptr;
 }
 
+/* STC MODULE */
+
+inline int16_t StcEmu::SampleData::GetTransposition() const {
+  int16_t result = mData[0] / 16 * 256 + mData[2];
+  return (mData[1] & 32) ? result : -result;
+}
+
+inline const StcEmu::Position *StcEmu::STCModule::GetPositionBegin() const {
+  return ptr<PositionsTable>(mPositions)->position;
+}
+
+inline const StcEmu::Position *StcEmu::STCModule::GetPositionEnd() const {
+  auto p = ptr<PositionsTable>(mPositions);
+  return p->position + p->count + 1;
+}
+
+inline size_t StcEmu::STCModule::mGetPositionsCount() const { return ptr<PositionsTable>(mPositions)->count + 1; }
+
+inline const uint8_t *StcEmu::STCModule::GetPatternData(const StcEmu::Pattern *pattern, uint8_t channel) const {
+  return ptr<uint8_t>(pattern->data_offset[channel]);
+}
+
+inline const uint8_t *StcEmu::STCModule::GetPatternData(uint8_t pattern, uint8_t channel) const {
+  return GetPatternData(GetPattern(pattern), channel);
+}
+
+inline const StcEmu::Pattern *StcEmu::STCModule::mGetPatternBegin() const { return ptr<Pattern>(mPatterns); }
+
+inline const StcEmu::Pattern *StcEmu::STCModule::GetPattern(uint8_t number) const {
+  auto it = mGetPatternBegin();
+  while (it->number != number)
+    ++it;
+  return it;
+}
+
+inline const uint8_t *StcEmu::STCModule::GetOrnamentData(uint8_t number) const {
+  auto it = ptr<Ornament>(mOrnaments);
+  while (it->number != number)
+    ++it;
+  return it->data;
+}
+
+inline const StcEmu::Sample *StcEmu::STCModule::GetSample(uint8_t number) const {
+  auto it = mSamples;
+  while (it->number != number)
+    ++it;
+  return it;
+}
+
 bool StcEmu::STCModule::mCheckPatternTable() const {
   auto it = mGetPatternBegin();
   for (uint8_t n = 0; n < Pattern::MAX_COUNT; ++n, ++it) {
@@ -215,27 +264,6 @@ bool StcEmu::STCModule::mCheckSongData() const {
     }
   }
   return true;
-}
-
-inline const StcEmu::Pattern *StcEmu::STCModule::GetPattern(uint8_t number) const {
-  auto it = mGetPatternBegin();
-  while (it->number != number)
-    ++it;
-  return it;
-}
-
-inline const uint8_t *StcEmu::STCModule::GetOrnamentData(uint8_t number) const {
-  auto it = ptr<Ornament>(mOrnaments);
-  while (it->number != number)
-    ++it;
-  return it->data;
-}
-
-inline const StcEmu::Sample *StcEmu::STCModule::GetSample(uint8_t number) const {
-  auto it = mSamples;
-  while (it->number != number)
-    ++it;
-  return it;
 }
 
 bool StcEmu::STCModule::CheckIntegrity() const {

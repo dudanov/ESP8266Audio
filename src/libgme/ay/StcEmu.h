@@ -19,12 +19,9 @@ class StcEmu : public ClassicEmu {
   struct SampleData {
     uint8_t GetVolume() const { return mData[0] % 16; }
     uint8_t GetNoise() const { return mData[1] % 32; }
-    int16_t GetTransposition() const {
-      int16_t result = mData[0] / 16 * 256 + mData[2];
-      return (mData[1] & 32) ? result : -result;
-    }
     bool GetToneMask() const { return mData[1] & 64; }
     bool GetNoiseMask() const { return mData[1] & 128; }
+    int16_t GetTransposition() const;
 
    private:
     uint8_t mData[3];
@@ -74,26 +71,19 @@ class StcEmu : public ClassicEmu {
     uint8_t GetDelay() const { return mDelay; }
 
     // Begin position iterator.
-    const Position *GetPositionBegin() const { return ptr<PositionsTable>(mPositions)->position; }
+    const Position *GetPositionBegin() const;
 
     // End position iterator.
-    const Position *GetPositionEnd() const {
-      auto p = ptr<PositionsTable>(mPositions);
-      return p->position + p->count + 1;
-    }
+    const Position *GetPositionEnd() const;
 
     // Get pattern by specified number.
     const Pattern *GetPattern(uint8_t number) const;
 
     // Get pattern data by specified number.
-    const uint8_t *GetPatternData(uint8_t pattern, uint8_t channel) const {
-      return GetPatternData(GetPattern(pattern), channel);
-    }
+    const uint8_t *GetPatternData(uint8_t pattern, uint8_t channel) const;
 
     // Get data from specified pattern.
-    const uint8_t *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-      return ptr<uint8_t>(pattern->data_offset[channel]);
-    }
+    const uint8_t *GetPatternData(const Pattern *pattern, uint8_t channel) const;
 
     // Get sample by specified number.
     const Sample *GetSample(uint8_t number) const;
@@ -124,11 +114,13 @@ class StcEmu : public ClassicEmu {
     // Find specified pattern by number. Return pointer to pattern on success, else nullptr.
     const Pattern *mFindPattern(uint8_t pattern) const;
 
-    size_t mGetPositionsCount() const { return ptr<PositionsTable>(mPositions)->count + 1; }
+    size_t mGetPositionsCount() const;
 
-    const Pattern *mGetPatternBegin() const { return ptr<Pattern>(mPatterns); }
+    const Pattern *mGetPatternBegin() const;
 
     const Pattern *mGetPatternEnd() const { return GetPattern(0xFF); }
+
+    /* STC MODULE HEADER DATA */
 
     uint8_t mDelay;
     uint8_t mPositions[2];
