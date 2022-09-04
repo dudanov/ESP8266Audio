@@ -124,7 +124,7 @@ struct GmeFile {
  public:
   blargg_err_t RemapTrack(int *track_io) const;  // need by MusicEmu
  private:
-  gme_type_t mType{0};
+  gme_type_t mType{nullptr};
   int mTrackNum;
   int mRawTrackCount;
   const char *mWarning;
@@ -147,4 +147,3 @@ MusicEmu *gmeNew(MusicEmu *, long sample_rate);
 
 #define GME_COPY_FIELD(in, out, name) \
   { GmeFile::copyField(out->name, in.name, sizeof in.name); }
-

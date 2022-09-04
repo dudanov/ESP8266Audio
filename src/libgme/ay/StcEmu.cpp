@@ -22,6 +22,16 @@ namespace gme {
 namespace emu {
 namespace ay {
 
+static const uint16_t PERIODS[] PROGMEM = {
+    0x0EF8, 0x0E10, 0x0D60, 0x0C80, 0x0BD8, 0x0B28, 0x0A88, 0x09F0, 0x0960, 0x08E0, 0x0858, 0x07E0, 0x077C, 0x0708,
+    0x06B0, 0x0640, 0x05EC, 0x0594, 0x0544, 0x04F8, 0x04B0, 0x0470, 0x042C, 0x03F0, 0x03BE, 0x0384, 0x0358, 0x0320,
+    0x02F6, 0x02CA, 0x02A2, 0x027C, 0x0258, 0x0238, 0x0216, 0x01F8, 0x01DF, 0x01C2, 0x01AC, 0x0190, 0x017B, 0x0165,
+    0x0151, 0x013E, 0x012C, 0x011C, 0x010B, 0x00FC, 0x00EF, 0x00E1, 0x00D6, 0x00C8, 0x00BD, 0x00B2, 0x00A8, 0x009F,
+    0x0096, 0x008E, 0x0085, 0x007E, 0x0077, 0x0070, 0x006B, 0x0064, 0x005E, 0x0059, 0x0054, 0x004F, 0x004B, 0x0047,
+    0x0042, 0x003F, 0x003B, 0x0038, 0x0035, 0x0032, 0x002F, 0x002C, 0x002A, 0x0027, 0x0025, 0x0023, 0x0021, 0x001F,
+    0x001D, 0x001C, 0x001A, 0x0019, 0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000F,
+};
+
 StcEmu::StcEmu() {
   static const char *const CHANNELS_NAMES[] = {"Wave 1", "Wave 2", "Wave 3"};
   static int const CHANNELS_TYPES[] = {WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2};
@@ -62,9 +72,11 @@ static const uint8_t *find_frame(const StcEmu::file_t &file, const uint32_t fram
 }
 
 static blargg_err_t parse_header(const uint8_t *in, long size, StcEmu::file_t &out) {
-  typedef StcEmu::header_t header_t;
+  typedef StcEmu::STCModule header_t;
   out.header = (const header_t *) in;
   out.end = in + size;
+
+  auto o = out.header->ornament();
 
   if (size <= StcEmu::HEADER_SIZE)
     return gme_wrong_file_type;
@@ -142,43 +154,220 @@ void StcEmu::mSetTempo(double t) {
 blargg_err_t StcEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
   mNextPlay = 0;
-  mIt = mFile.begin;
   mApu.Reset();
   SetTempo(mGetTempo());
   return nullptr;
 }
 
-void StcEmu::mSeekFrame(uint32_t frame) { mIt = find_frame(mFile, frame); }
+bool StcEmu::STCModule::mCheckPatternTable() const {
+  auto it = mGetPatternBegin();
+  for (uint8_t n = 0; n < Pattern::MAX_COUNT; ++n, ++it) {
+    if (it->number == 0xFF)
+      return true;
+  }
+  return false;
+}
 
-inline blargg_err_t StcEmu::mWriteRegisters() {
-  uint16_t mask = get_be16(mIt++);
-  if (mask & 0xC000)
-    return gme_wrong_file_type;
-  for (unsigned addr = 0; mask != 0; mask >>= 1, addr++) {
-    if (mask & 1)
-      mApu.Write(mNextPlay, addr, *++mIt);
+const StcEmu::Pattern *StcEmu::STCModule::mFindPattern(uint8_t number) const {
+  for (auto it = mGetPatternBegin(); it != mGetPatternEnd(); ++it) {
+    if (it->number == number)
+      return it;
   }
   return nullptr;
 }
 
-blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
-  while (mNextPlay <= duration) {
-    if (*mIt != 0xFE) {
-      if (*mIt != 0xFF)
-        RETURN_ERR(mWriteRegisters());
-      mNextPlay += mPlayPeriod;
+uint8_t StcEmu::STCModule::mCountPatternLength(const StcEmu::Pattern *pattern, uint8_t channel) const {
+  unsigned length = 0, skip = 0;
+  for (auto it = GetPatternData(pattern, channel); *it != 0xFF; ++it) {
+    const uint8_t data = *it;
+    if ((data < 0x60) || (data == 0x80) || (data == 0x81)) {
+      length += skip;
+    } else if (data < 0x83) {
+      ;
+    } else if (data < 0x8F) {
+      ++it;
+    } else if (data > 0xA0 && data < 0xE1) {
+      skip = data - 0xA0;
     } else {
-      mNextPlay += *++mIt * mPlayPeriod;
-    }
-    if (++mIt >= mFile.end) {
-      mSetTrackEnded();
-      mIt = mFile.loop;
+      // wrong code
+      return 0;
     }
   }
-  mNextPlay -= duration;
-  mApu.EndFrame(duration);
-  return nullptr;
+  return (length <= 64) ? length : 0;
 }
+
+bool StcEmu::STCModule::mCheckSongData() const {
+  uint8_t PatternLength = 0;
+  for (auto PositionIt = GetPositionBegin(); PositionIt != GetPositionEnd(); ++PositionIt) {
+    auto pattern = mFindPattern(PositionIt->pattern);
+    if (pattern == nullptr)
+      return false;
+    for (uint8_t channel = 0; channel < 3; ++channel) {
+      const uint8_t length = mCountPatternLength(pattern, channel);
+      if (length == 0)
+        return false;
+      if (PatternLength != 0) {
+        if (PatternLength == length)
+          continue;
+        return false;
+      }
+      PatternLength = length;
+    }
+  }
+  return true;
+}
+
+inline const StcEmu::Pattern *StcEmu::STCModule::GetPattern(uint8_t number) const {
+  auto it = mGetPatternBegin();
+  while (it->number != number)
+    ++it;
+  return it;
+}
+
+inline const uint8_t *StcEmu::STCModule::GetOrnamentData(uint8_t number) const {
+  auto it = ptr<Ornament>(mOrnaments);
+  while (it->number != number)
+    ++it;
+  return it->data;
+}
+
+inline const StcEmu::Sample *StcEmu::STCModule::GetSample(uint8_t number) const {
+  auto it = mSamples;
+  while (it->number != number)
+    ++it;
+  return it;
+}
+
+bool StcEmu::STCModule::CheckIntegrity() const {
+  // Checking samples section
+  constexpr uint16_t SamplesBlockOffset = sizeof(STCModule);
+  const uint16_t PositionsTableOffset = get_le16(mPositions);
+  if (PositionsTableOffset <= SamplesBlockOffset)
+    return false;
+  const uint16_t SamplesBlockSize = PositionsTableOffset - SamplesBlockOffset;
+  if (SamplesBlockSize % sizeof(Sample))
+    return false;
+
+  // Checking positions section
+  const uint16_t PositionsBlockOffset = PositionsTableOffset + sizeof(PositionsTable);
+  const uint16_t OrnamentsBlockOffset = get_le16(mOrnaments);
+  if (OrnamentsBlockOffset <= PositionsBlockOffset)
+    return false;
+  const uint16_t PositionsBlockSize = OrnamentsBlockOffset - PositionsBlockOffset;
+  if (PositionsBlockSize % sizeof(Position))
+    return false;
+  if (PositionsBlockSize / sizeof(Position) != mGetPositionsCount())
+    return false;
+
+  // Checking ornaments section
+  const uint16_t PatternsBlockOffset = get_le16(mPatterns);
+  if (PatternsBlockOffset <= OrnamentsBlockOffset)
+    return false;
+  const uint16_t OrnamentsBlockSize = PatternsBlockOffset - OrnamentsBlockOffset;
+  if (OrnamentsBlockSize % sizeof(Ornament))
+    return false;
+
+  // Checking pattern and song data
+  if (!mCheckPatternTable() || !mCheckSongData())
+    return false;
+
+  return true;
+}
+
+unsigned StcEmu::STCModule::CountSongLength() const {
+  // all patterns has same length
+  return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount();
+}
+
+void StcEmu::PatternInterpreter(AyApu &apu, blip_clk_time_t time) {
+  for (auto &chan : mChannel) {
+    while (true) {
+      uint8_t val = *chan.PatternDataIt;
+      if (val < 0x60) {
+        // note in semitones (00=C-1)
+        chan.Note = val;
+        chan.SampleTikCounter = 32;
+        chan.PositionInSample = 0;
+        chan.PatternDataIt++;
+        break;
+      } else if (val < 0x70) {
+        // bits 0-3 = sample number
+        chan.SamplePointer = mModule->GetSample(val & 0b1111);
+      } else if (val < 0x80) {
+        // bits 0-3 = ornament number
+        chan.OrnamentPointer = mModule->GetOrnamentData(val & 0b1111);
+        chan.EnvelopeEnabled = false;
+      } else if (val == 0x80) {
+        // rest (shuts channel)
+        chan.SampleTikCounter = -1;
+        chan.PatternDataIt++;
+        break;
+      } else if (val == 0x81) {
+        // empty location
+        chan.PatternDataIt++;
+        break;
+      } else if (val == 0x82) {
+        // select ornament 0
+        chan.OrnamentPointer = mModule->GetOrnamentData(0);
+        chan.EnvelopeEnabled = false;
+      } else if (val < 0x8F) {
+        // select envelope effect
+        apu.Write(time, AyApu::R13, val - 0x80);
+        apu.Write(time, AyApu::R11, *++chan.PatternDataIt);
+        chan.EnvelopeEnabled = true;
+        chan.OrnamentPointer = mModule->GetOrnamentData(0);
+      } else {
+        // number of empty locations after the subsequent code
+        chan.NumberOfNotesToSkip = val - 0xA1;
+      }
+      chan.PatternDataIt++;
+    }
+    chan.NoteSkipCounter = chan.NumberOfNotesToSkip;
+  }
+}
+
+void StcEmu::GetRegisters(Channel &chan, uint8_t &TempMixer) {
+  // unsigned short i;
+  unsigned char j;
+  const STCModule *stc = mFile.header;
+  if (chan.SampleTikCounter >= 0) {
+    chan.SampleTikCounter--;
+    chan.PositionInSample = (chan.PositionInSample + 1) % 32;
+    if (chan.SampleTikCounter == 0) {
+      if (chan.SamplePointer->number != 0) {
+        chan.PositionInSample = chan.SamplePointer->repeat_pos % 32;
+        chan.SampleTikCounter = chan.SamplePointer->repeat_len + 1;
+      } else {
+        chan.SampleTikCounter = -1;
+      }
+    }
+  }
+  if (chan.SampleTikCounter >= 0) {
+    auto data = &chan.SamplePointer->data[chan.PositionInSample];
+    if (data->GetNoiseMask())
+      TempMixer |= 64;
+    else
+      mApu.Write(0, AyApu::R6, data->GetNoise());
+    if (data->GetToneMask())
+      TempMixer |= 8;
+    chan.Amplitude = data->GetVolume();
+
+    j = chan.Note + chan.OrnamentPointer[chan.PositionInSample] + ;
+    if (j > 95)
+      j = 95;
+    if ((module[i + 1] & 0x20) != 0)
+      chan.Ton = (ST_Table[j] + module[i + 2] + (((unsigned short) (module[i] & 0xf0)) << 4)) & 0xFFF;
+    else
+      chan.Ton = (ST_Table[j] - module[i + 2] - (((unsigned short) (module[i] & 0xf0)) << 4)) & 0xFFF;
+    if (chan.EnvelopeEnabled)
+      chan.Amplitude = chan.Amplitude | 16;
+  } else
+    chan.Amplitude = 0;
+
+  TempMixer = TempMixer >> 1;
+}
+
+blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) { return nullptr; }
 
 }  // namespace ay
 }  // namespace emu
