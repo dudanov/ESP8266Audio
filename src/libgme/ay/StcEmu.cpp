@@ -167,7 +167,7 @@ blargg_err_t StcEmu::mStartTrack(int track) {
 
 /* STC MODULE */
 
-inline int16_t StcEmu::SampleData::GetTransposition() const {
+inline int16_t StcEmu::SampleData::Transposition() const {
   int16_t result = mData[0] / 16 * 256 + mData[2];
   return (mData[1] & 32) ? result : -result;
 }
@@ -202,14 +202,14 @@ inline const StcEmu::Pattern *StcEmu::STCModule::GetPattern(uint8_t number) cons
 
 inline const uint8_t *StcEmu::STCModule::GetOrnamentData(uint8_t number) const {
   auto it = ptr<Ornament>(mOrnaments);
-  while (it->number != number)
+  while (!it->HasNumber(number))
     ++it;
-  return it->data;
+  return it->Data();
 }
 
 inline const StcEmu::Sample *StcEmu::STCModule::GetSample(uint8_t number) const {
   auto it = mSamples;
-  while (it->number != number)
+  while (!it->HasNumber(number))
     ++it;
   return it;
 }
@@ -336,7 +336,7 @@ void StcEmu::PatternInterpreter(blip_clk_time_t time) {
         chan.SetOrnamentData(mModule->GetOrnamentData(val & 0b1111));
       } else if (val == 0x80) {
         // Rest (shuts channel). End position.
-        chan.SampleOff();
+        chan.TurnOff();
         chan.PatternDataIt++;
         break;
       } else if (val == 0x81) {
@@ -350,7 +350,7 @@ void StcEmu::PatternInterpreter(blip_clk_time_t time) {
         // Select envelope effect.
         mApu.Write(time, AyApu::R13, val & 0b1111);
         mApu.Write(time, AyApu::R11, *++chan.PatternDataIt);
-        chan.Ornament = mModule->GetOrnamentData(0);
+        chan.mOrnament = mModule->GetOrnamentData(0);
         chan.EnvelopeEnabled = true;
       } else {
         // number of empty locations after the subsequent code
@@ -370,25 +370,25 @@ void StcEmu::GetRegisters(Channel &chan, uint8_t &TempMixer) {
     chan.SampleCounter--;
     chan.SamplePosition = (chan.SamplePosition + 1) % 32;
     if (chan.SampleCounter == 0) {
-      if (chan.Sample->number != 0) {
-        chan.SamplePosition = chan.Sample->repeat_pos % 32;
-        chan.SampleCounter = chan.Sample->repeat_len + 1;
+      if (chan.mSample->mNumber != 0) {
+        chan.SamplePosition = chan.mSample->mRepeatPosition % 32;
+        chan.SampleCounter = chan.mSample->mRepeatLength + 1;
       } else {
         chan.SampleCounter = -1;
       }
     }
   }
   if (chan.SampleCounter >= 0) {
-    auto data = &chan.Sample->data[chan.SamplePosition];
-    if (data->GetNoiseMask())
+    auto data = &chan.mSample->mData[chan.SamplePosition];
+    if (data->NoiseMask())
       TempMixer |= 64;
     else
-      mApu.Write(0, AyApu::R6, data->GetNoise());
-    if (data->GetToneMask())
+      mApu.Write(0, AyApu::R6, data->Noise());
+    if (data->ToneMask())
       TempMixer |= 8;
-    chan.Amplitude = data->GetVolume();
+    chan.Amplitude = data->Volume();
 
-    j = chan.Note + chan.Ornament[chan.SamplePosition] + ;
+    j = chan.Note + chan.mOrnament[chan.SamplePosition] + ;
     if (j > 95)
       j = 95;
     if ((module[i + 1] & 0x20) != 0)

@@ -17,29 +17,37 @@ class StcEmu : public ClassicEmu {
   static gme_type_t static_type() { return gme_stc_type; }
 
   struct SampleData {
-    uint8_t GetVolume() const { return mData[0] % 16; }
-    uint8_t GetNoise() const { return mData[1] % 32; }
-    bool GetToneMask() const { return mData[1] & 64; }
-    bool GetNoiseMask() const { return mData[1] & 128; }
-    int16_t GetTransposition() const;
+    uint8_t Volume() const { return mData[0] % 16; }
+    uint8_t Noise() const { return mData[1] % 32; }
+    bool ToneMask() const { return mData[1] & 64; }
+    bool NoiseMask() const { return mData[1] & 128; }
+    int16_t Transposition() const;
 
    private:
     uint8_t mData[3];
   };
 
   struct Sample {
-    uint8_t GetRepeatPosition() const { return repeat_pos; }
-    const uint8_t GetRepeatLength() const { return repeat_len; }
-    bool IsRepeatable() const { return repeat_pos; }
-    uint8_t number;
-    SampleData data[32];
-    uint8_t repeat_pos;
-    uint8_t repeat_len;
+    bool HasNumber(uint8_t number) const { return mNumber == number; }
+    const SampleData *Data(size_t pos) const { return mData + pos; }
+    bool IsRepeatable() const { return mRepeatPosition != 0; }
+    uint8_t RepeatPosition() const { return mRepeatPosition; }
+    const uint8_t RepeatLength() const { return mRepeatLength; }
+
+   private:
+    uint8_t mNumber;
+    SampleData mData[32];
+    uint8_t mRepeatPosition;
+    uint8_t mRepeatLength;
   };
 
   struct Ornament {
-    uint8_t number;
-    uint8_t data[32];
+    bool HasNumber(uint8_t number) const { return mNumber == number; }
+    const uint8_t *Data() const { return mData; }
+
+   private:
+    uint8_t mNumber;
+    uint8_t mData[32];
   };
 
   struct Position {
@@ -59,35 +67,35 @@ class StcEmu : public ClassicEmu {
   };
 
   struct Channel {
-    void SampleOff() { SampleCounter = 0; }
+    void TurnOff() { SampleCounter = 0; }
     void SetNote(uint8_t note) {
       Note = note;
       SampleCounter = 32;
       SamplePosition = 0;
       PatternDataIt++;
     }
-    void SetSample(const Sample *sample) { Sample = sample; }
-    bool IsSampleOn() const { return SampleCounter; }
+    void SetSample(const Sample *sample) { mSample = sample; }
+    bool IsOn() const { return SampleCounter; }
     void SetOrnamentData(const uint8_t *data) {
-      Ornament = data;
+      mOrnament = data;
       EnvelopeEnabled = false;
     }
-    const SampleData *GetSampleData() const { return Sample->data + SamplePosition; }
-    uint8_t GetOrnamentData() const { return Ornament[SamplePosition]; }
-    bool SampleAdvance() {
-      if (!IsSampleOn())
+    const SampleData *SampleData() const { return mSample->Data(SamplePosition); }
+    uint8_t OrnamentData() const { return mOrnament[SamplePosition]; }
+    bool Advance() {
+      if (!IsOn())
         return;
       if (--SampleCounter) {
         ++SamplePosition;
-      } else if (Sample->IsRepeatable()) {
-        SamplePosition = Sample->GetRepeatPosition();
-        SampleCounter = Sample->GetRepeatLength();
+      } else if (mSample->IsRepeatable()) {
+        SamplePosition = mSample->RepeatPosition();
+        SampleCounter = mSample->RepeatLength();
       }
     }
     void Reset() { mPlayNext = 0; }
     blip_clk_time_t mPlayNext;
-    const Sample *Sample;
-    const uint8_t *Ornament, *PatternDataIt;
+    const Sample *mSample;
+    const uint8_t *mOrnament, *PatternDataIt;
     uint16_t Tone;
     uint8_t Amplitude, Note, NumberOfNotesToSkip;
     uint8_t SamplePosition;
@@ -96,22 +104,22 @@ class StcEmu : public ClassicEmu {
   };
 
   void mPlaySample(Channel &channel) {
-    if (!channel.IsSampleOn())
+    if (!channel.IsOn())
       return;
-    auto data = channel.GetSampleData();
-    if (data->GetNoiseMask())
+    auto sample = channel.SampleData();
+    if (sample->NoiseMask())
       ;  // tunoff chip
     else
-      mApu.Write(0, AyApu::R6, data->GetNoise());
+      mApu.Write(0, AyApu::R6, sample->Noise());
 
-    if (data->GetToneMask())
+    if (sample->ToneMask())
       ;  // turn | 8
 
-    channel.Amplitude = data->GetVolume();
-    uint8_t note = channel.Note + channel.GetOrnamentData() + mPositionTransposition();
+    channel.Amplitude = sample->Volume();
+    uint8_t note = channel.Note + channel.OrnamentData() + mPositionTransposition();
     if (note > 95)
       note = 95;
-    channel.Tone = pgm_read_word(&PERIODS[note]) + data->GetTransposition();
+    channel.Tone = pgm_read_word(&PERIODS[note]) + sample->Transposition();
     if (channel.EnvelopeEnabled)
       channel.Amplitude |= 16;
     else
