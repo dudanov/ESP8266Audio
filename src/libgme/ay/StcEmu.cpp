@@ -326,7 +326,7 @@ void StcEmu::mPlaySamples() {
       continue;
     }
 
-    auto sample = channel.SampleData();
+    auto sample = channel.GetSampleData();
 
     if (!sample->NoiseMask())
       mApu.Write(mEmuTime, 6, sample->Noise());

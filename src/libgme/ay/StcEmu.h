@@ -2,6 +2,7 @@
 
 // Sinclair Spectrum STC music file emulator
 
+#include <cstring>
 #include "AyApu.h"
 #include "../ClassicEmu.h"
 
@@ -91,7 +92,7 @@ class StcEmu : public ClassicEmu {
 
     bool IsOn() const { return mSampleCounter != 0; }
     void SetSample(const Sample *sample) { mSample = sample; }
-    const SampleData *SampleData() const { return mSample->Data(mSamplePosition); }
+    const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
 
     void SetOrnamentData(const uint8_t *data) { mOrnament = data; }
     uint8_t OrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
