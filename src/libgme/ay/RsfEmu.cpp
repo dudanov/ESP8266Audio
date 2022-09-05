@@ -2,7 +2,7 @@
 #include "../blargg_endian.h"
 #include "../blargg_source.h"
 
-#include <string.h>
+#include <cstring>
 #include <pgmspace.h>
 
 /*

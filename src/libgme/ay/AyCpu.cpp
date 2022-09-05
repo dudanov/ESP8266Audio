@@ -11,8 +11,8 @@ emulator.
 #include "../blargg_endian.h"
 #include "../blargg_source.h"
 
+#include <cstring>
 #include <pgmspace.h>
-#include <string.h>
 
 /* Copyright (C) 2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser

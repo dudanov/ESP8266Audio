@@ -97,14 +97,20 @@ class StcEmu : public ClassicEmu {
         SampleCounter = mSample->RepeatLength();
       }
     }
-    void Reset() { mPlayNext = 0; }
+    void Reset() { memset(this, 0, sizeof(*this)); }
+    // Time for next pattern position.
     blip_clk_time_t mPlayNext;
+    // Pointer to sample.
     const Sample *mSample;
-    const uint8_t *mOrnament, *PatternDataIt;
-    uint16_t Tone;
-    uint8_t Amplitude, Note, NumberOfNotesToSkip;
+    // Pattern data iterator.
+    const uint8_t *PatternDataIt;
+    // Pointer to ornament data.
+    const uint8_t *mOrnament;
     uint8_t SamplePosition;
-    uint8_t SampleCounter, NoteSkipCounter;
+    uint8_t SampleCounter;
+    uint8_t Amplitude;
+    uint8_t Note;
+    uint16_t TonePeriod;
     bool EnvelopeEnabled;
   };
 
@@ -181,8 +187,9 @@ class StcEmu : public ClassicEmu {
   bool mUpdate() {
     auto pattern = mModule->GetPattern(mPositionIt->pattern);
     for (unsigned idx = 0; idx < 3; ++idx) {
-      auto &p = mChannel[idx];
-      p.PatternDataIt = mModule->GetPatternData(pattern, idx);
+      auto &c = mChannel[idx];
+      c.PatternDataIt = mModule->GetPatternData(pattern, idx);
+      c.mOrnament = mModule->GetOrnamentData(0);
     }
     return true;
   }
@@ -206,15 +213,18 @@ class StcEmu : public ClassicEmu {
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
   void mSeekFrame(uint32_t frame);
-  blargg_err_t mWriteRegisters();
   void PatternInterpreter(blip_clk_time_t time, Channel &chan);
+  void mInit();
 
  private:
   AyApu mApu;
   std::array<Channel, AyApu::OSCS_NUM> mChannel;
   const STCModule *mModule;
   const Position *mPositionIt, *mPositionEnd;
+  // Play period 50Hz
   blip_clk_time_t mPlayPeriod;
+  // Global song delay
+  blip_clk_time_t mDelayPeriod;
   blip_clk_time_t mNextPlay;
 };  // namespace ay
 

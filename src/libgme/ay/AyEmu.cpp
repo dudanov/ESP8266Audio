@@ -4,7 +4,7 @@
 #include "../blargg_endian.h"
 #include "../blargg_source.h"
 
-#include <string.h>
+#include <cstring>
 #include <pgmspace.h>
 
 /* Copyright (C) 2006 Shay Green. This module is free software; you

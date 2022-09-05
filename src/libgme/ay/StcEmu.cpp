@@ -2,7 +2,7 @@
 #include "../blargg_endian.h"
 #include "../blargg_source.h"
 
-#include <string.h>
+#include <cstring>
 #include <pgmspace.h>
 
 /*
@@ -138,10 +138,11 @@ struct StcFile : GmeInfo {
 
 // Setup
 
-blargg_err_t StcEmu::mLoad(const uint8_t *begin, long size) {
-  mModule = reinterpret_cast<const STCModule *>(begin);
+blargg_err_t StcEmu::mLoad(const uint8_t *data, long size) {
+  mModule = reinterpret_cast<const STCModule *>(data);
   if (!mModule->CheckIntegrity(size))
     return gme_wrong_file_type;
+  mPositionEnd = mModule->GetPositionEnd();
   mSetTrackNum(1);
   mSetChannelsNumber(AyApu::OSCS_NUM);
   mApu.SetVolume(mGetGain());
@@ -154,18 +155,29 @@ void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 
 // Emulation
 
-void StcEmu::mSetTempo(double t) {
-  mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / get_le16(mFile.header->framerate) / t);
+void StcEmu::mSetTempo(double temp) {
+  mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp);
+  mDelayPeriod = mPlayPeriod * mModule->GetDelay();
 }
 
 blargg_err_t StcEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
-  mPositionIt = mModule->GetPositionBegin();
-  mPositionEnd = mModule->GetPositionEnd();
-  mNextPlay = 0;
-  mApu.Reset();
+  mInit();
   SetTempo(mGetTempo());
   return nullptr;
+}
+
+void StcEmu::mInit() {
+  mApu.Reset();
+  mNextPlay = 0;
+  mPositionIt = mModule->GetPositionBegin();
+  auto pattern = mModule->GetPattern(mPositionIt->pattern);
+  for (unsigned idx = 0; idx < 3; ++idx) {
+    auto &c = mChannel[idx];
+    c.Reset();
+    c.PatternDataIt = mModule->GetPatternData(pattern, idx);
+    c.mOrnament = mModule->GetOrnamentData(0);
+  }
 }
 
 /* STC MODULE */
@@ -327,6 +339,7 @@ unsigned StcEmu::STCModule::CountSongLength() const {
 
 void StcEmu::PatternInterpreter(blip_clk_time_t time) {
   for (auto &chan : mChannel) {
+    uint8_t skip = 0;
     while (true) {
       const uint8_t val = *chan.PatternDataIt;
       if (val < 0x60) {
@@ -359,11 +372,11 @@ void StcEmu::PatternInterpreter(blip_clk_time_t time) {
         chan.EnvelopeEnabled = true;
       } else {
         // number of empty locations after the subsequent code
-        chan.NumberOfNotesToSkip = val - 0xA1;
+        skip = val - 0xA1;
       }
       chan.PatternDataIt++;
     }
-    chan.NoteSkipCounter = chan.NumberOfNotesToSkip;
+    chan.mPlayNext += mDelayPeriod * skip;
   }
 }
 
@@ -386,7 +399,7 @@ void StcEmu::mPlaySample(Channel &channel, uint8_t &mixer) {
   mixer >>= 1;
 
   const uint8_t note = channel.Note + channel.OrnamentData() + mPositionTransposition();
-  channel.Tone = Channel::GetTonePeriod(note) + sample->Transposition();
+  channel.TonePeriod = Channel::GetTonePeriod(note) + sample->Transposition();
 
   channel.Amplitude = sample->Volume();
 
