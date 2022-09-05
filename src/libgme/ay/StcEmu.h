@@ -242,6 +242,7 @@ class StcEmu : public ClassicEmu {
   blip_clk_time_t mDelayPeriod;
   // Current emulation time
   blip_clk_time_t mEmuTime;
+  blip_clk_time_t mDTime;
 };
 
 }  // namespace ay
