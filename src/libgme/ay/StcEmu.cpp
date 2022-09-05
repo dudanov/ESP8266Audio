@@ -308,7 +308,7 @@ void StcEmu::mPlayPattern() {
         chan.SetOrnamentData(mModule->GetOrnamentData(0));
       } else {
         // number of empty locations after the subsequent code
-        skip = code - 0xA1;
+        skip = code - 0xA0;
       }
       chan.AdvancePattern();
     }
@@ -350,7 +350,7 @@ blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
     if (mChannel[0].PatternCode() == 0xFF) {
       if (!mAdvancePosition())
-        ;//mSetTrackEnded();
+        mSetTrackEnded();
     }
     mPlayPattern();
     mPlaySamples();
