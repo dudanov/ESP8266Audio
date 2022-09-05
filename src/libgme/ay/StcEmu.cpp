@@ -388,23 +388,15 @@ void StcEmu::mPlaySample(Channel &channel, uint8_t &mixer) {
 
   auto sample = channel.SampleData();
 
-  if (sample->NoiseMask())
-    mixer |= 0x40;
-  else
+  if (!sample->NoiseMask())
     mApu.Write(0, AyApu::R6, sample->Noise());
 
-  if (sample->ToneMask())
-    mixer |= 0x08;
-
+  mixer |= 0b1000000 * sample->NoiseMask() | 0b1000 * sample->ToneMask();
   mixer >>= 1;
 
   const uint8_t note = channel.Note + channel.OrnamentData() + mPositionTransposition();
   channel.TonePeriod = Channel::GetTonePeriod(note) + sample->Transposition();
-
-  channel.Amplitude = sample->Volume();
-
-  if (channel.EnvelopeEnabled)
-    channel.Amplitude |= 16;
+  channel.Amplitude = sample->Volume() | 0b10000 * channel.EnvelopeEnabled;
 }
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
