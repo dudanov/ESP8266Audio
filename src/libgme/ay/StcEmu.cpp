@@ -89,7 +89,7 @@ void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 // Emulation
 
 void StcEmu::mSetTempo(double temp) {
-  mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 20 / temp);
+  mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp);
 }
 
 blargg_err_t StcEmu::mStartTrack(int track) {
@@ -309,7 +309,7 @@ void StcEmu::mPlayPattern() {
         chan.SetOrnamentData(mModule->GetOrnamentData(0));
       } else {
         // number of empty locations after the subsequent code
-        chan.SetDelay(code - 0xA0);
+        chan.SetDelay(code - 0xA1);
       }
       chan.AdvancePattern();
     }
