@@ -201,6 +201,7 @@ class StcEmu : public ClassicEmu {
     for (unsigned idx = 0; idx < 3; ++idx) {
       auto &c = mChannel[idx];
       c.SetPatternData(mModule->GetPatternData(pattern, idx));
+      c.SetOrnamentData(mModule->GetOrnamentData(0));
     }
     return true;
   }
