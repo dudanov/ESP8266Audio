@@ -49,7 +49,7 @@ StcEmu::StcEmu() {
 StcEmu::~StcEmu() {}
 
 blargg_err_t StcEmu::mGetTrackInfo(track_info_t *out, int track) const {
-  //copy_stc_fields(mFile, *out);
+  // copy_stc_fields(mFile, *out);
   return nullptr;
 }
 
@@ -345,8 +345,6 @@ void StcEmu::mPlaySamples() {
   }
   mApu.Write(mEmuTime, 7, mixer);
 }
-
-
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {

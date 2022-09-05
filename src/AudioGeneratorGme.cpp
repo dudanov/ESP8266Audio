@@ -94,7 +94,7 @@ bool AudioGeneratorGme::mLoad() {
 
   this->seek(0);
   this->read(header, sizeof(header));
-  gme_type_t file_type = gme_identify_extension(gme_identify_header(header));
+  gme_type_t file_type = gme_identify_extension("STC");// gme_identify_header(header));
 
   if (file_type == nullptr) {
     this->cb.st(-1, gme_wrong_file_type);
