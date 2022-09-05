@@ -202,7 +202,6 @@ class StcEmu : public ClassicEmu {
     for (unsigned idx = 0; idx < 3; ++idx) {
       auto &c = mChannel[idx];
       c.SetPatternData(mModule->GetPatternData(pattern, idx));
-      c.SetOrnamentData(mModule->GetOrnamentData(0));
     }
     return true;
   }
@@ -212,6 +211,8 @@ class StcEmu : public ClassicEmu {
   bool mAdvancePosition() {
     if (++mPositionIt != mPositionEnd)
       return mUpdate();
+    mPositionIt = mModule->GetPositionBegin();
+    mUpdate();
     return false;
   }
 
@@ -225,7 +226,7 @@ class StcEmu : public ClassicEmu {
   void mUpdateEq(BlipEq const &) override;
   void mSeekFrame(uint32_t frame);
   void mPlaySamples();
-  void PatternInterpreter();
+  void mPlayPattern();
   void mInit();
 
  private:

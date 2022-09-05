@@ -270,7 +270,7 @@ unsigned StcEmu::STCModule::CountSongLength() const {
   return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount();
 }
 
-void StcEmu::PatternInterpreter() {
+void StcEmu::mPlayPattern() {
   for (auto &chan : mChannel) {
     if (!chan.IsPlayTime(mEmuTime))
       continue;
@@ -346,9 +346,15 @@ void StcEmu::mPlaySamples() {
   mApu.Write(mEmuTime, 7, mixer);
 }
 
+
+
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
-    PatternInterpreter();
+    if (mChannel[0].PatternCode() == 0xFF) {
+      if (!mAdvancePosition())
+        mSetTrackEnded();
+    }
+    mPlayPattern();
     mPlaySamples();
   }
 
