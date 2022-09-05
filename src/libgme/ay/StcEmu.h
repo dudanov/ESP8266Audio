@@ -72,49 +72,62 @@ class StcEmu : public ClassicEmu {
 
   struct Channel {
     static uint16_t GetTonePeriod(uint8_t tone);
-    void TurnOff() { SampleCounter = 0; }
+
+    void TurnOff() { mSampleCounter = 0; }
+
     void SetNote(uint8_t note) {
-      Note = note;
-      SampleCounter = 32;
-      SamplePosition = 0;
-      PatternDataIt++;
+      mNote = note;
+      mSampleCounter = 32;
+      mSamplePosition = 0;
     }
+
+    bool IsEnvelopeOn() const { return mEnvelope; }
+    void EnvelopeOn() { mEnvelope = true; }
+    void EnvelopeOff() { mEnvelope = false; }
+
+    void SetPatternData(const uint8_t *data) { mPatternIt = data; }
+    uint8_t PatternCode() const { return *mPatternIt; }
+    void AdvancePattern() { mPatternIt++; }
+
+    bool IsOn() const { return mSampleCounter != 0; }
     void SetSample(const Sample *sample) { mSample = sample; }
-    bool IsOn() const { return SampleCounter; }
-    void SetOrnamentData(const uint8_t *data) {
-      mOrnament = data;
-      EnvelopeEnabled = false;
+    const SampleData *SampleData() const { return mSample->Data(mSamplePosition); }
+
+    void SetOrnamentData(const uint8_t *data) { mOrnament = data; }
+    uint8_t OrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
+
+    void Reset() { memset(this, 0, sizeof(*this)); }
+
+    void AdvanceTime(blip_clk_time_t time) { mPlayNext += time; }
+    bool IsPlayTime(blip_clk_time_t time) const { return mPlayNext <= time; }
+    void SetEnvelope(AyApu &apu) {
+      apu.Write(mPlayNext, 13, *mPatternIt % 16);
+      apu.Write(mPlayNext, 11, *++mPatternIt);
+      EnvelopeOn();
     }
-    const SampleData *SampleData() const { return mSample->Data(SamplePosition); }
-    uint8_t OrnamentData() const { return mOrnament[SamplePosition]; }
-    bool Advance() {
-      if (!IsOn())
-        return;
-      if (--SampleCounter) {
-        ++SamplePosition;
+    void AdvanceSample() {
+      if (--mSampleCounter) {
+        ++mSamplePosition;
       } else if (mSample->IsRepeatable()) {
-        SamplePosition = mSample->RepeatPosition();
-        SampleCounter = mSample->RepeatLength();
+        mSamplePosition = mSample->RepeatPosition();
+        mSampleCounter = mSample->RepeatLength();
       }
     }
-    void Reset() { memset(this, 0, sizeof(*this)); }
+
+   private:
     // Time for next pattern position.
     blip_clk_time_t mPlayNext;
     // Pointer to sample.
     const Sample *mSample;
     // Pattern data iterator.
-    const uint8_t *PatternDataIt;
+    const uint8_t *mPatternIt;
     // Pointer to ornament data.
     const uint8_t *mOrnament;
-    uint8_t SamplePosition;
-    uint8_t SampleCounter;
-    uint8_t Amplitude;
-    uint8_t Note;
-    uint16_t TonePeriod;
-    bool EnvelopeEnabled;
+    uint8_t mNote;
+    uint8_t mSamplePosition;
+    uint8_t mSampleCounter;
+    bool mEnvelope;
   };
-
-  void mPlaySample(Channel &channel, uint8_t &volume);
 
   enum { HEADER_SIZE = 27 };
 
@@ -188,8 +201,8 @@ class StcEmu : public ClassicEmu {
     auto pattern = mModule->GetPattern(mPositionIt->pattern);
     for (unsigned idx = 0; idx < 3; ++idx) {
       auto &c = mChannel[idx];
-      c.PatternDataIt = mModule->GetPatternData(pattern, idx);
-      c.mOrnament = mModule->GetOrnamentData(0);
+      c.SetPatternData(mModule->GetPatternData(pattern, idx));
+      c.SetOrnamentData(mModule->GetOrnamentData(0));
     }
     return true;
   }
@@ -202,8 +215,6 @@ class StcEmu : public ClassicEmu {
     return false;
   }
 
-  void PatternInterpreter(blip_clk_time_t time);
-
  protected:
   blargg_err_t mLoad(const uint8_t *data, long size) override;
   blargg_err_t mStartTrack(int) override;
@@ -213,7 +224,8 @@ class StcEmu : public ClassicEmu {
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
   void mSeekFrame(uint32_t frame);
-  void PatternInterpreter(blip_clk_time_t time, Channel &chan);
+  void mPlaySamples();
+  void PatternInterpreter();
   void mInit();
 
  private:
@@ -225,7 +237,8 @@ class StcEmu : public ClassicEmu {
   blip_clk_time_t mPlayPeriod;
   // Global song delay
   blip_clk_time_t mDelayPeriod;
-  blip_clk_time_t mNextPlay;
+  // Current emulation time
+  blip_clk_time_t mEmuTime;
 };  // namespace ay
 
 }  // namespace ay

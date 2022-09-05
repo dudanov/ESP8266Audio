@@ -34,7 +34,7 @@ inline uint16_t StcEmu::Channel::GetTonePeriod(uint8_t tone) {
       0x0042, 0x003F, 0x003B, 0x0038, 0x0035, 0x0032, 0x002F, 0x002C, 0x002A, 0x0027, 0x0025, 0x0023, 0x0021, 0x001F,
       0x001D, 0x001C, 0x001A, 0x0019, 0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000F,
   };
-  return pgm_read_word(TABLE + (tone <= 95) ? tone : 95);
+  return pgm_read_word(TABLE + ((tone <= 95) ? tone : 95));
 }
 
 StcEmu::StcEmu() {
@@ -48,90 +48,23 @@ StcEmu::StcEmu() {
 
 StcEmu::~StcEmu() {}
 
-static unsigned count_bits(unsigned value) {
-  unsigned nbits = 0;
-  if (value != 0) {
-    do {
-      nbits++;
-    } while (value &= (value - 1));
-  }
-  return nbits;
-}
-
-static const uint8_t *find_frame(const StcEmu::file_t &file, const uint32_t frame) {
-  if (frame >= get_le32(file.header->frames))
-    return file.begin;
-  auto it = file.begin;
-  for (uint32_t n = 0; n < frame;) {
-    if (*it != 0xFE) {
-      ++n;
-      if (*it != 0xFF)
-        it += count_bits(get_be16(it++));
-    } else {
-      n += *++it;
-    }
-    if (++it >= file.end)
-      return file.begin;
-  }
-  return it;
-}
-
-static blargg_err_t parse_header(const uint8_t *in, long size, StcEmu::file_t &out) {
-  typedef StcEmu::STCModule header_t;
-  out.header = (const header_t *) in;
-  out.end = in + size;
-
-  auto o = out.header->ornament();
-
-  if (size <= StcEmu::HEADER_SIZE)
-    return gme_wrong_file_type;
-
-  if (memcmp_P(out.header->tag, PSTR("STC\x03"), 4))
-    return gme_wrong_file_type;
-
-  const uint32_t loop_frame = get_le32(out.header->loop);
-
-  if (loop_frame >= get_le32(out.header->frames))
-    return gme_wrong_file_type;
-
-  out.begin = in + get_le16(out.header->song_offset);
-
-  if (std::distance(out.begin, out.end) <= 0)
-    return gme_wrong_file_type;
-
-  out.loop = find_frame(out, loop_frame);
-  return nullptr;
-}
-
-static void copy_stc_fields(const StcEmu::file_t &file, track_info_t &out) {
-  out.track_count = 1;
-  const unsigned period = 1000 / get_le16(file.header->framerate);
-  out.length = period * get_le32(file.header->frames);
-  out.loop_length = period * get_le32(file.header->loop);
-  auto p = GmeFile::copyField(out.song, (const char *) file.header->info);
-  p = GmeFile::copyField(out.author, p);
-  GmeFile::copyField(out.comment, p);
-}
-
 blargg_err_t StcEmu::mGetTrackInfo(track_info_t *out, int track) const {
-  copy_stc_fields(mFile, *out);
+  //copy_stc_fields(mFile, *out);
   return nullptr;
 }
 
 struct StcFile : GmeInfo {
-  StcEmu::file_t file;
-
   StcFile() { mSetType(gme_stc_type); }
   static MusicEmu *createStcFile() { return BLARGG_NEW StcFile; }
 
   blargg_err_t mLoad(uint8_t const *begin, long size) override {
-    RETURN_ERR(parse_header(begin, size, file));
+    //    RETURN_ERR(parse_header(begin, size, file));
     mSetTrackNum(1);
-    return 0;
+    return nullptr;
   }
 
   blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override {
-    copy_stc_fields(file, *out);
+    //  copy_stc_fields(file, *out);
     return nullptr;
   }
 };
@@ -169,14 +102,14 @@ blargg_err_t StcEmu::mStartTrack(int track) {
 
 void StcEmu::mInit() {
   mApu.Reset();
-  mNextPlay = 0;
+  mEmuTime = 0;
   mPositionIt = mModule->GetPositionBegin();
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
   for (unsigned idx = 0; idx < 3; ++idx) {
     auto &c = mChannel[idx];
     c.Reset();
-    c.PatternDataIt = mModule->GetPatternData(pattern, idx);
-    c.mOrnament = mModule->GetOrnamentData(0);
+    c.SetPatternData(mModule->GetPatternData(pattern, idx));
+    c.SetOrnamentData(mModule->GetOrnamentData(0));
   }
 }
 
@@ -337,71 +270,92 @@ unsigned StcEmu::STCModule::CountSongLength() const {
   return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount();
 }
 
-void StcEmu::PatternInterpreter(blip_clk_time_t time) {
+void StcEmu::PatternInterpreter() {
   for (auto &chan : mChannel) {
+    if (!chan.IsPlayTime(mEmuTime))
+      continue;
     uint8_t skip = 0;
     while (true) {
-      const uint8_t val = *chan.PatternDataIt;
-      if (val < 0x60) {
+      const uint8_t code = chan.PatternCode();
+      if (code < 0x60) {
         // Note in semitones (00=C-1). End position.
-        chan.SetNote(val);
+        chan.SetNote(code);
+        chan.AdvancePattern();
         break;
-      } else if (val < 0x70) {
+      } else if (code < 0x70) {
         // Bits 0-3 = sample number
-        chan.SetSample(mModule->GetSample(val & 0b1111));
-      } else if (val < 0x80) {
+        chan.SetSample(mModule->GetSample(code % 16));
+      } else if (code < 0x80) {
         // Bits 0-3 = ornament number
-        chan.SetOrnamentData(mModule->GetOrnamentData(val & 0b1111));
-      } else if (val == 0x80) {
+        chan.SetOrnamentData(mModule->GetOrnamentData(code % 16));
+        chan.EnvelopeOff();
+      } else if (code == 0x80) {
         // Rest (shuts channel). End position.
         chan.TurnOff();
-        chan.PatternDataIt++;
+        chan.AdvancePattern();
         break;
-      } else if (val == 0x81) {
+      } else if (code == 0x81) {
         // Empty location. End position.
-        chan.PatternDataIt++;
+        chan.AdvancePattern();
         break;
-      } else if (val == 0x82) {
+      } else if (code == 0x82) {
         // Select ornament 0.
         chan.SetOrnamentData(mModule->GetOrnamentData(0));
-      } else if (val < 0x8F) {
+        chan.EnvelopeOff();
+      } else if (code < 0x8F) {
         // Select envelope effect.
-        mApu.Write(time, AyApu::R13, val & 0b1111);
-        mApu.Write(time, AyApu::R11, *++chan.PatternDataIt);
-        chan.mOrnament = mModule->GetOrnamentData(0);
-        chan.EnvelopeEnabled = true;
+        chan.SetEnvelope(mApu);
+        chan.SetOrnamentData(mModule->GetOrnamentData(0));
       } else {
         // number of empty locations after the subsequent code
-        skip = val - 0xA1;
+        skip = code - 0xA1;
       }
-      chan.PatternDataIt++;
+      chan.AdvancePattern();
     }
-    chan.mPlayNext += mDelayPeriod * skip;
+    chan.AdvanceTime(mDelayPeriod * skip);
   }
 }
 
-void StcEmu::mPlaySample(Channel &channel, uint8_t &mixer) {
-  if (!channel.IsOn()) {
-    channel.Amplitude = 0;
-    return;
+void StcEmu::mPlaySamples() {
+  uint8_t mixer = 0;
+  for (uint8_t idx = 0; idx < 3; ++idx) {
+    Channel &channel = mChannel[idx];
+
+    if (!channel.IsOn()) {
+      mApu.Write(mEmuTime, idx + 8, 0);
+      continue;
+    }
+
+    auto sample = channel.SampleData();
+
+    if (!sample->NoiseMask())
+      mApu.Write(mEmuTime, 6, sample->Noise());
+
+    mixer |= 64 * sample->NoiseMask() | 8 * sample->ToneMask();
+    mixer >>= 1;
+
+    const uint8_t note = channel.OrnamentNote() + mPositionTransposition();
+    const uint16_t period = (Channel::GetTonePeriod(note) + sample->Transposition()) % 4096;
+
+    mApu.Write(mEmuTime, idx * 2, period % 256);
+    mApu.Write(mEmuTime, idx * 2 + 1, period / 256);
+    mApu.Write(mEmuTime, idx + 8, sample->Volume() + 16 * channel.IsEnvelopeOn());
+
+    channel.AdvanceSample();
   }
-
-  auto sample = channel.SampleData();
-
-  if (!sample->NoiseMask())
-    mApu.Write(0, AyApu::R6, sample->Noise());
-
-  mixer |= 0b1000000 * sample->NoiseMask() | 0b1000 * sample->ToneMask();
-  mixer >>= 1;
-
-  const uint8_t note = channel.Note + channel.OrnamentData() + mPositionTransposition();
-  channel.TonePeriod = Channel::GetTonePeriod(note) + sample->Transposition();
-  channel.Amplitude = sample->Volume() | 0b10000 * channel.EnvelopeEnabled;
+  mApu.Write(mEmuTime, 7, mixer);
 }
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
-  while (mNextPlay <= duration) {
+  for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
+    PatternInterpreter();
+    mPlaySamples();
   }
+
+  for (auto &c : mChannel)
+    c.AdvanceTime(-duration);
+  mEmuTime -= duration;
+  mApu.EndFrame(duration);
   return nullptr;
 }
 
