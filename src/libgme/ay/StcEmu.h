@@ -62,8 +62,12 @@ class StcEmu : public ClassicEmu {
 
   struct Pattern {
     static const uint8_t MAX_COUNT = 32;
-    uint8_t number;
-    uint8_t data_offset[3][2];
+    bool HasNumber(uint8_t number) const { return mNumber == number; }
+    const uint8_t *DataOffset(uint8_t channel) const { return mDataOffset[channel]; }
+
+   private:
+    uint8_t mNumber;
+    uint8_t mDataOffset[3][2];
   };
 
   struct Channel {
@@ -162,7 +166,7 @@ class StcEmu : public ClassicEmu {
     bool CheckIntegrity(size_t size) const;
 
    private:
-    template<typename T> const T *ptr(const uint8_t *offset) const {
+    template<typename T> const T *mGetPointer(const uint8_t *offset) const {
       return reinterpret_cast<const T *>(&mDelay + get_le16(offset));
     }
 

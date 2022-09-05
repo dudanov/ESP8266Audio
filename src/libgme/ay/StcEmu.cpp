@@ -173,35 +173,37 @@ inline int16_t StcEmu::SampleData::Transposition() const {
 }
 
 inline const StcEmu::Position *StcEmu::STCModule::GetPositionBegin() const {
-  return ptr<PositionsTable>(mPositions)->position;
+  return mGetPointer<PositionsTable>(mPositions)->position;
 }
 
 inline const StcEmu::Position *StcEmu::STCModule::GetPositionEnd() const {
-  auto p = ptr<PositionsTable>(mPositions);
+  auto p = mGetPointer<PositionsTable>(mPositions);
   return p->position + p->count + 1;
 }
 
-inline size_t StcEmu::STCModule::mGetPositionsCount() const { return ptr<PositionsTable>(mPositions)->count + 1; }
+inline size_t StcEmu::STCModule::mGetPositionsCount() const {
+  return mGetPointer<PositionsTable>(mPositions)->count + 1;
+}
 
 inline const uint8_t *StcEmu::STCModule::GetPatternData(const StcEmu::Pattern *pattern, uint8_t channel) const {
-  return ptr<uint8_t>(pattern->data_offset[channel]);
+  return mGetPointer<uint8_t>(pattern->DataOffset(channel));
 }
 
 inline const uint8_t *StcEmu::STCModule::GetPatternData(uint8_t pattern, uint8_t channel) const {
   return GetPatternData(GetPattern(pattern), channel);
 }
 
-inline const StcEmu::Pattern *StcEmu::STCModule::mGetPatternBegin() const { return ptr<Pattern>(mPatterns); }
+inline const StcEmu::Pattern *StcEmu::STCModule::mGetPatternBegin() const { return mGetPointer<Pattern>(mPatterns); }
 
 inline const StcEmu::Pattern *StcEmu::STCModule::GetPattern(uint8_t number) const {
   auto it = mGetPatternBegin();
-  while (it->number != number)
+  while (!it->HasNumber(number))
     ++it;
   return it;
 }
 
 inline const uint8_t *StcEmu::STCModule::GetOrnamentData(uint8_t number) const {
-  auto it = ptr<Ornament>(mOrnaments);
+  auto it = mGetPointer<Ornament>(mOrnaments);
   while (!it->HasNumber(number))
     ++it;
   return it->Data();
@@ -217,7 +219,7 @@ inline const StcEmu::Sample *StcEmu::STCModule::GetSample(uint8_t number) const 
 bool StcEmu::STCModule::mCheckPatternTable() const {
   auto it = mGetPatternBegin();
   for (uint8_t n = 0; n < Pattern::MAX_COUNT; ++n, ++it) {
-    if (it->number == 0xFF)
+    if (it->HasNumber(0xFF))
       return true;
   }
   return false;
@@ -225,7 +227,7 @@ bool StcEmu::STCModule::mCheckPatternTable() const {
 
 const StcEmu::Pattern *StcEmu::STCModule::mFindPattern(uint8_t number) const {
   for (auto it = mGetPatternBegin(); it != mGetPatternEnd(); ++it) {
-    if (it->number == number)
+    if (it->HasNumber(number))
       return it;
   }
   return nullptr;
@@ -405,7 +407,6 @@ void StcEmu::GetRegisters(Channel &chan, uint8_t &TempMixer) {
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   while (mNextPlay <= duration) {
-
   }
   return nullptr;
 }
