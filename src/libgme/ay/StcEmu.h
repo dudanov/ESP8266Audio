@@ -71,6 +71,7 @@ class StcEmu : public ClassicEmu {
   };
 
   struct Channel {
+    static uint16_t GetTonePeriod(uint8_t tone);
     void TurnOff() { SampleCounter = 0; }
     void SetNote(uint8_t note) {
       Note = note;
@@ -107,30 +108,7 @@ class StcEmu : public ClassicEmu {
     bool EnvelopeEnabled;
   };
 
-  void mPlaySample(Channel &channel) {
-    if (!channel.IsOn())
-      return;
-    auto sample = channel.SampleData();
-    if (sample->NoiseMask())
-      ;  // tunoff chip
-    else
-      mApu.Write(0, AyApu::R6, sample->Noise());
-
-    if (sample->ToneMask())
-      ;  // turn | 8
-
-    channel.Amplitude = sample->Volume();
-    uint8_t note = channel.Note + channel.OrnamentData() + mPositionTransposition();
-    if (note > 95)
-      note = 95;
-    channel.Tone = pgm_read_word(&PERIODS[note]) + sample->Transposition();
-    if (channel.EnvelopeEnabled)
-      channel.Amplitude |= 16;
-    else
-      channel.Amplitude = 0;
-
-    TempMixer = TempMixer >> 1;
-  }
+  void mPlaySample(Channel &channel, uint8_t &volume);
 
   enum { HEADER_SIZE = 27 };
 
@@ -230,7 +208,6 @@ class StcEmu : public ClassicEmu {
   void mSeekFrame(uint32_t frame);
   blargg_err_t mWriteRegisters();
   void PatternInterpreter(blip_clk_time_t time, Channel &chan);
-  void GetRegisters(Channel &chan, uint8_t &TempMixer);
 
  private:
   AyApu mApu;
