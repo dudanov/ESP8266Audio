@@ -323,6 +323,8 @@ void StcEmu::mPlaySamples() {
 
     if (!channel.IsOn()) {
       mApu.Write(mEmuTime, idx + 8, 0);
+      mixer |= 64 + 8;
+      mixer >>= 1;
       continue;
     }
 
