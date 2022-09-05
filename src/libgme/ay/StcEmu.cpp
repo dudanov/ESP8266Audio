@@ -308,7 +308,7 @@ void StcEmu::mPlayPattern() {
         chan.SetOrnamentData(mModule->GetOrnamentData(0));
       } else {
         // number of empty locations after the subsequent code
-        skip = code - 0xA1;
+        skip = code - 0xA0;
       }
       chan.AdvancePattern();
     }
