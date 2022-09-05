@@ -22,7 +22,7 @@ namespace gme {
 namespace emu {
 namespace ay {
 
-static const uint32_t CLK_SPECTRUM = 3546900;
+static const uint32_t CLK_SPECTRUM = 1773450;
 
 inline uint16_t StcEmu::Channel::GetTonePeriod(uint8_t tone) {
   static const uint16_t TABLE[] PROGMEM = {
@@ -310,7 +310,7 @@ void StcEmu::mPlayPattern() {
         chan.SetOrnamentData(mModule->GetOrnamentData(0));
       } else {
         // number of empty locations after the subsequent code
-        chan.SetDelay(code - 0xA0);
+        chan.SetDelay(code - 0xA1);
       }
       chan.AdvancePattern();
     }
