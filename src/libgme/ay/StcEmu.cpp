@@ -89,7 +89,7 @@ void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 // Emulation
 
 void StcEmu::mSetTempo(double temp) {
-  mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp);
+  mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 20 / temp);
 }
 
 blargg_err_t StcEmu::mStartTrack(int track) {
