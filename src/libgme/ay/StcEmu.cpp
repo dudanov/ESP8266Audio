@@ -355,7 +355,7 @@ blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
           mSetTrackEnded();
       }
       mPlayPattern();
-      mDTime += mModule->GetDelay() * mPlayPeriod;
+      mDTime += mDelayPeriod;
     }
     mPlaySamples();
   }

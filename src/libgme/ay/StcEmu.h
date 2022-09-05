@@ -132,7 +132,7 @@ class StcEmu : public ClassicEmu {
 
   struct STCModule {
     // Get song global delay.
-    uint8_t GetDelay() const { return mDelay; }
+    uint8_t GetDelay() const { return mDelay - 1; }
 
     // Begin position iterator.
     const Position *GetPositionBegin() const;
