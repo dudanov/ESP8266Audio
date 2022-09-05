@@ -350,7 +350,7 @@ blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
     if (mChannel[0].PatternCode() == 0xFF) {
       if (!mAdvancePosition())
-        mSetTrackEnded();
+        ;//mSetTrackEnded();
     }
     mPlayPattern();
     mPlaySamples();
