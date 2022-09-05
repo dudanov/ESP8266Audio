@@ -274,7 +274,7 @@ void StcEmu::mPlayPattern() {
   for (auto &chan : mChannel) {
     if (!chan.IsPlayTime(mEmuTime))
       continue;
-    uint8_t skip = 0;
+    uint8_t skip = 1;
     while (true) {
       const uint8_t code = chan.PatternCode();
       if (code < 0x60) {
@@ -308,7 +308,7 @@ void StcEmu::mPlayPattern() {
         chan.SetOrnamentData(mModule->GetOrnamentData(0));
       } else {
         // number of empty locations after the subsequent code
-        skip = code - 0xA0;
+        skip = code - 0xA1;
       }
       chan.AdvancePattern();
     }
