@@ -88,7 +88,7 @@ class StcEmu : public ClassicEmu {
 
     void SetPatternData(const uint8_t *data) { mPatternIt = data; }
     uint8_t PatternCode() const { return *mPatternIt; }
-    void AdvancePattern() { mPatternIt++; }
+    uint8_t AdvancePattern() { *++mPatternIt; }
 
     bool IsOn() const { return mSampleCounter != 0; }
     void SetSample(const Sample *sample) { mSample = sample; }
@@ -99,13 +99,11 @@ class StcEmu : public ClassicEmu {
 
     void Reset() { memset(this, 0, sizeof(*this)); }
 
-    void AdvanceTime(blip_clk_time_t time) { mPlayNext += time; }
-    void SubTime(blip_clk_time_t time) { mPlayNext -= time; }
-    bool IsPlayTime(blip_clk_time_t time) const { return mPlayNext <= time; }
-    void SetEnvelope(AyApu &apu) {
-      apu.Write(mPlayNext, 13, *mPatternIt % 16);
-      apu.Write(mPlayNext, 11, *++mPatternIt);
-      EnvelopeOn();
+    void SetDelay(uint8_t delay) { mDelay = delay; }
+    bool IsPlayTime() {
+      if (mDelay == 0 || --mDelay == 0)
+        return true;
+      return false;
     }
     void AdvanceSample() {
       if (--mSampleCounter) {
@@ -117,8 +115,6 @@ class StcEmu : public ClassicEmu {
     }
 
    private:
-    // Time for next pattern position.
-    blip_clk_time_t mPlayNext;
     // Pointer to sample.
     const Sample *mSample;
     // Pattern data iterator.
@@ -128,6 +124,7 @@ class StcEmu : public ClassicEmu {
     uint8_t mNote;
     uint8_t mSamplePosition;
     uint8_t mSampleCounter;
+    uint8_t mDelay;
     bool mEnvelope;
   };
 

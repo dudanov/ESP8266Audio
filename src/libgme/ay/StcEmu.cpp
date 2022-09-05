@@ -273,9 +273,8 @@ unsigned StcEmu::STCModule::CountSongLength() const {
 
 void StcEmu::mPlayPattern() {
   for (auto &chan : mChannel) {
-    if (!chan.IsPlayTime(mEmuTime))
+    if (!chan.IsPlayTime())
       continue;
-    uint8_t skip = 0;
     while (true) {
       const uint8_t code = chan.PatternCode();
       if (code < 0x60) {
@@ -305,15 +304,16 @@ void StcEmu::mPlayPattern() {
         chan.EnvelopeOff();
       } else if (code < 0x8F) {
         // Select envelope effect.
-        chan.SetEnvelope(mApu);
+        mApu.Write(mEmuTime, 13, code % 16);
+        mApu.Write(mEmuTime, 11, chan.AdvancePattern());
+        chan.EnvelopeOn();
         chan.SetOrnamentData(mModule->GetOrnamentData(0));
       } else {
         // number of empty locations after the subsequent code
-        skip = code - 0xA0;
+        chan.SetDelay(code - 0xA0);
       }
       chan.AdvancePattern();
     }
-    chan.AdvanceTime(mDelayPeriod * skip);
   }
 }
 
@@ -360,8 +360,6 @@ blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
     mPlaySamples();
   }
 
-  for (auto &c : mChannel)
-    c.SubTime(duration);
   mEmuTime -= duration;
   mDTime -= duration;
   mApu.EndFrame(duration);
