@@ -310,7 +310,7 @@ void StcEmu::mPlayPattern() {
         chan.SetOrnamentData(mModule->GetOrnamentData(0));
       } else {
         // number of empty locations after the subsequent code
-        chan.SetDelay(code - 0xA0);
+        chan.SetDelay(code - 0xA1);
       }
       chan.AdvancePattern();
     }
