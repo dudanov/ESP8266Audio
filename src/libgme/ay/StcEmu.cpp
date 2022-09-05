@@ -357,7 +357,7 @@ blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   }
 
   for (auto &c : mChannel)
-    c.AdvanceTime(-duration);
+    c.SubTime(duration);
   mEmuTime -= duration;
   mApu.EndFrame(duration);
   return nullptr;

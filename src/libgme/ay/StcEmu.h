@@ -100,6 +100,7 @@ class StcEmu : public ClassicEmu {
     void Reset() { memset(this, 0, sizeof(*this)); }
 
     void AdvanceTime(blip_clk_time_t time) { mPlayNext += time; }
+    void SubTime(blip_clk_time_t time) { mPlayNext -= time; }
     bool IsPlayTime(blip_clk_time_t time) const { return mPlayNext <= time; }
     void SetEnvelope(AyApu &apu) {
       apu.Write(mPlayNext, 13, *mPatternIt % 16);
