@@ -22,7 +22,7 @@ namespace gme {
 namespace emu {
 namespace ay {
 
-static const uint32_t CLK_SPECTRUM = 1773450;
+static const uint32_t CLK_SPECTRUM = 3546900;
 
 inline uint16_t StcEmu::Channel::GetTonePeriod(uint8_t tone) {
   static const uint16_t TABLE[] PROGMEM = {
@@ -355,7 +355,7 @@ blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
           mSetTrackEnded();
       }
       mPlayPattern();
-      mDTime += mDelayPeriod;
+      mDTime += mPlayPeriod * 10;
     }
     mPlaySamples();
   }
