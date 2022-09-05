@@ -132,7 +132,7 @@ class StcEmu : public ClassicEmu {
 
   struct STCModule {
     // Get song global delay.
-    uint8_t GetDelay() const { return mDelay - 1; }
+    uint8_t GetDelay() const { return mDelay; }
 
     // Begin position iterator.
     const Position *GetPositionBegin() const;
@@ -235,11 +235,10 @@ class StcEmu : public ClassicEmu {
   const Position *mPositionIt, *mPositionEnd;
   // Play period 50Hz
   blip_clk_time_t mPlayPeriod;
-  // Global song delay
-  blip_clk_time_t mDelayPeriod;
   // Current emulation time
   blip_clk_time_t mEmuTime;
-  blip_clk_time_t mDTime;
+  // Global song delay
+  uint8_t mDelay;
 };
 
 }  // namespace ay

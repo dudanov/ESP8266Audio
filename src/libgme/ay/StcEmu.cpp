@@ -90,7 +90,6 @@ void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 
 void StcEmu::mSetTempo(double temp) {
   mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp);
-  mDelayPeriod = mPlayPeriod * mModule->GetDelay();
 }
 
 blargg_err_t StcEmu::mStartTrack(int track) {
@@ -103,7 +102,7 @@ blargg_err_t StcEmu::mStartTrack(int track) {
 void StcEmu::mInit() {
   mApu.Reset();
   mEmuTime = 0;
-  mDTime = 0;
+  mDelay = 1;
   mPositionIt = mModule->GetPositionBegin();
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
   for (unsigned idx = 0; idx < 3; ++idx) {
@@ -349,19 +348,18 @@ void StcEmu::mPlaySamples() {
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
-    if (mDTime <= mEmuTime) {
+    if (--mDelay == 0) {
+      mDelay = mModule->GetDelay();
       if (mChannel[0].PatternCode() == 0xFF) {
         if (!mAdvancePosition())
           mSetTrackEnded();
       }
       mPlayPattern();
-      mDTime += mDelayPeriod;
     }
     mPlaySamples();
   }
 
   mEmuTime -= duration;
-  mDTime -= duration;
   mApu.EndFrame(duration);
   return nullptr;
 }
