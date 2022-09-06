@@ -203,6 +203,7 @@ class StcEmu : public ClassicEmu {
       auto &c = mChannel[idx];
       c.SetPatternData(mModule->GetPatternData(pattern, idx));
       c.SetOrnamentData(mModule->GetOrnamentData(0));
+      c.SetDelay(0);
     }
     return true;
   }
