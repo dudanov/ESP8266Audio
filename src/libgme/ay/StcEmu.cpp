@@ -288,8 +288,8 @@ void StcEmu::mPlayPattern() {
         channel.SetSample(mModule->GetSample(code % 16));
       } else if (code < 0x80) {
         // Bits 0-3 = ornament number
-        channel.SetOrnamentData(mModule->GetOrnamentData(code % 16));
         channel.EnvelopeOff();
+        channel.SetOrnamentData(mModule->GetOrnamentData(code % 16));
       } else if (code == 0x80) {
         // Rest (shuts channel). End position.
         channel.TurnOff();
@@ -301,8 +301,8 @@ void StcEmu::mPlayPattern() {
         break;
       } else if (code == 0x82) {
         // Select ornament 0.
-        channel.SetOrnamentData(mModule->GetOrnamentData(0));
         channel.EnvelopeOff();
+        channel.SetOrnamentData(mModule->GetOrnamentData(0));
       } else if (code < 0x8F) {
         // Select envelope effect.
         channel.EnvelopeOn();
@@ -352,7 +352,7 @@ void StcEmu::mPlaySamples() {
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
-    if (!mRunDelay())
+    if (mRunDelay())
       mPlayPattern();
     mPlaySamples();
   }
