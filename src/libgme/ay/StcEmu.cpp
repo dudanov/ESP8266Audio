@@ -351,7 +351,7 @@ void StcEmu::mUpdateChannels() {
   for (unsigned idx = 0; idx < 3; ++idx) {
     auto &channel = mChannel[idx];
     channel.SetPatternData(mModule->GetPatternData(pattern, idx));
-    channel.SetOrnament(mModule->GetOrnament(0));
+    //channel.SetOrnament(mModule->GetOrnament(0));
   }
 }
 
