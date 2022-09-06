@@ -93,33 +93,14 @@ class StcEmu : public ClassicEmu {
     uint8_t PatternCode() const { return *mPatternIt; }
 
     void SetSample(const Sample *sample) { mSample = sample; }
-    void SetOrnamentData(const uint8_t *data) { mOrnament = data; }
+    void SetOrnament(const Ornament *ornament) { mOrnament = ornament->Data(); }
 
     const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
     uint8_t GetOrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
 
-    void SetDelay(uint8_t delay) {
-      mDelay = delay;
-      mDelayCounter = delay;
-    }
-
-    bool RunDelay() {
-      if (mDelayCounter > 0) {
-        mDelayCounter--;
-        return true;
-      }
-      mDelayCounter = mDelay;
-      return false;
-    }
-
-    void AdvanceSample() {
-      if (--mSampleCounter) {
-        ++mSamplePosition;
-      } else if (mSample->IsRepeatable()) {
-        mSamplePosition = mSample->RepeatPosition();
-        mSampleCounter = mSample->RepeatLength();
-      }
-    }
+    void SetDelay(uint8_t delay) { mDelay = mDelayCounter = delay; }
+    bool RunDelay();
+    void AdvanceSample();
 
    private:
     // Pointer to sample.
@@ -138,7 +119,7 @@ class StcEmu : public ClassicEmu {
 
   struct STCModule {
     // Get song global delay.
-    uint8_t GetDelay() const { return mDelay; }
+    uint8_t GetDelay() const { return mDelay - 1; }
 
     // Begin position iterator.
     const Position *GetPositionBegin() const;
@@ -159,7 +140,7 @@ class StcEmu : public ClassicEmu {
     const Sample *GetSample(uint8_t number) const;
 
     // Get data of specified ornament number.
-    const uint8_t *GetOrnamentData(uint8_t number) const;
+    const Ornament *GetOrnament(uint8_t number) const;
 
     // Return song length in frames.
     unsigned CountSongLength() const;
@@ -201,25 +182,6 @@ class StcEmu : public ClassicEmu {
     Sample mSamples[0];
   };
 
-  // Update pattern data pointers for current position.
-  bool mUpdate() {
-    auto pattern = mModule->GetPattern(mPositionIt->pattern);
-    for (unsigned idx = 0; idx < 3; ++idx) {
-      auto &c = mChannel[idx];
-      c.SetPatternData(mModule->GetPatternData(pattern, idx));
-      c.SetOrnamentData(mModule->GetOrnamentData(0));
-    }
-    return true;
-  }
-
-  bool mAdvancePosition() {
-    if (++mPositionIt != mPositionEnd)
-      return mUpdate();
-    mPositionIt = mModule->GetPositionBegin();
-    mUpdate();
-    return false;
-  }
-
  protected:
   blargg_err_t mLoad(const uint8_t *data, long size) override;
   blargg_err_t mStartTrack(int) override;
@@ -228,30 +190,34 @@ class StcEmu : public ClassicEmu {
   void mSetTempo(double) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
+
+  /* PLAYER METHODS AND DATA */
+
   uint8_t mPositionTransposition() const { return mPositionIt->transposition; }
-  void mPlaySamples();
-  void mPlayPattern();
   void mInit();
-  bool mRunDelay() {
-    if (mDelay != 0) {
-      mDelay--;
-      return false;
-    }
-    mDelay = mModule->GetDelay() - 1;
-    return true;
-  }
+  bool mRunDelay();
+  void mPlayPattern();
+  void mPlayChannelPattern(Channel &channel);
+  void mPlaySamples();
+  // Update pattern data pointers for current position.
+  void mUpdateChannels();
+  bool mAdvancePosition();
 
  private:
+  // AY APU Emulator
   AyApu mApu;
+  // Channels
   std::array<Channel, AyApu::OSCS_NUM> mChannel;
+  // Song file header
   const STCModule *mModule;
+  // Song position iterators
   const Position *mPositionIt, *mPositionEnd;
-  // Play period 50Hz
-  blip_clk_time_t mPlayPeriod;
   // Current emulation time
   blip_clk_time_t mEmuTime;
+  // Play period 50Hz
+  blip_clk_time_t mPlayPeriod;
   // Global song delay
-  uint8_t mDelay;
+  uint8_t mDelayCounter;
 };
 
 }  // namespace ay

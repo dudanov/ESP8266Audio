@@ -100,14 +100,14 @@ blargg_err_t StcEmu::mStartTrack(int track) {
 void StcEmu::mInit() {
   mApu.Reset();
   mEmuTime = 0;
-  mDelay = 0;
+  mDelayCounter = 0;
   mPositionIt = mModule->GetPositionBegin();
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
   for (unsigned idx = 0; idx < 3; ++idx) {
     auto &c = mChannel[idx];
     c.Reset();
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
-    c.SetOrnamentData(mModule->GetOrnamentData(0));
+    c.SetOrnament(mModule->GetOrnament(0));
   }
 }
 
@@ -148,11 +148,11 @@ inline const StcEmu::Pattern *StcEmu::STCModule::GetPattern(uint8_t number) cons
   return it;
 }
 
-inline const uint8_t *StcEmu::STCModule::GetOrnamentData(uint8_t number) const {
+inline const StcEmu::Ornament *StcEmu::STCModule::GetOrnament(uint8_t number) const {
   auto it = mGetPointer<Ornament>(mOrnaments);
   while (!it->HasNumber(number))
     ++it;
-  return it->Data();
+  return it;
 }
 
 inline const StcEmu::Sample *StcEmu::STCModule::GetSample(uint8_t number) const {
@@ -268,53 +268,95 @@ unsigned StcEmu::STCModule::CountSongLength() const {
   return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount();
 }
 
+inline bool StcEmu::mRunDelay() {
+  if (mDelayCounter > 0) {
+    mDelayCounter--;
+    return false;
+  }
+  mDelayCounter = mModule->GetDelay();
+  return true;
+}
+
+inline bool StcEmu::Channel::RunDelay() {
+  if (mDelayCounter > 0) {
+    mDelayCounter--;
+    return false;
+  }
+  mDelayCounter = mDelay;
+  return true;
+}
+
 void StcEmu::mPlayPattern() {
-  for (auto &channel : mChannel) {
-    if (channel.RunDelay())
-      continue;
-    while (true) {
-      const uint8_t code = channel.PatternCode();
-      if (code == 0xFF) {
-        if (!mAdvancePosition())
-          mSetTrackEnded();
-        continue;
-      } else if (code < 0x60) {
-        // Note in semitones (00=C-1). End position.
-        channel.SetNote(code);
-        channel.AdvancePattern();
-        break;
-      } else if (code < 0x70) {
-        // Bits 0-3 = sample number
-        channel.SetSample(mModule->GetSample(code % 16));
-      } else if (code < 0x80) {
-        // Bits 0-3 = ornament number
-        channel.EnvelopeOff();
-        channel.SetOrnamentData(mModule->GetOrnamentData(code % 16));
-      } else if (code == 0x80) {
-        // Rest (shuts channel). End position.
-        channel.TurnOff();
-        channel.AdvancePattern();
-        break;
-      } else if (code == 0x81) {
-        // Empty location. End position.
-        channel.AdvancePattern();
-        break;
-      } else if (code == 0x82) {
-        // Select ornament 0.
-        channel.EnvelopeOff();
-        channel.SetOrnamentData(mModule->GetOrnamentData(0));
-      } else if (code < 0x8F) {
-        // Select envelope effect.
-        channel.EnvelopeOn();
-        channel.SetOrnamentData(mModule->GetOrnamentData(0));
-        mApu.Write(mEmuTime, 13, code % 16);
-        mApu.Write(mEmuTime, 11, channel.AdvancePattern());
-      } else {
-        // number of empty locations after the subsequent code
-        channel.SetDelay(code - 0xA1);
-      }
-      channel.AdvancePattern();
+  if (mRunDelay()) {
+    for (auto &channel : mChannel) {
+      if (channel.RunDelay())
+        mPlayChannelPattern(channel);
     }
+  }
+}
+
+void StcEmu::mPlayChannelPattern(Channel &channel) {
+  while (true) {
+    const uint8_t code = channel.PatternCode();
+    if (code == 0xFF) {
+      if (!mAdvancePosition())
+        mSetTrackEnded();
+      continue;
+    } else if (code < 0x60) {
+      // Note in semitones (00=C-1). End position.
+      channel.SetNote(code);
+      channel.AdvancePattern();
+      break;
+    } else if (code < 0x70) {
+      // Bits 0-3 = sample number
+      channel.SetSample(mModule->GetSample(code % 16));
+    } else if (code < 0x80) {
+      // Bits 0-3 = ornament number
+      channel.EnvelopeOff();
+      channel.SetOrnament(mModule->GetOrnament(code % 16));
+    } else if (code == 0x80) {
+      // Rest (shuts channel). End position.
+      channel.TurnOff();
+      channel.AdvancePattern();
+      break;
+    } else if (code == 0x81) {
+      // Empty location. End position.
+      channel.AdvancePattern();
+      break;
+    } else if (code == 0x82) {
+      // Select ornament 0.
+      channel.EnvelopeOff();
+      channel.SetOrnament(mModule->GetOrnament(0));
+    } else if (code < 0x8F) {
+      // Select envelope effect.
+      channel.EnvelopeOn();
+      channel.SetOrnament(mModule->GetOrnament(0));
+      mApu.Write(mEmuTime, 13, code % 16);
+      mApu.Write(mEmuTime, 11, channel.AdvancePattern());
+    } else {
+      // number of empty locations after the subsequent code
+      channel.SetDelay(code - 0xA1);
+    }
+    channel.AdvancePattern();
+  }
+}
+
+inline bool StcEmu::mAdvancePosition() {
+  if (++mPositionIt != mPositionEnd) {
+    mUpdateChannels();
+    return true;
+  }
+  mPositionIt = mModule->GetPositionBegin();
+  mUpdateChannels();
+  return false;
+}
+
+void StcEmu::mUpdateChannels() {
+  auto pattern = mModule->GetPattern(mPositionIt->pattern);
+  for (unsigned idx = 0; idx < 3; ++idx) {
+    auto &channel = mChannel[idx];
+    channel.SetPatternData(mModule->GetPatternData(pattern, idx));
+    channel.SetOrnament(mModule->GetOrnament(0));
   }
 }
 
@@ -350,10 +392,18 @@ void StcEmu::mPlaySamples() {
   mApu.Write(mEmuTime, 7, mixer);
 }
 
+inline void StcEmu::Channel::AdvanceSample() {
+  if (--mSampleCounter) {
+    ++mSamplePosition;
+  } else if (mSample->IsRepeatable()) {
+    mSamplePosition = mSample->RepeatPosition();
+    mSampleCounter = mSample->RepeatLength();
+  }
+}
+
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
-    if (mRunDelay())
-      mPlayPattern();
+    mPlayPattern();
     mPlaySamples();
   }
   mEmuTime -= duration;
