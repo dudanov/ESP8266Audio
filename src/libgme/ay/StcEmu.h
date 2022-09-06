@@ -2,7 +2,6 @@
 
 // Sinclair Spectrum STC music file emulator
 
-#include <cstring>
 #include "AyApu.h"
 #include "../ClassicEmu.h"
 
@@ -74,9 +73,8 @@ class StcEmu : public ClassicEmu {
   struct Channel {
     static uint16_t GetTonePeriod(uint8_t tone);
 
-    bool IsOn() const { return mSampleCounter > 0; }
-    void TurnOff() { mSampleCounter = 0; }
-    void Reset() { memset(this, 0, sizeof(*this)); }
+    bool IsEnabled() const { return mSampleCounter > 0; }
+    void Disable() { mSampleCounter = 0; }
 
     void SetNote(uint8_t note) {
       mNote = note;

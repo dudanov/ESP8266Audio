@@ -310,7 +310,7 @@ void StcEmu::mPlayChannelPattern(Channel &channel) {
       channel.SetOrnament(mModule->GetOrnament(code % 16));
     } else if (code == 0x80) {
       // Rest (shuts channel). End position.
-      channel.TurnOff();
+      channel.Disable();
       channel.AdvancePattern();
       break;
     } else if (code == 0x81) {
@@ -347,9 +347,9 @@ inline bool StcEmu::mAdvancePosition() {
 
 void StcEmu::mUpdateChannels() {
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
+  memset(&mChannel, 0, sizeof(mChannel));
   for (unsigned idx = 0; idx < 3; ++idx) {
     auto &channel = mChannel[idx];
-    channel.Reset();
     channel.SetPatternData(mModule->GetPatternData(pattern, idx));
     channel.SetOrnament(mModule->GetOrnament(0));
   }
@@ -360,7 +360,7 @@ void StcEmu::mPlaySamples() {
   for (uint8_t idx = 0; idx < 3; ++idx) {
     Channel &channel = mChannel[idx];
 
-    if (!channel.IsOn()) {
+    if (!channel.IsEnabled()) {
       mApu.Write(mEmuTime, idx + 8, 0);
       mixer |= 64 + 8;
       mixer >>= 1;
