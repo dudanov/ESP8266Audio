@@ -74,12 +74,14 @@ class StcEmu : public ClassicEmu {
   struct Channel {
     static uint16_t GetTonePeriod(uint8_t tone);
 
+    bool IsOn() const { return mSampleCounter > 0; }
     void TurnOff() { mSampleCounter = 0; }
+    void Reset() { memset(this, 0, sizeof(*this)); }
 
     void SetNote(uint8_t note) {
       mNote = note;
-      mSampleCounter = 32;
       mSamplePosition = 0;
+      mSampleCounter = 32;
     }
 
     bool IsEnvelopeOn() const { return mEnvelope; }
@@ -87,17 +89,14 @@ class StcEmu : public ClassicEmu {
     void EnvelopeOff() { mEnvelope = false; }
 
     void SetPatternData(const uint8_t *data) { mPatternIt = data; }
-    uint8_t PatternCode() const { return *mPatternIt; }
     uint8_t AdvancePattern() { *++mPatternIt; }
+    uint8_t PatternCode() const { return *mPatternIt; }
 
-    bool IsOn() const { return mSampleCounter > 0; }
     void SetSample(const Sample *sample) { mSample = sample; }
-    const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
-
     void SetOrnamentData(const uint8_t *data) { mOrnament = data; }
-    uint8_t GetOrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
 
-    void Reset() { memset(this, 0, sizeof(*this)); }
+    const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
+    uint8_t GetOrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
 
     void SetDelay(uint8_t delay) {
       mDelay = delay;
@@ -136,8 +135,6 @@ class StcEmu : public ClassicEmu {
     uint8_t mDelayCounter;
     bool mEnvelope;
   };
-
-  enum { HEADER_SIZE = 27 };
 
   struct STCModule {
     // Get song global delay.
@@ -214,8 +211,6 @@ class StcEmu : public ClassicEmu {
     return true;
   }
 
-  uint8_t mPositionTransposition() const { return mPositionIt->transposition; }
-
   bool mAdvancePosition() {
     if (++mPositionIt != mPositionEnd)
       return mUpdate();
@@ -232,7 +227,7 @@ class StcEmu : public ClassicEmu {
   void mSetTempo(double) override;
   void mSetChannel(int, BlipBuffer *, BlipBuffer *, BlipBuffer *) override;
   void mUpdateEq(BlipEq const &) override;
-  void mSeekFrame(uint32_t frame);
+  uint8_t mPositionTransposition() const { return mPositionIt->transposition; }
   void mPlaySamples();
   void mPlayPattern();
   void mInit();
