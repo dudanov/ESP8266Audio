@@ -103,7 +103,12 @@ void StcEmu::mInit() {
   mDelayCounter = 0;
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannel, 0, sizeof(mChannel));
-  mUpdateChannels();
+  auto pattern = mModule->GetPattern(mPositionIt->pattern);
+  for (unsigned idx = 0; idx < 3; ++idx) {
+    auto &channel = mChannel[idx];
+    channel.SetPatternData(mModule->GetPatternData(pattern, idx));
+    channel.SetOrnament(mModule->GetOrnament(0));
+  }
 }
 
 /* STC MODULE */
@@ -351,7 +356,6 @@ void StcEmu::mUpdateChannels() {
   for (unsigned idx = 0; idx < 3; ++idx) {
     auto &channel = mChannel[idx];
     channel.SetPatternData(mModule->GetPatternData(pattern, idx));
-    //channel.SetOrnament(mModule->GetOrnament(0));
   }
 }
 
