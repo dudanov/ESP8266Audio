@@ -100,7 +100,7 @@ blargg_err_t StcEmu::mStartTrack(int track) {
 void StcEmu::mInit() {
   mApu.Reset();
   mEmuTime = 0;
-  mDelay = 1;
+  mDelay = 0;
   mPositionIt = mModule->GetPositionBegin();
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
   for (unsigned idx = 0; idx < 3; ++idx) {

@@ -131,8 +131,8 @@ class StcEmu : public ClassicEmu {
     uint8_t mNote;
     uint8_t mSamplePosition;
     uint8_t mSampleCounter;
-    uint8_t mDelay;
     uint8_t mDelayCounter;
+    uint8_t mDelay;
     bool mEnvelope;
   };
 
