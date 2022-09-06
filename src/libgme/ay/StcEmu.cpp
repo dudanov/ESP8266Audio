@@ -353,10 +353,8 @@ inline bool StcEmu::mAdvancePosition() {
 
 void StcEmu::mUpdateChannels() {
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
-  for (unsigned idx = 0; idx < 3; ++idx) {
-    auto &channel = mChannel[idx];
-    channel.SetPatternData(mModule->GetPatternData(pattern, idx));
-  }
+  for (unsigned idx = 0; idx < 3; ++idx)
+    mChannel[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
 void StcEmu::mPlaySamples() {
