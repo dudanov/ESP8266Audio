@@ -71,8 +71,6 @@ class StcEmu : public ClassicEmu {
   };
 
   struct Channel {
-    static uint16_t GetTonePeriod(uint8_t tone);
-
     void SetNote(uint8_t note) {
       mNote = note;
       mSamplePosition = 0;
@@ -81,23 +79,25 @@ class StcEmu : public ClassicEmu {
     void Disable() { mSampleCounter = 0; }
     bool IsEnabled() const { return mSampleCounter > 0; }
 
-    bool IsEnvelopeEnabled() const { return mEnvelope; }
-    void EnvelopeEnable() { mEnvelope = true; }
-    void EnvelopeDisable() { mEnvelope = false; }
-
     void SetPatternData(const uint8_t *data) { mPatternIt = data; }
     uint8_t AdvancePattern() { *++mPatternIt; }
     uint8_t PatternCode() const { return *mPatternIt; }
 
     void SetSample(const Sample *sample) { mSample = sample; }
     void SetOrnament(const Ornament *ornament) { mOrnament = ornament->Data(); }
+    void AdvanceSample();
 
     const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
     uint8_t GetOrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
 
+    bool IsEnvelopeEnabled() const { return mEnvelope; }
+    void EnvelopeEnable() { mEnvelope = true; }
+    void EnvelopeDisable() { mEnvelope = false; }
+
     void SetDelay(uint8_t delay) { mDelay = mDelayCounter = delay; }
     bool RunDelay();
-    void AdvanceSample();
+
+    static uint16_t GetTonePeriod(uint8_t tone);
 
    private:
     // Pointer to sample.
