@@ -272,9 +272,7 @@ unsigned StcEmu::STCModule::CountSongLength() const {
 
 void StcEmu::mPlayPattern() {
   for (auto &chan : mChannel) {
-    if (!chan.IsPlayTime())
-      continue;
-    while (true) {
+    while (chan.IsPlayTime()) {
       const uint8_t code = chan.PatternCode();
       if (code == 0xFF) {
         if (!mAdvancePosition())

@@ -101,8 +101,9 @@ class StcEmu : public ClassicEmu {
 
     void SetDelay(uint8_t delay) { mDelay = delay; }
     bool IsPlayTime() {
-      if (mDelay == 0 || --mDelay == 0)
+      if (mDelay == 0)
         return true;
+      --mDelay;
       return false;
     }
     void AdvanceSample() {
