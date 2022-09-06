@@ -232,12 +232,11 @@ class StcEmu : public ClassicEmu {
   void mPlayPattern();
   void mInit();
   bool mRunDelay() {
-    if (mDelay > 0) {
-      mDelay--;
-      return false;
+    if (mDelay != 0 && --mDelay == 0) {
+      mDelay = mModule->GetDelay();
+      return true;
     }
-    mDelay = mModule->GetDelay();
-    return true;
+    return false;
   }
 
  private:
