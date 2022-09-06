@@ -276,7 +276,11 @@ void StcEmu::mPlayPattern() {
       continue;
     while (true) {
       const uint8_t code = chan.PatternCode();
-      if (code < 0x60) {
+      if (code == 0xFF) {
+        if (!mAdvancePosition())
+          mSetTrackEnded();
+        continue;
+      } else if (code < 0x60) {
         // Note in semitones (00=C-1). End position.
         chan.SetNote(code);
         chan.AdvancePattern();
@@ -352,10 +356,6 @@ blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
     if (--mDelay == 0) {
       mDelay = mModule->GetDelay();
-      if (mChannel[0].PatternCode() == 0xFF) {
-        if (!mAdvancePosition())
-          mSetTrackEnded();
-      }
       mPlayPattern();
     }
     mPlaySamples();
