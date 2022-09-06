@@ -90,7 +90,7 @@ class StcEmu : public ClassicEmu {
     uint8_t PatternCode() const { return *mPatternIt; }
     uint8_t AdvancePattern() { *++mPatternIt; }
 
-    bool IsOn() const { return mSampleCounter >= 0; }
+    bool IsOn() const { return mSampleCounter > 0; }
     void SetSample(const Sample *sample) { mSample = sample; }
     const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
 
@@ -107,8 +107,6 @@ class StcEmu : public ClassicEmu {
       return false;
     }
     void AdvanceSample() {
-      if (mSampleCounter < 0)
-        return;
       if (--mSampleCounter) {
         ++mSamplePosition;
       } else if (mSample->IsRepeatable()) {
@@ -126,7 +124,7 @@ class StcEmu : public ClassicEmu {
     const uint8_t *mOrnament;
     uint8_t mNote;
     uint8_t mSamplePosition;
-    int8_t mSampleCounter;
+    uint8_t mSampleCounter;
     uint8_t mDelay;
     bool mEnvelope;
   };

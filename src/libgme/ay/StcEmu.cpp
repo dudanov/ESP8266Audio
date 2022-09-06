@@ -323,8 +323,6 @@ void StcEmu::mPlaySamples() {
   for (uint8_t idx = 0; idx < 3; ++idx) {
     Channel &channel = mChannel[idx];
 
-    channel.AdvanceSample();
-
     if (!channel.IsOn()) {
       mApu.Write(mEmuTime, idx + 8, 0);
       mixer |= 64 + 8;
@@ -347,7 +345,7 @@ void StcEmu::mPlaySamples() {
     mApu.Write(mEmuTime, idx * 2 + 1, period / 256);
     mApu.Write(mEmuTime, idx + 8, sample->Volume() + 16 * channel.IsEnvelopeOn());
 
-    //channel.AdvanceSample();
+    channel.AdvanceSample();
   }
   mApu.Write(mEmuTime, 7, mixer);
 }
