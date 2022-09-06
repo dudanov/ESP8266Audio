@@ -88,9 +88,7 @@ void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 
 // Emulation
 
-void StcEmu::mSetTempo(double temp) {
-  mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp);
-}
+void StcEmu::mSetTempo(double temp) { mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp); }
 
 blargg_err_t StcEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
@@ -271,49 +269,51 @@ unsigned StcEmu::STCModule::CountSongLength() const {
 }
 
 void StcEmu::mPlayPattern() {
-  for (auto &chan : mChannel) {
-    while (chan.IsPlayTime()) {
-      const uint8_t code = chan.PatternCode();
+  for (auto &channel : mChannel) {
+    if (channel.RunDelay())
+      continue;
+    while (true) {
+      const uint8_t code = channel.PatternCode();
       if (code == 0xFF) {
         if (!mAdvancePosition())
           mSetTrackEnded();
         continue;
       } else if (code < 0x60) {
         // Note in semitones (00=C-1). End position.
-        chan.SetNote(code);
-        chan.AdvancePattern();
+        channel.SetNote(code);
+        channel.AdvancePattern();
         break;
       } else if (code < 0x70) {
         // Bits 0-3 = sample number
-        chan.SetSample(mModule->GetSample(code % 16));
+        channel.SetSample(mModule->GetSample(code % 16));
       } else if (code < 0x80) {
         // Bits 0-3 = ornament number
-        chan.SetOrnamentData(mModule->GetOrnamentData(code % 16));
-        chan.EnvelopeOff();
+        channel.SetOrnamentData(mModule->GetOrnamentData(code % 16));
+        channel.EnvelopeOff();
       } else if (code == 0x80) {
         // Rest (shuts channel). End position.
-        chan.TurnOff();
-        chan.AdvancePattern();
+        channel.TurnOff();
+        channel.AdvancePattern();
         break;
       } else if (code == 0x81) {
         // Empty location. End position.
-        chan.AdvancePattern();
+        channel.AdvancePattern();
         break;
       } else if (code == 0x82) {
         // Select ornament 0.
-        chan.SetOrnamentData(mModule->GetOrnamentData(0));
-        chan.EnvelopeOff();
+        channel.SetOrnamentData(mModule->GetOrnamentData(0));
+        channel.EnvelopeOff();
       } else if (code < 0x8F) {
         // Select envelope effect.
+        channel.EnvelopeOn();
+        channel.SetOrnamentData(mModule->GetOrnamentData(0));
         mApu.Write(mEmuTime, 13, code % 16);
-        mApu.Write(mEmuTime, 11, chan.AdvancePattern());
-        chan.EnvelopeOn();
-        chan.SetOrnamentData(mModule->GetOrnamentData(0));
+        mApu.Write(mEmuTime, 11, channel.AdvancePattern());
       } else {
         // number of empty locations after the subsequent code
-        chan.SetDelay(code - 0xA1);
+        channel.SetDelay(code - 0xA1);
       }
-      chan.AdvancePattern();
+      channel.AdvancePattern();
     }
   }
 }
@@ -338,7 +338,7 @@ void StcEmu::mPlaySamples() {
     mixer |= 64 * sample->NoiseMask() | 8 * sample->ToneMask();
     mixer >>= 1;
 
-    const uint8_t note = channel.OrnamentNote() + mPositionTransposition();
+    const uint8_t note = channel.GetOrnamentNote() + mPositionTransposition();
     const uint16_t period = (Channel::GetTonePeriod(note) + sample->Transposition()) % 4096;
 
     mApu.Write(mEmuTime, idx * 2, period % 256);
@@ -352,13 +352,10 @@ void StcEmu::mPlaySamples() {
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
-    if (--mDelay == 0) {
-      mDelay = mModule->GetDelay();
+    if (!mRunDelay())
       mPlayPattern();
-    }
     mPlaySamples();
   }
-
   mEmuTime -= duration;
   mApu.EndFrame(duration);
   return nullptr;

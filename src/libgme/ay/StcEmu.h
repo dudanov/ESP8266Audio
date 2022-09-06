@@ -95,17 +95,24 @@ class StcEmu : public ClassicEmu {
     const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
 
     void SetOrnamentData(const uint8_t *data) { mOrnament = data; }
-    uint8_t OrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
+    uint8_t GetOrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
 
     void Reset() { memset(this, 0, sizeof(*this)); }
 
-    void SetDelay(uint8_t delay) { mDelay = delay; }
-    bool IsPlayTime() {
-      if (mDelay == 0)
+    void SetDelay(uint8_t delay) {
+      mDelay = delay;
+      mDelayCounter = delay;
+    }
+
+    bool RunDelay() {
+      if (mDelayCounter > 0) {
+        mDelayCounter--;
         return true;
-      --mDelay;
+      }
+      mDelayCounter = mDelay;
       return false;
     }
+
     void AdvanceSample() {
       if (--mSampleCounter) {
         ++mSamplePosition;
@@ -126,6 +133,7 @@ class StcEmu : public ClassicEmu {
     uint8_t mSamplePosition;
     uint8_t mSampleCounter;
     uint8_t mDelay;
+    uint8_t mDelayCounter;
     bool mEnvelope;
   };
 
@@ -202,8 +210,6 @@ class StcEmu : public ClassicEmu {
     for (unsigned idx = 0; idx < 3; ++idx) {
       auto &c = mChannel[idx];
       c.SetPatternData(mModule->GetPatternData(pattern, idx));
-      c.SetOrnamentData(mModule->GetOrnamentData(0));
-      c.SetDelay(0);
     }
     return true;
   }
@@ -230,6 +236,14 @@ class StcEmu : public ClassicEmu {
   void mPlaySamples();
   void mPlayPattern();
   void mInit();
+  bool mRunDelay() {
+    if (mDelay > 0) {
+      mDelay--;
+      return false;
+    }
+    mDelay = mModule->GetDelay();
+    return true;
+  }
 
  private:
   AyApu mApu;
