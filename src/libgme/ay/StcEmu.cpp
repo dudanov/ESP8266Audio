@@ -312,7 +312,7 @@ void StcEmu::mPlayChannelPattern(Channel &channel) {
       channel.SetSample(mModule->GetSample(code % 16));
     } else if (code < 0x80) {
       // Bits 0-3 = ornament number
-      channel.EnvelopeOff();
+      channel.EnvelopeDisable();
       channel.SetOrnament(mModule->GetOrnament(code % 16));
     } else if (code == 0x80) {
       // Rest (shuts channel). End position.
@@ -325,11 +325,11 @@ void StcEmu::mPlayChannelPattern(Channel &channel) {
       break;
     } else if (code == 0x82) {
       // Select ornament 0.
-      channel.EnvelopeOff();
+      channel.EnvelopeDisable();
       channel.SetOrnament(mModule->GetOrnament(0));
     } else if (code < 0x8F) {
       // Select envelope effect.
-      channel.EnvelopeOn();
+      channel.EnvelopeEnable();
       channel.SetOrnament(mModule->GetOrnament(0));
       mApu.Write(mEmuTime, 13, code % 16);
       mApu.Write(mEmuTime, 11, channel.AdvancePattern());
@@ -364,7 +364,7 @@ void StcEmu::mPlaySamples() {
 
     if (!channel.IsEnabled()) {
       mApu.Write(mEmuTime, idx + 8, 0);
-      mixer |= 64 + 8;
+      mixer |= 64 | 8;
       mixer >>= 1;
       continue;
     }
@@ -382,7 +382,7 @@ void StcEmu::mPlaySamples() {
 
     mApu.Write(mEmuTime, idx * 2, period % 256);
     mApu.Write(mEmuTime, idx * 2 + 1, period / 256);
-    mApu.Write(mEmuTime, idx + 8, sample->Volume() + 16 * channel.IsEnvelopeOn());
+    mApu.Write(mEmuTime, idx + 8, sample->Volume() + 16 * channel.IsEnvelopeEnabled());
 
     channel.AdvanceSample();
   }

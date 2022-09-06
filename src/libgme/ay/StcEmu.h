@@ -73,18 +73,17 @@ class StcEmu : public ClassicEmu {
   struct Channel {
     static uint16_t GetTonePeriod(uint8_t tone);
 
-    bool IsEnabled() const { return mSampleCounter > 0; }
-    void Disable() { mSampleCounter = 0; }
-
     void SetNote(uint8_t note) {
       mNote = note;
       mSamplePosition = 0;
       mSampleCounter = 32;
     }
+    void Disable() { mSampleCounter = 0; }
+    bool IsEnabled() const { return mSampleCounter > 0; }
 
-    bool IsEnvelopeOn() const { return mEnvelope; }
-    void EnvelopeOn() { mEnvelope = true; }
-    void EnvelopeOff() { mEnvelope = false; }
+    bool IsEnvelopeEnabled() const { return mEnvelope; }
+    void EnvelopeEnable() { mEnvelope = true; }
+    void EnvelopeDisable() { mEnvelope = false; }
 
     void SetPatternData(const uint8_t *data) { mPatternIt = data; }
     uint8_t AdvancePattern() { *++mPatternIt; }
