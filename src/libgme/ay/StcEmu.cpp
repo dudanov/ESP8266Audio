@@ -327,13 +327,13 @@ void StcEmu::mPlaySamples() {
 
     if (!channel.IsOn()) {
       mApu.Write(mEmuTime, idx + 8, 0);
+      channel.AdvanceSample();
       mixer |= 64 + 8;
       mixer >>= 1;
       continue;
     }
 
     auto sample = channel.GetSampleData();
-    channel.AdvanceSample();
 
     if (!sample->NoiseMask())
       mApu.Write(mEmuTime, 6, sample->Noise());
@@ -347,6 +347,8 @@ void StcEmu::mPlaySamples() {
     mApu.Write(mEmuTime, idx * 2, period % 256);
     mApu.Write(mEmuTime, idx * 2 + 1, period / 256);
     mApu.Write(mEmuTime, idx + 8, sample->Volume() + 16 * channel.IsEnvelopeOn());
+
+    channel.AdvanceSample();
   }
   mApu.Write(mEmuTime, 7, mixer);
 }
