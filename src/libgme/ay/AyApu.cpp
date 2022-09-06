@@ -160,7 +160,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
 
     // period
     bool half_vol = false;
-    const blip_clk_time_t inaudible_period = out->GetRateClocks(INAUDIBLE_FREQ) / 2;
+    const blip_clk_time_t inaudible_period = (out->GetClockRate() + INAUDIBLE_FREQ) / (INAUDIBLE_FREQ * 2);
     if (osc.mPeriod <= inaudible_period && !(mode & TONE_OFF)) {
       half_vol = true;  // Actually around 60%, but 50% is close enough
       mode |= TONE_OFF;
