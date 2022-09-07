@@ -100,7 +100,7 @@ blargg_err_t StcEmu::mStartTrack(int track) {
 void StcEmu::mInit() {
   mApu.Reset();
   mEmuTime = 0;
-  mDelayCounter = 0;
+  mDelayCounter = 1;
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
@@ -292,10 +292,10 @@ void StcEmu::mPlayPattern() {
         channel.SetNote(code);
         break;
       } else if (code <= 0x6F) {
-        // Bits 0-3 = sample number (0-15).
+        // Select sample (0-15).
         channel.SetSample(mModule->GetSample(code % 16));
       } else if (code <= 0x7F) {
-        // Bits 0-3 = ornament number (0-15).
+        // Select ornament (0-15).
         channel.EnvelopeDisable();
         channel.SetOrnament(mModule->GetOrnament(code % 16));
       } else if (code == 0x80) {
@@ -372,10 +372,8 @@ inline void StcEmu::Channel::AdvanceSample() {
 }
 
 inline bool StcEmu::mRunDelay() {
-  if (mDelayCounter > 0) {
-    mDelayCounter--;
+  if (--mDelayCounter > 0)
     return false;
-  }
   mDelayCounter = mModule->GetDelay();
   return true;
 }
