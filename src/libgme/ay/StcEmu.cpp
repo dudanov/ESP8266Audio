@@ -284,7 +284,7 @@ void StcEmu::mPlayPattern() {
     while (true) {
       const uint8_t code = channel.PatternCode();
       if (code == 0xFF) {
-        // End pattern marker. Advance to next pattern and update all channels.
+        // End pattern marker. Advance to next song position and update all channels.
         mAdvancePosition();
         continue;
       } else if (code <= 0x5F) {
