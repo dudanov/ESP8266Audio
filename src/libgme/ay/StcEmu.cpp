@@ -102,10 +102,10 @@ void StcEmu::mInit() {
   mEmuTime = 0;
   mDelayCounter = 0;
   mPositionIt = mModule->GetPositionBegin();
-  memset(&mChannel, 0, sizeof(mChannel));
+  memset(&mChannels, 0, sizeof(mChannels));
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
   for (unsigned idx = 0; idx < 3; ++idx) {
-    auto &channel = mChannel[idx];
+    auto &channel = mChannels[idx];
     channel.SetPatternData(mModule->GetPatternData(pattern, idx));
     channel.SetOrnament(mModule->GetOrnament(0));
   }
@@ -268,70 +268,56 @@ unsigned StcEmu::STCModule::CountSongLength() const {
   return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount();
 }
 
-inline bool StcEmu::mRunDelay() {
-  if (mDelayCounter > 0) {
-    mDelayCounter--;
-    return false;
+inline bool StcEmu::Channel::IsEmptyLocation() {
+  if (mSkipCounter > 0) {
+    mSkipCounter--;
+    return true;
   }
-  mDelayCounter = mModule->GetDelay();
-  return true;
-}
-
-inline bool StcEmu::Channel::RunDelay() {
-  if (mDelayCounter > 0) {
-    mDelayCounter--;
-    return false;
-  }
-  mDelayCounter = mDelay;
-  return true;
+  mSkipCounter = mSkipCount;
+  return false;
 }
 
 void StcEmu::mPlayPattern() {
-  if (mRunDelay()) {
-    for (auto &channel : mChannel) {
-      if (channel.RunDelay())
-        mPlayChannelPattern(channel);
-    }
-  }
-}
-
-void StcEmu::mPlayChannelPattern(Channel &channel) {
-  while (true) {
-    const uint8_t code = channel.PatternCode();
-    if (code == 0xFF) {
-      mAdvancePosition();
+  for (auto &channel : mChannels) {
+    if (channel.IsEmptyLocation())
       continue;
-    } else if (code < 0x60) {
-      // Note in semitones (00=C-1). End position.
-      channel.SetNote(code);
-      break;
-    } else if (code < 0x70) {
-      // Bits 0-3 = sample number
-      channel.SetSample(mModule->GetSample(code % 16));
-    } else if (code < 0x80) {
-      // Bits 0-3 = ornament number
-      channel.EnvelopeDisable();
-      channel.SetOrnament(mModule->GetOrnament(code % 16));
-    } else if (code == 0x80) {
-      // Rest (shuts channel). End position.
-      channel.Disable();
-      break;
-    } else if (code == 0x81) {
-      // Empty location. End position.
-      break;
-    } else if (code == 0x82) {
-      // Select ornament 0.
-      channel.EnvelopeDisable();
-      channel.SetOrnament(mModule->GetOrnament(0));
-    } else if (code < 0x8F) {
-      // Select envelope effect.
-      channel.EnvelopeEnable();
-      channel.SetOrnament(mModule->GetOrnament(0));
-      mApu.Write(mEmuTime, 13, code % 16);
-      mApu.Write(mEmuTime, 11, channel.PatternCode());
-    } else {
-      // number of empty locations after the subsequent code
-      channel.SetDelay(code - 0xA1);
+    while (true) {
+      const uint8_t code = channel.PatternCode();
+      if (code == 0xFF) {
+        mAdvancePosition();
+        continue;
+      } else if (code < 0x60) {
+        // Note in semitones (00=C-1). End position.
+        channel.SetNote(code);
+        return;
+      } else if (code < 0x70) {
+        // Bits 0-3 = sample number
+        channel.SetSample(mModule->GetSample(code % 16));
+      } else if (code < 0x80) {
+        // Bits 0-3 = ornament number
+        channel.EnvelopeDisable();
+        channel.SetOrnament(mModule->GetOrnament(code % 16));
+      } else if (code == 0x80) {
+        // Rest (shuts channel). End position.
+        channel.Disable();
+        return;
+      } else if (code == 0x81) {
+        // Empty location. End position.
+        return;
+      } else if (code == 0x82) {
+        // Select ornament 0.
+        channel.EnvelopeDisable();
+        channel.SetOrnament(mModule->GetOrnament(0));
+      } else if (code < 0x8F) {
+        // Select envelope effect.
+        channel.EnvelopeEnable();
+        channel.SetOrnament(mModule->GetOrnament(0));
+        mApu.Write(mEmuTime, 13, code % 16);
+        mApu.Write(mEmuTime, 11, channel.PatternCode());
+      } else {
+        // number of empty locations after the subsequent code
+        channel.SetSkipCount(code - 0xA1);
+      }
     }
   }
 }
@@ -343,13 +329,13 @@ inline void StcEmu::mAdvancePosition() {
   }
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
   for (unsigned idx = 0; idx < 3; ++idx)
-    mChannel[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
+    mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
 void StcEmu::mPlaySamples() {
   uint8_t mixer = 0;
   for (uint8_t idx = 0; idx < 3; ++idx) {
-    Channel &channel = mChannel[idx];
+    Channel &channel = mChannels[idx];
 
     if (!channel.IsEnabled()) {
       mApu.Write(mEmuTime, idx + 8, 0);
@@ -387,9 +373,19 @@ inline void StcEmu::Channel::AdvanceSample() {
   }
 }
 
+inline bool StcEmu::mRunDelay() {
+  if (mDelayCounter > 0) {
+    mDelayCounter--;
+    return false;
+  }
+  mDelayCounter = mModule->GetDelay();
+  return true;
+}
+
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
-    mPlayPattern();
+    if (mRunDelay())
+      mPlayPattern();
     mPlaySamples();
   }
   mEmuTime -= duration;

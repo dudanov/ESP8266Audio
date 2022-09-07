@@ -93,8 +93,8 @@ class StcEmu : public ClassicEmu {
     void EnvelopeEnable() { mEnvelope = true; }
     void EnvelopeDisable() { mEnvelope = false; }
 
-    void SetDelay(uint8_t delay) { mDelay = mDelayCounter = delay; }
-    bool RunDelay();
+    void SetSkipCount(uint8_t delay) { mSkipCount = mSkipCounter = delay; }
+    bool IsEmptyLocation();
 
     static uint16_t GetTonePeriod(uint8_t tone);
 
@@ -108,8 +108,8 @@ class StcEmu : public ClassicEmu {
     uint8_t mNote;
     uint8_t mSamplePosition;
     uint8_t mSampleCounter;
-    uint8_t mDelayCounter;
-    uint8_t mDelay;
+    uint8_t mSkipCounter;
+    uint8_t mSkipCount;
     bool mEnvelope;
   };
 
@@ -193,7 +193,6 @@ class StcEmu : public ClassicEmu {
   void mInit();
   bool mRunDelay();
   void mPlayPattern();
-  void mPlayChannelPattern(Channel &channel);
   void mPlaySamples();
   void mAdvancePosition();
 
@@ -201,7 +200,7 @@ class StcEmu : public ClassicEmu {
   // AY APU Emulator
   AyApu mApu;
   // Channels
-  std::array<Channel, AyApu::OSCS_NUM> mChannel;
+  std::array<Channel, AyApu::OSCS_NUM> mChannels;
   // Song file header
   const STCModule *mModule;
   // Song position iterators
