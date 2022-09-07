@@ -299,13 +299,11 @@ void StcEmu::mPlayChannelPattern(Channel &channel) {
   while (true) {
     const uint8_t code = channel.PatternCode();
     if (code == 0xFF) {
-      if (!mAdvancePosition())
-        mSetTrackEnded();
+      mAdvancePosition();
       continue;
     } else if (code < 0x60) {
       // Note in semitones (00=C-1). End position.
       channel.SetNote(code);
-      channel.AdvancePattern();
       break;
     } else if (code < 0x70) {
       // Bits 0-3 = sample number
@@ -317,11 +315,9 @@ void StcEmu::mPlayChannelPattern(Channel &channel) {
     } else if (code == 0x80) {
       // Rest (shuts channel). End position.
       channel.Disable();
-      channel.AdvancePattern();
       break;
     } else if (code == 0x81) {
       // Empty location. End position.
-      channel.AdvancePattern();
       break;
     } else if (code == 0x82) {
       // Select ornament 0.
@@ -332,26 +328,19 @@ void StcEmu::mPlayChannelPattern(Channel &channel) {
       channel.EnvelopeEnable();
       channel.SetOrnament(mModule->GetOrnament(0));
       mApu.Write(mEmuTime, 13, code % 16);
-      mApu.Write(mEmuTime, 11, channel.AdvancePattern());
+      mApu.Write(mEmuTime, 11, channel.PatternCode());
     } else {
       // number of empty locations after the subsequent code
       channel.SetDelay(code - 0xA1);
     }
-    channel.AdvancePattern();
   }
 }
 
-inline bool StcEmu::mAdvancePosition() {
-  if (++mPositionIt != mPositionEnd) {
-    mUpdateChannels();
-    return true;
+inline void StcEmu::mAdvancePosition() {
+  if (++mPositionIt == mPositionEnd) {
+    mPositionIt = mModule->GetPositionBegin();
+    mSetTrackEnded();
   }
-  mPositionIt = mModule->GetPositionBegin();
-  mUpdateChannels();
-  return false;
-}
-
-void StcEmu::mUpdateChannels() {
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
   for (unsigned idx = 0; idx < 3; ++idx)
     mChannel[idx].SetPatternData(mModule->GetPatternData(pattern, idx));

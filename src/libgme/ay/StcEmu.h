@@ -80,8 +80,7 @@ class StcEmu : public ClassicEmu {
     bool IsEnabled() const { return mSampleCounter > 0; }
 
     void SetPatternData(const uint8_t *data) { mPatternIt = data; }
-    uint8_t AdvancePattern() { *++mPatternIt; }
-    uint8_t PatternCode() const { return *mPatternIt; }
+    uint8_t PatternCode() { return *mPatternIt++; }
 
     void SetSample(const Sample *sample) { mSample = sample; }
     void SetOrnament(const Ornament *ornament) { mOrnament = ornament->Data(); }
@@ -196,9 +195,7 @@ class StcEmu : public ClassicEmu {
   void mPlayPattern();
   void mPlayChannelPattern(Channel &channel);
   void mPlaySamples();
-  // Update pattern data pointers for current position.
-  void mUpdateChannels();
-  bool mAdvancePosition();
+  void mAdvancePosition();
 
  private:
   // AY APU Emulator
