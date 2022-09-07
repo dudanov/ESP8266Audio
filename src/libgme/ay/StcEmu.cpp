@@ -289,7 +289,7 @@ void StcEmu::mPlayPattern() {
       } else if (code < 0x60) {
         // Note in semitones (00=C-1). End position.
         channel.SetNote(code);
-        return;
+        break;
       } else if (code < 0x70) {
         // Bits 0-3 = sample number
         channel.SetSample(mModule->GetSample(code % 16));
@@ -300,10 +300,10 @@ void StcEmu::mPlayPattern() {
       } else if (code == 0x80) {
         // Rest (shuts channel). End position.
         channel.Disable();
-        return;
+        break;
       } else if (code == 0x81) {
         // Empty location. End position.
-        return;
+        break;
       } else if (code == 0x82) {
         // Select ornament 0.
         channel.EnvelopeDisable();
