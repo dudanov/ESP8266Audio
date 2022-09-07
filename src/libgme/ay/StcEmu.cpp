@@ -334,13 +334,12 @@ inline void StcEmu::mAdvancePosition() {
 
 void StcEmu::mPlaySamples() {
   uint8_t mixer = 0;
-  for (uint8_t idx = 0; idx < 3; ++idx) {
+  for (uint8_t idx = 0; idx < 3; ++idx, mixer >>= 1) {
     Channel &channel = mChannels[idx];
 
     if (!channel.IsEnabled()) {
       mApu.Write(mEmuTime, idx + 8, 0);
       mixer |= 64 | 8;
-      mixer >>= 1;
       continue;
     }
 
@@ -350,7 +349,6 @@ void StcEmu::mPlaySamples() {
       mApu.Write(mEmuTime, 6, sample->Noise());
 
     mixer |= 64 * sample->NoiseMask() | 8 * sample->ToneMask();
-    mixer >>= 1;
 
     const uint8_t note = channel.GetOrnamentNote() + mPositionTransposition();
     const uint16_t period = (Channel::GetTonePeriod(note) + sample->Transposition()) % 4096;
