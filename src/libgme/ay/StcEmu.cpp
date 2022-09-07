@@ -183,13 +183,13 @@ uint8_t StcEmu::STCModule::mCountPatternLength(const StcEmu::Pattern *pattern, u
   unsigned length = 0, skip = 0;
   for (auto it = GetPatternData(pattern, channel); *it != 0xFF; ++it) {
     const uint8_t data = *it;
-    if ((data < 0x60) || (data == 0x80) || (data == 0x81)) {
+    if ((data <= 0x5F) || (data == 0x80) || (data == 0x81)) {
       length += skip;
-    } else if (data < 0x83) {
+    } else if (data <= 0x82) {
       ;
-    } else if (data < 0x8F) {
+    } else if (data <= 0x8E) {
       ++it;
-    } else if (data > 0xA0 && data < 0xE1) {
+    } else if (data >= 0xA1 && data <= 0xE0) {
       skip = data - 0xA0;
     } else {
       // wrong code
@@ -284,17 +284,18 @@ void StcEmu::mPlayPattern() {
     while (true) {
       const uint8_t code = channel.PatternCode();
       if (code == 0xFF) {
+        // End pattern marker. Advance to next pattern and update all channels.
         mAdvancePosition();
         continue;
-      } else if (code < 0x60) {
+      } else if (code <= 0x5F) {
         // Note in semitones (00=C-1). End position.
         channel.SetNote(code);
         break;
-      } else if (code < 0x70) {
-        // Bits 0-3 = sample number
+      } else if (code <= 0x6F) {
+        // Bits 0-3 = sample number (0-15).
         channel.SetSample(mModule->GetSample(code % 16));
-      } else if (code < 0x80) {
-        // Bits 0-3 = ornament number
+      } else if (code <= 0x7F) {
+        // Bits 0-3 = ornament number (0-15).
         channel.EnvelopeDisable();
         channel.SetOrnament(mModule->GetOrnament(code % 16));
       } else if (code == 0x80) {
@@ -308,14 +309,14 @@ void StcEmu::mPlayPattern() {
         // Select ornament 0.
         channel.EnvelopeDisable();
         channel.SetOrnament(mModule->GetOrnament(0));
-      } else if (code < 0x8F) {
-        // Select envelope effect.
+      } else if (code <= 0x8E) {
+        // Select envelope effect (3-14).
         channel.EnvelopeEnable();
         channel.SetOrnament(mModule->GetOrnament(0));
         mApu.Write(mEmuTime, 13, code % 16);
         mApu.Write(mEmuTime, 11, channel.PatternCode());
       } else {
-        // number of empty locations after the subsequent code
+        // Number of empty locations after the subsequent code (0-63).
         channel.SetSkipCount(code - 0xA1);
       }
     }
