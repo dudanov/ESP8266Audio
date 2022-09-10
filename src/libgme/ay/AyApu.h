@@ -16,6 +16,11 @@ class AyApu {
   AyApu();
 
   enum Reg { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, RNUM };
+  enum ClockSpeed {
+    CLK_SPECTRUM = 3546800,
+    CLK_PENTAGON_128K = 3500000,
+    CLK_ATARI_ST = 4000000,
+  };
   static const unsigned OSCS_NUM = 3;
   static const unsigned AMP_RANGE = 255;
 

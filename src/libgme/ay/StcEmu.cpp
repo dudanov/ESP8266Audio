@@ -23,8 +23,6 @@ namespace emu {
 namespace ay {
 namespace stc {
 
-static const uint32_t CLK_SPECTRUM = 3546900;
-
 /* STC MODULE */
 
 const uint16_t STCModule::NOTE_TABLE[96] PROGMEM = {
@@ -258,7 +256,7 @@ blargg_err_t StcEmu::mLoad(const uint8_t *data, long size) {
   mSetTrackNum(1);
   mSetChannelsNumber(AyApu::OSCS_NUM);
   mApu.SetVolume(mGetGain());
-  return mSetupBuffer(CLK_SPECTRUM);
+  return mSetupBuffer(AyApu::CLK_SPECTRUM);
 }
 
 void StcEmu::mUpdateEq(BlipEq const &eq) { mApu.SetTrebleEq(eq); }
