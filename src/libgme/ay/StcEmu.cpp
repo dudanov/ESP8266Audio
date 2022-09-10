@@ -374,17 +374,12 @@ void StcEmu::mPlaySamples() {
   mApu.Write(mEmuTime, 7, mixer);
 }
 
-inline bool StcEmu::mRunDelay() {
-  if (--mDelayCounter > 0)
-    return false;
-  mDelayCounter = mModule->GetDelay();
-  return true;
-}
-
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
-    if (mRunDelay())
+    if (--mDelayCounter == 0) {
+      mDelayCounter = mModule->GetDelay();
       mPlayPattern();
+    }
     mPlaySamples();
   }
   mEmuTime -= duration;

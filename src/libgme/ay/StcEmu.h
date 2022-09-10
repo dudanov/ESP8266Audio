@@ -195,7 +195,6 @@ class StcEmu : public ClassicEmu {
 
   uint8_t mPositionTransposition() const { return mPositionIt->transposition; }
   void mInit();
-  bool mRunDelay();
   void mPlayPattern();
   void mPlaySamples();
   void mAdvancePosition();
