@@ -77,6 +77,7 @@ struct Pattern {
 };
 
 struct Channel {
+  Channel(const Channel &) = delete;
   void SetNote(uint8_t note) {
     mNote = note;
     mSamplePosition = 0;
