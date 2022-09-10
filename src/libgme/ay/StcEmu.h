@@ -10,6 +10,8 @@ namespace emu {
 namespace ay {
 namespace stc {
 
+/* STC MODULE DATA DESCRIPTION */
+
 struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
@@ -74,49 +76,6 @@ struct Pattern {
  private:
   uint8_t mNumber;
   uint8_t mDataOffset[3][2];
-};
-
-struct Channel {
-  Channel() = default;
-  Channel(const Channel &) = delete;
-  void SetNote(uint8_t note) {
-    mNote = note;
-    mSamplePosition = 0;
-    mSampleCounter = 32;
-  }
-  void Disable() { mSampleCounter = 0; }
-  bool IsEnabled() const { return mSampleCounter > 0; }
-
-  void SetPatternData(const uint8_t *data) { mPatternIt = data; }
-  uint8_t PatternCode() { return *mPatternIt++; }
-
-  void SetSample(const Sample *sample) { mSample = sample; }
-  void SetOrnament(const Ornament *ornament) { mOrnament = ornament->Data(); }
-  void AdvanceSample();
-
-  const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
-  uint8_t GetOrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
-
-  bool IsEnvelopeEnabled() const { return mEnvelope; }
-  void EnvelopeEnable() { mEnvelope = true; }
-  void EnvelopeDisable() { mEnvelope = false; }
-
-  void SetSkipCount(uint8_t delay) { mSkipCount = mSkipCounter = delay; }
-  bool IsEmptyLocation();
-
- private:
-  // Pointer to sample.
-  const Sample *mSample;
-  // Pattern data iterator.
-  const uint8_t *mPatternIt;
-  // Pointer to ornament data.
-  const uint8_t *mOrnament;
-  uint8_t mNote;
-  uint8_t mSamplePosition;
-  uint8_t mSampleCounter;
-  uint8_t mSkipCounter;
-  uint8_t mSkipCount;
-  bool mEnvelope;
 };
 
 struct STCModule {
@@ -191,6 +150,53 @@ struct STCModule {
   Sample mSamples[0];
 };
 
+// Channel entity
+struct Channel {
+  /* only create */
+  Channel() = default;
+  /* not allow make copies */
+  Channel(const Channel &) = delete;
+
+  void SetNote(uint8_t note) {
+    mNote = note;
+    mSamplePosition = 0;
+    mSampleCounter = 32;
+  }
+  void Disable() { mSampleCounter = 0; }
+  bool IsEnabled() const { return mSampleCounter > 0; }
+
+  void SetPatternData(const uint8_t *data) { mPatternIt = data; }
+  uint8_t PatternCode() { return *mPatternIt++; }
+
+  void SetSample(const Sample *sample) { mSample = sample; }
+  void SetOrnament(const Ornament *ornament) { mOrnament = ornament->Data(); }
+  void AdvanceSample();
+
+  const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
+  uint8_t GetOrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
+
+  bool IsEnvelopeEnabled() const { return mEnvelope; }
+  void EnvelopeEnable() { mEnvelope = true; }
+  void EnvelopeDisable() { mEnvelope = false; }
+
+  void SetSkipCount(uint8_t delay) { mSkipCount = mSkipCounter = delay; }
+  bool IsEmptyLocation();
+
+ private:
+  // Pointer to sample.
+  const Sample *mSample;
+  // Pattern data iterator.
+  const uint8_t *mPatternIt;
+  // Pointer to ornament data.
+  const uint8_t *mOrnament;
+  uint8_t mNote;
+  uint8_t mSamplePosition;
+  uint8_t mSampleCounter;
+  uint8_t mSkipCounter;
+  uint8_t mSkipCount;
+  bool mEnvelope;
+};
+
 class StcEmu : public ClassicEmu {
  public:
   StcEmu();
@@ -228,7 +234,7 @@ class StcEmu : public ClassicEmu {
   blip_clk_time_t mEmuTime;
   // Play period 50Hz
   blip_clk_time_t mFramePeriod;
-  // Global song delay
+  // Global song delay counter
   uint8_t mDelayCounter;
 };
 
