@@ -90,8 +90,6 @@ struct Channel {
   void SetSkipCount(uint8_t delay) { mSkipCount = mSkipCounter = delay; }
   bool IsEmptyLocation();
 
-  static uint16_t GetTonePeriod(uint8_t tone);
-
  private:
   // Pointer to sample.
   const Sample *mSample;
@@ -110,6 +108,8 @@ struct Channel {
 struct STCModule {
   // Shared note period table.
   static const uint16_t NOTE_TABLE[96];
+
+  static uint16_t GetTonePeriod(uint8_t tone);
 
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }

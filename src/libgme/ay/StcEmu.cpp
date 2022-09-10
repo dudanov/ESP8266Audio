@@ -37,6 +37,10 @@ const uint16_t STCModule::NOTE_TABLE[] PROGMEM = {
     0x001D, 0x001C, 0x001A, 0x0019, 0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000F,
 };
 
+inline uint16_t STCModule::GetTonePeriod(uint8_t tone) {
+  return pgm_read_word(STCModule::NOTE_TABLE + ((tone <= 95) ? tone : 95));
+}
+
 inline const Position *STCModule::GetPositionBegin() const { return mGetPointer<PositionsTable>(mPositions)->position; }
 
 inline const Position *STCModule::GetPositionEnd() const {
@@ -185,10 +189,6 @@ unsigned STCModule::CountSongLength() const {
 
 /* CHANNEL */
 
-inline uint16_t Channel::GetTonePeriod(uint8_t tone) {
-  return pgm_read_word(STCModule::NOTE_TABLE + ((tone <= 95) ? tone : 95));
-}
-
 inline void Channel::AdvanceSample() {
   if (--mSampleCounter) {
     ++mSamplePosition;
@@ -291,7 +291,7 @@ void StcEmu::mInit() {
 }
 
 void StcEmu::mPlayPattern() {
-  for (auto &channel : mChannels) {
+  for (Channel &channel : mChannels) {
     if (channel.IsEmptyLocation())
       continue;
     while (true) {
@@ -341,7 +341,7 @@ inline void StcEmu::mAdvancePosition() {
     mSetTrackEnded();
   }
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
-  for (unsigned idx = 0; idx != mChannels.size(); ++idx)
+  for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
@@ -363,7 +363,7 @@ void StcEmu::mPlaySamples() {
     mixer |= 64 * sample->NoiseMask() | 8 * sample->ToneMask();
 
     const uint8_t note = channel.GetOrnamentNote() + mPositionTransposition();
-    const uint16_t period = (Channel::GetTonePeriod(note) + sample->Transposition()) % 4096;
+    const uint16_t period = (STCModule::GetTonePeriod(note) + sample->Transposition()) % 4096;
 
     mApu.Write(mEmuTime, idx * 2, period % 256);
     mApu.Write(mEmuTime, idx * 2 + 1, period / 256);
