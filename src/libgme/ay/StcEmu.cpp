@@ -267,7 +267,7 @@ void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 
 // Emulation
 
-void StcEmu::mSetTempo(double temp) { mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp); }
+void StcEmu::mSetTempo(double temp) { mFramePeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp); }
 
 blargg_err_t StcEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
@@ -322,8 +322,8 @@ void StcEmu::mPlayPattern() {
         // Select envelope effect (3-14).
         channel.EnvelopeEnable();
         channel.SetOrnament(mModule->GetOrnament(0));
-        mApu.Write(mEmuTime, 13, code % 16);
-        mApu.Write(mEmuTime, 11, channel.PatternCode());
+        mApu.Write(mEmuTime, AyApu::R13, code % 16);
+        mApu.Write(mEmuTime, AyApu::R11, channel.PatternCode());
       } else if (code == 0xFF) {
         // End pattern marker. Advance to next song position and update all channels.
         mAdvancePosition();
@@ -358,24 +358,24 @@ void StcEmu::mPlaySamples() {
     auto sample = channel.GetSampleData();
 
     if (!sample->NoiseMask())
-      mApu.Write(mEmuTime, 6, sample->Noise());
+      mApu.Write(mEmuTime, AyApu::R6, sample->Noise());
 
     mixer |= 64 * sample->NoiseMask() | 8 * sample->ToneMask();
 
     const uint8_t note = channel.GetOrnamentNote() + mPositionTransposition();
     const uint16_t period = (STCModule::GetTonePeriod(note) + sample->Transposition()) % 4096;
 
-    mApu.Write(mEmuTime, idx * 2, period % 256);
-    mApu.Write(mEmuTime, idx * 2 + 1, period / 256);
-    mApu.Write(mEmuTime, idx + 8, sample->Volume() + 16 * channel.IsEnvelopeEnabled());
+    mApu.Write(mEmuTime, AyApu::R0 + idx * 2, period % 256);
+    mApu.Write(mEmuTime, AyApu::R1 + idx * 2, period / 256);
+    mApu.Write(mEmuTime, AyApu::R8 + idx, sample->Volume() + 16 * channel.IsEnvelopeEnabled());
 
     channel.AdvanceSample();
   }
-  mApu.Write(mEmuTime, 7, mixer);
+  mApu.Write(mEmuTime, AyApu::R7, mixer);
 }
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
-  for (; mEmuTime <= duration; mEmuTime += mPlayPeriod) {
+  for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
     if (--mDelayCounter == 0) {
       mDelayCounter = mModule->GetDelay();
       mPlayPattern();

@@ -211,7 +211,7 @@ class StcEmu : public ClassicEmu {
   // Current emulation time
   blip_clk_time_t mEmuTime;
   // Play period 50Hz
-  blip_clk_time_t mPlayPeriod;
+  blip_clk_time_t mFramePeriod;
   // Global song delay
   uint8_t mDelayCounter;
 };
