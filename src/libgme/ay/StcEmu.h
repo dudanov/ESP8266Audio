@@ -11,6 +11,8 @@ namespace ay {
 namespace stc {
 
 struct SampleData {
+  SampleData() = delete;
+  SampleData(const SampleData &) = delete;
   uint8_t Volume() const { return mData[0] % 16; }
   uint8_t Noise() const { return mData[1] % 32; }
   bool ToneMask() const { return mData[1] & 64; }
@@ -22,6 +24,8 @@ struct SampleData {
 };
 
 struct Sample {
+  Sample() = delete;
+  Sample(const SampleData &) = delete;
   bool HasNumber(uint8_t number) const { return mNumber == number; }
   const SampleData *Data(size_t pos) const { return mData + pos; }
   bool IsRepeatable() const { return mRepeatPosition != 0; }
@@ -36,6 +40,8 @@ struct Sample {
 };
 
 struct Ornament {
+  Ornament() = delete;
+  Ornament(const Ornament &) = delete;
   bool HasNumber(uint8_t number) const { return mNumber == number; }
   const uint8_t *Data() const { return mData; }
 
@@ -45,16 +51,22 @@ struct Ornament {
 };
 
 struct Position {
+  Position() = delete;
+  Position(const Position &) = delete;
   uint8_t pattern;
   uint8_t transposition;
 };
 
 struct PositionsTable {
+  PositionsTable() = delete;
+  PositionsTable(const PositionsTable &) = delete;
   uint8_t count;
   Position position[0];
 };
 
 struct Pattern {
+  Pattern() = delete;
+  Pattern(const Pattern &) = delete;
   static const uint8_t MAX_COUNT = 32;
   bool HasNumber(uint8_t number) const { return mNumber == number; }
   const uint8_t *DataOffset(uint8_t channel) const { return mDataOffset[channel]; }
@@ -106,6 +118,8 @@ struct Channel {
 };
 
 struct STCModule {
+  STCModule() = delete;
+  STCModule(const STCModule &) = delete;
   // Shared note period table.
   static const uint16_t NOTE_TABLE[96];
 
