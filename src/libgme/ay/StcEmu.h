@@ -25,7 +25,7 @@ struct SampleData {
 
 struct Sample {
   Sample() = delete;
-  Sample(const SampleData &) = delete;
+  Sample(const Sample &) = delete;
   bool HasNumber(uint8_t number) const { return mNumber == number; }
   const SampleData *Data(size_t pos) const { return mData + pos; }
   bool IsRepeatable() const { return mRepeatPosition != 0; }
