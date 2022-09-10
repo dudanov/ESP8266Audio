@@ -25,6 +25,8 @@ namespace stc {
 
 static const uint32_t CLK_SPECTRUM = 3546900;
 
+/* STC MODULE */
+
 const uint16_t STCModule::NOTE_TABLE[] PROGMEM = {
     0x0EF8, 0x0E10, 0x0D60, 0x0C80, 0x0BD8, 0x0B28, 0x0A88, 0x09F0, 0x0960, 0x08E0, 0x0858, 0x07E0, 0x077C, 0x0708,
     0x06B0, 0x0640, 0x05EC, 0x0594, 0x0544, 0x04F8, 0x04B0, 0x0470, 0x042C, 0x03F0, 0x03BE, 0x0384, 0x0358, 0x0320,
@@ -34,91 +36,6 @@ const uint16_t STCModule::NOTE_TABLE[] PROGMEM = {
     0x0042, 0x003F, 0x003B, 0x0038, 0x0035, 0x0032, 0x002F, 0x002C, 0x002A, 0x0027, 0x0025, 0x0023, 0x0021, 0x001F,
     0x001D, 0x001C, 0x001A, 0x0019, 0x0017, 0x0016, 0x0015, 0x0013, 0x0012, 0x0011, 0x0010, 0x000F,
 };
-
-inline uint16_t Channel::GetTonePeriod(uint8_t tone) {
-  return pgm_read_word(STCModule::NOTE_TABLE + ((tone <= 95) ? tone : 95));
-}
-
-StcEmu::StcEmu() {
-  static const char *const CHANNELS_NAMES[] = {"Wave 1", "Wave 2", "Wave 3"};
-  static int const CHANNELS_TYPES[] = {WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2};
-  mSetType(gme_stc_type);
-  mSetChannelsNames(CHANNELS_NAMES);
-  mSetChannelsTypes(CHANNELS_TYPES);
-  mSetSilenceLookahead(1);
-}
-
-StcEmu::~StcEmu() {}
-
-blargg_err_t StcEmu::mGetTrackInfo(track_info_t *out, int track) const {
-  // copy_stc_fields(mFile, *out);
-  return nullptr;
-}
-
-struct StcFile : GmeInfo {
-  StcFile() { mSetType(gme_stc_type); }
-  static MusicEmu *createStcFile() { return BLARGG_NEW StcFile; }
-
-  blargg_err_t mLoad(uint8_t const *begin, long size) override {
-    //    RETURN_ERR(parse_header(begin, size, file));
-    mSetTrackNum(1);
-    return nullptr;
-  }
-
-  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override {
-    //  copy_stc_fields(file, *out);
-    return nullptr;
-  }
-};
-
-// Setup
-
-blargg_err_t StcEmu::mLoad(const uint8_t *data, long size) {
-  mModule = reinterpret_cast<const STCModule *>(data);
-  if (!mModule->CheckIntegrity(size))
-    return gme_wrong_file_type;
-  mPositionEnd = mModule->GetPositionEnd();
-  mSetTrackNum(1);
-  mSetChannelsNumber(AyApu::OSCS_NUM);
-  mApu.SetVolume(mGetGain());
-  return mSetupBuffer(CLK_SPECTRUM);
-}
-
-void StcEmu::mUpdateEq(BlipEq const &eq) { mApu.SetTrebleEq(eq); }
-
-void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) { mApu.SetOscOutput(i, center); }
-
-// Emulation
-
-void StcEmu::mSetTempo(double temp) { mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp); }
-
-blargg_err_t StcEmu::mStartTrack(int track) {
-  RETURN_ERR(ClassicEmu::mStartTrack(track));
-  mInit();
-  SetTempo(mGetTempo());
-  return nullptr;
-}
-
-void StcEmu::mInit() {
-  mApu.Reset();
-  mEmuTime = 0;
-  mDelayCounter = 1;
-  mPositionIt = mModule->GetPositionBegin();
-  memset(&mChannels, 0, sizeof(mChannels));
-  auto pattern = mModule->GetPattern(mPositionIt->pattern);
-  for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
-    Channel &c = mChannels[idx];
-    c.SetPatternData(mModule->GetPatternData(pattern, idx));
-    c.SetOrnament(mModule->GetOrnament(0));
-  }
-}
-
-/* STC MODULE */
-
-inline int16_t SampleData::Transposition() const {
-  int16_t result = mData[0] / 16 * 256 + mData[2];
-  return (mData[1] & 32) ? result : -result;
-}
 
 inline const Position *STCModule::GetPositionBegin() const { return mGetPointer<PositionsTable>(mPositions)->position; }
 
@@ -266,6 +183,21 @@ unsigned STCModule::CountSongLength() const {
   return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount() * mDelay;
 }
 
+/* CHANNEL */
+
+inline uint16_t Channel::GetTonePeriod(uint8_t tone) {
+  return pgm_read_word(STCModule::NOTE_TABLE + ((tone <= 95) ? tone : 95));
+}
+
+inline void Channel::AdvanceSample() {
+  if (--mSampleCounter) {
+    ++mSamplePosition;
+  } else if (mSample->IsRepeatable()) {
+    mSamplePosition = mSample->RepeatPosition();
+    mSampleCounter = mSample->RepeatLength();
+  }
+}
+
 inline bool Channel::IsEmptyLocation() {
   if (mSkipCounter > 0) {
     mSkipCounter--;
@@ -273,6 +205,89 @@ inline bool Channel::IsEmptyLocation() {
   }
   mSkipCounter = mSkipCount;
   return false;
+}
+
+/* SAMPLE DATA */
+
+inline int16_t SampleData::Transposition() const {
+  int16_t result = mData[0] / 16 * 256 + mData[2];
+  return (mData[1] & 32) ? result : -result;
+}
+
+/* STC EMULATOR */
+
+StcEmu::StcEmu() {
+  static const char *const CHANNELS_NAMES[] = {"Wave 1", "Wave 2", "Wave 3"};
+  static int const CHANNELS_TYPES[] = {WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2};
+  mSetType(gme_stc_type);
+  mSetChannelsNames(CHANNELS_NAMES);
+  mSetChannelsTypes(CHANNELS_TYPES);
+  mSetSilenceLookahead(1);
+}
+
+StcEmu::~StcEmu() {}
+
+blargg_err_t StcEmu::mGetTrackInfo(track_info_t *out, int track) const {
+  // copy_stc_fields(mFile, *out);
+  return nullptr;
+}
+
+struct StcFile : GmeInfo {
+  StcFile() { mSetType(gme_stc_type); }
+  static MusicEmu *createStcFile() { return BLARGG_NEW StcFile; }
+
+  blargg_err_t mLoad(uint8_t const *begin, long size) override {
+    //    RETURN_ERR(parse_header(begin, size, file));
+    mSetTrackNum(1);
+    return nullptr;
+  }
+
+  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override {
+    //  copy_stc_fields(file, *out);
+    return nullptr;
+  }
+};
+
+// Setup
+
+blargg_err_t StcEmu::mLoad(const uint8_t *data, long size) {
+  mModule = reinterpret_cast<const STCModule *>(data);
+  if (!mModule->CheckIntegrity(size))
+    return gme_wrong_file_type;
+  mPositionEnd = mModule->GetPositionEnd();
+  mSetTrackNum(1);
+  mSetChannelsNumber(AyApu::OSCS_NUM);
+  mApu.SetVolume(mGetGain());
+  return mSetupBuffer(CLK_SPECTRUM);
+}
+
+void StcEmu::mUpdateEq(BlipEq const &eq) { mApu.SetTrebleEq(eq); }
+
+void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) { mApu.SetOscOutput(i, center); }
+
+// Emulation
+
+void StcEmu::mSetTempo(double temp) { mPlayPeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp); }
+
+blargg_err_t StcEmu::mStartTrack(int track) {
+  RETURN_ERR(ClassicEmu::mStartTrack(track));
+  mInit();
+  SetTempo(mGetTempo());
+  return nullptr;
+}
+
+void StcEmu::mInit() {
+  mApu.Reset();
+  mEmuTime = 0;
+  mDelayCounter = 1;
+  mPositionIt = mModule->GetPositionBegin();
+  memset(&mChannels, 0, sizeof(mChannels));
+  auto pattern = mModule->GetPattern(mPositionIt->pattern);
+  for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
+    Channel &c = mChannels[idx];
+    c.SetPatternData(mModule->GetPatternData(pattern, idx));
+    c.SetOrnament(mModule->GetOrnament(0));
+  }
 }
 
 void StcEmu::mPlayPattern() {
@@ -357,15 +372,6 @@ void StcEmu::mPlaySamples() {
     channel.AdvanceSample();
   }
   mApu.Write(mEmuTime, 7, mixer);
-}
-
-inline void Channel::AdvanceSample() {
-  if (--mSampleCounter) {
-    ++mSamplePosition;
-  } else if (mSample->IsRepeatable()) {
-    mSamplePosition = mSample->RepeatPosition();
-    mSampleCounter = mSample->RepeatLength();
-  }
 }
 
 inline bool StcEmu::mRunDelay() {
