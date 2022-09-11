@@ -191,7 +191,7 @@ inline void Channel::AdvanceSample() {
   if (--mSampleCounter) {
     ++mSamplePosition;
   } else if (mSample->IsRepeatable()) {
-    mSamplePosition = mSample->RepeatPosition();
+    mSamplePosition = mSample->RepeatPosition() % 32;
     mSampleCounter = mSample->RepeatLength() + 1;
   }
 }
