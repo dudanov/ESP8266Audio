@@ -12,6 +12,8 @@ namespace stc {
 
 /* STC MODULE DATA DESCRIPTION */
 
+static const auto FRAMERATE = AyApu::FRAMERATE_SPECTRUM;
+
 struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
@@ -109,6 +111,9 @@ struct STCModule {
 
   // Return song length in frames.
   unsigned CountSongLength() const;
+
+  // Return song length in frames.
+  unsigned CountSongLengthMs() const { return CountSongLength() * 1000 / FRAMERATE; }
 
   // Check file integrity.
   bool CheckIntegrity(size_t size) const;

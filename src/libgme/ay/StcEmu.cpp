@@ -221,7 +221,7 @@ StcEmu::StcEmu() {
 StcEmu::~StcEmu() {}
 
 blargg_err_t StcEmu::mGetTrackInfo(track_info_t *out, int track) const {
-  out->length = mModule->CountSongLength() * 20;
+  out->length = mModule->CountSongLengthMs();
   return nullptr;
 }
 
@@ -239,7 +239,7 @@ struct StcFile : GmeInfo {
   }
 
   blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override {
-    out->length = mModule->CountSongLength() * 20;
+    out->length = mModule->CountSongLengthMs();
     return nullptr;
   }
 };
@@ -263,7 +263,7 @@ void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 
 // Emulation
 
-void StcEmu::mSetTempo(double temp) { mFramePeriod = static_cast<blip_clk_time_t>(mGetClockRate() / 50 / temp); }
+void StcEmu::mSetTempo(double temp) { mFramePeriod = static_cast<blip_clk_time_t>(mGetClockRate() / FRAMERATE / temp); }
 
 blargg_err_t StcEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));

@@ -20,7 +20,10 @@ class AyApu {
     CLK_SPECTRUM = 3546800,
     CLK_PENTAGON_128K = 3500000,
     CLK_ATARI_ST = 4000000,
+    CLK_AMSTRAD_CPC = 2000000,
   };
+  static const double FRAMERATE_PENTAGON_128K = 48.828;
+  static const unsigned FRAMERATE_SPECTRUM = 50;
   static const unsigned OSCS_NUM = 3;
   static const unsigned AMP_RANGE = 255;
 
