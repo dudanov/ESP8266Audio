@@ -12,8 +12,8 @@ namespace stc {
 
 /* STC MODULE DATA DESCRIPTION */
 
-static const auto CLOCK_RATE = AyApu::CLK_SPECTRUM;
-static const auto FRAME_RATE = AyApu::FRAMERATE_SPECTRUM;
+static const auto CLOCK_RATE = CLK_SPECTRUM;
+static const auto FRAME_RATE = FRAMERATE_SPECTRUM;
 
 struct SampleData {
   SampleData() = delete;
