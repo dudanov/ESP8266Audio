@@ -325,8 +325,9 @@ void StcEmu::mPlayPattern() {
         // Select envelope effect (3-14).
         channel.EnvelopeEnable();
         channel.SetOrnament(mModule, 0);
-        mApu.Write(mEmuTime, AyApu::R13, code % 16);
         mApu.Write(mEmuTime, AyApu::R11, channel.PatternCode());
+        mApu.Write(mEmuTime, AyApu::R12, 0);
+        mApu.Write(mEmuTime, AyApu::R13, code % 16);
       } else if (code == 0xFF) {
         // End pattern marker. Advance to next song position and update all channels.
         mAdvancePosition();
