@@ -10,9 +10,6 @@ namespace emu {
 namespace ay {
 namespace stc {
 
-// Shared note period table.
-const uint16_t NOTE_TABLE[96];
-
 /* STC MODULE DATA DESCRIPTION */
 
 struct SampleData {
@@ -84,6 +81,8 @@ struct Pattern {
 struct STCModule {
   STCModule() = delete;
   STCModule(const STCModule &) = delete;
+  // Shared note period table.
+  static const uint16_t NOTE_TABLE[96];
 
   static uint16_t GetTonePeriod(uint8_t tone);
 
