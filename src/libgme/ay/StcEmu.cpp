@@ -254,7 +254,7 @@ blargg_err_t StcEmu::mLoad(const uint8_t *data, long size) {
   mSetTrackNum(1);
   mSetChannelsNumber(AyApu::OSCS_NUM);
   mApu.SetVolume(mGetGain());
-  return mSetupBuffer(AyApu::CLK_SPECTRUM);
+  return mSetupBuffer(CLOCK_RATE);
 }
 
 void StcEmu::mUpdateEq(BlipEq const &eq) { mApu.SetTrebleEq(eq); }
@@ -263,7 +263,9 @@ void StcEmu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) 
 
 // Emulation
 
-void StcEmu::mSetTempo(double temp) { mFramePeriod = static_cast<blip_clk_time_t>(mGetClockRate() / FRAMERATE / temp); }
+void StcEmu::mSetTempo(double temp) {
+  mFramePeriod = static_cast<blip_clk_time_t>(mGetClockRate() / FRAME_RATE / temp);
+}
 
 blargg_err_t StcEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
