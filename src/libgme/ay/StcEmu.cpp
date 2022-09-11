@@ -344,10 +344,8 @@ inline void StcEmu::mAdvancePosition() {
     mSetTrackEnded();
   }
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
-  for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
+  for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
-    mChannels[idx].Disable();
-  }
 }
 
 void StcEmu::mPlaySamples() {

@@ -30,7 +30,7 @@ struct Sample {
   Sample(const Sample &) = delete;
   bool HasNumber(uint8_t number) const { return mNumber == number; }
   const SampleData *Data(size_t pos) const { return mData + pos; }
-  bool IsRepeatable() const { return mRepeatPosition != 0; }
+  bool IsRepeatable() const { return mRepeatPosition > 0; }
   uint8_t RepeatPosition() const { return mRepeatPosition - 1; }
   uint8_t RepeatLength() const { return mRepeatLength; }
 
