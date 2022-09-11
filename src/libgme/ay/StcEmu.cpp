@@ -221,22 +221,25 @@ StcEmu::StcEmu() {
 StcEmu::~StcEmu() {}
 
 blargg_err_t StcEmu::mGetTrackInfo(track_info_t *out, int track) const {
-  // copy_stc_fields(mFile, *out);
+  out->length = mModule->CountSongLength() * 20;
   return nullptr;
 }
 
 struct StcFile : GmeInfo {
+  const STCModule *mModule;
   StcFile() { mSetType(gme_stc_type); }
-  static MusicEmu *createStcFile() { return BLARGG_NEW StcFile; }
+  static MusicEmu *createStcFile() { return new StcFile; }
 
-  blargg_err_t mLoad(uint8_t const *begin, long size) override {
-    //    RETURN_ERR(parse_header(begin, size, file));
+  blargg_err_t mLoad(const uint8_t *data, long size) override {
+    mModule = reinterpret_cast<const STCModule *>(data);
+    if (!mModule->CheckIntegrity(size))
+      return gme_wrong_file_type;
     mSetTrackNum(1);
     return nullptr;
   }
 
   blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override {
-    //  copy_stc_fields(file, *out);
+    out->length = mModule->CountSongLength() * 20;
     return nullptr;
   }
 };
