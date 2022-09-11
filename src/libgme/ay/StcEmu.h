@@ -98,9 +98,6 @@ struct STCModule {
   // Get pattern by specified number.
   const Pattern *GetPattern(uint8_t number) const;
 
-  // Get pattern data by specified number.
-  const uint8_t *GetPatternData(uint8_t pattern, uint8_t channel) const;
-
   // Get data from specified pattern.
   const uint8_t *GetPatternData(const Pattern *pattern, uint8_t channel) const;
 
@@ -168,8 +165,8 @@ struct Channel {
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   uint8_t PatternCode() { return *mPatternIt++; }
 
-  void SetSample(const Sample *sample) { mSample = sample; }
-  void SetOrnament(const Ornament *ornament) { mOrnament = ornament->Data(); }
+  void SetSample(const STCModule *stc, uint8_t number) { mSample = stc->GetSample(number); }
+  void SetOrnament(const STCModule *stc, uint8_t number) { mOrnament = stc->GetOrnament(number)->Data(); }
   void AdvanceSample();
 
   const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }

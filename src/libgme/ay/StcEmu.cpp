@@ -52,10 +52,6 @@ inline const uint8_t *STCModule::GetPatternData(const Pattern *pattern, uint8_t 
   return mGetPointer<uint8_t>(pattern->DataOffset(channel));
 }
 
-inline const uint8_t *STCModule::GetPatternData(uint8_t pattern, uint8_t channel) const {
-  return GetPatternData(GetPattern(pattern), channel);
-}
-
 inline const Pattern *STCModule::mGetPatternBegin() const { return mGetPointer<Pattern>(mPatterns); }
 
 inline const Pattern *STCModule::GetPattern(uint8_t number) const {
@@ -284,7 +280,7 @@ void StcEmu::mInit() {
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
-    c.SetOrnament(mModule->GetOrnament(0));
+    c.SetOrnament(mModule, 0);
   }
 }
 
@@ -300,11 +296,11 @@ void StcEmu::mPlayPattern() {
         break;
       } else if (code <= 0x6F) {
         // Select sample (0-15).
-        channel.SetSample(mModule->GetSample(code % 16));
+        channel.SetSample(mModule, code % 16);
       } else if (code <= 0x7F) {
         // Select ornament (0-15).
         channel.EnvelopeDisable();
-        channel.SetOrnament(mModule->GetOrnament(code % 16));
+        channel.SetOrnament(mModule, code % 16);
       } else if (code == 0x80) {
         // Rest (shuts channel). End position.
         channel.Disable();
@@ -315,11 +311,11 @@ void StcEmu::mPlayPattern() {
       } else if (code == 0x82) {
         // Select ornament 0.
         channel.EnvelopeDisable();
-        channel.SetOrnament(mModule->GetOrnament(0));
+        channel.SetOrnament(mModule, 0);
       } else if (code <= 0x8E) {
         // Select envelope effect (3-14).
         channel.EnvelopeEnable();
-        channel.SetOrnament(mModule->GetOrnament(0));
+        channel.SetOrnament(mModule, 0);
         mApu.Write(mEmuTime, AyApu::R13, code % 16);
         mApu.Write(mEmuTime, AyApu::R11, channel.PatternCode());
       } else if (code == 0xFF) {
