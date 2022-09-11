@@ -19,7 +19,7 @@ struct SampleData {
   uint8_t Noise() const { return mData[0] / 2 % 32; }
   int8_t EnvelopeSlide() const {
     const uint8_t val = mData[0] >> 1;
-    return (val & 0x10) ? (val | 0xF0) : (val & 0x0F);
+    return (val & 16) ? (val | ~15) : (val & 15);
   }
   uint8_t Volume() const { return mData[1] % 16; }
   bool ToneMask() const { return mData[1] & 16; }
