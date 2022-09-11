@@ -17,8 +17,8 @@ struct SampleData {
   SampleData(const SampleData &) = delete;
   bool EnvelopeMask() const { return mData[0] & 1; }
   uint8_t Noise() const { return mData[0] / 2 % 32; }
-  int8_t EnvelopeSlide() const {
-    const uint8_t val = mData[0] >> 1;
+  int EnvelopeSlide() const {
+    const int val = mData[0] >> 1;
     return (val & 16) ? (val | ~15) : (val & 15);
   }
   uint8_t Volume() const { return mData[1] % 16; }
