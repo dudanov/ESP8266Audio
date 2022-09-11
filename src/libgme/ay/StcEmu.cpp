@@ -346,7 +346,7 @@ inline void StcEmu::mAdvancePosition() {
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
-    mChannels[idx].SetOrnament(mModule, 0);
+    mChannels[idx].Disable();
   }
 }
 
