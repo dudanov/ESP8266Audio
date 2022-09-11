@@ -23,6 +23,9 @@ namespace emu {
 namespace ay {
 namespace stc {
 
+static const auto CLOCK_RATE = CLK_SPECTRUM;
+static const auto FRAME_RATE = FRAMERATE_SPECTRUM;
+
 /* STC MODULE */
 
 const uint16_t STCModule::NOTE_TABLE[96] PROGMEM = {
@@ -179,6 +182,8 @@ unsigned STCModule::CountSongLength() const {
   // all patterns has same length
   return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount() * mDelay;
 }
+
+unsigned STCModule::CountSongLengthMs() const { return CountSongLength() * 1000 / FRAME_RATE; }
 
 /* CHANNEL */
 

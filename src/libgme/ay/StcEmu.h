@@ -12,9 +12,6 @@ namespace stc {
 
 /* STC MODULE DATA DESCRIPTION */
 
-static const auto CLOCK_RATE = CLK_SPECTRUM;
-static const auto FRAME_RATE = FRAMERATE_SPECTRUM;
-
 struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
@@ -113,8 +110,8 @@ struct STCModule {
   // Return song length in frames.
   unsigned CountSongLength() const;
 
-  // Return song length in frames.
-  unsigned CountSongLengthMs() const { return CountSongLength() * 1000 / FRAME_RATE; }
+  // Return song length in miliseconds.
+  unsigned CountSongLengthMs() const;
 
   // Check file integrity.
   bool CheckIntegrity(size_t size) const;
