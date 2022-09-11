@@ -22,8 +22,6 @@ namespace gme {
 namespace emu {
 namespace ay {
 
-static const uint32_t CLK_SPECTRUM = 3546900;
-static const uint32_t CLK_CPC = 2000000;
 static const uint16_t RAM_START = 0x4000;
 static const uint8_t OSCS_NUM = AyApu::OSCS_NUM + 1;
 
@@ -291,7 +289,7 @@ void AyEmu::mCpuOutMisc(cpu_time_t time, unsigned addr, int data) {
 enable_cpc:
   if (!mCpcMode) {
     mCpcMode = true;
-    mChangeClockRate(CLK_CPC);
+    mChangeClockRate(CLK_AMSTRAD_CPC);
     SetTempo(mGetTempo());
   }
 }
