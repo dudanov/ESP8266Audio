@@ -130,15 +130,15 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
   require(end_clk_time >= mLastClkTime);
 
   // noise period and initial values
-  const blip_clk_time_t NOISE_PSC = CLOCK_PSC * 2;  // verified
+  constexpr blip_clk_time_t NOISE_PSC = CLOCK_PSC * 2;  // verified
   blip_clk_time_t noise_period = mRegs[R6] % 32 * NOISE_PSC;
   if (noise_period == 0)
     noise_period = NOISE_PSC;
-  const blip_clk_time_t old_noise_delay = mNoise.mDelay;
   const blargg_ulong old_noise_lfsr = mNoise.mLfsr;
+  const blip_clk_time_t old_noise_delay = mNoise.mDelay;
 
   // envelope period
-  const blip_clk_time_t ENVELOPE_PSC = CLOCK_PSC * 2;  // verified
+  constexpr blip_clk_time_t ENVELOPE_PSC = CLOCK_PSC * 2;  // verified
   blip_clk_time_t env_period = get_le16(&mRegs[R11]) * ENVELOPE_PSC;
   if (env_period == 0)
     env_period = ENVELOPE_PSC;  // same as period 1 on my AY chip
