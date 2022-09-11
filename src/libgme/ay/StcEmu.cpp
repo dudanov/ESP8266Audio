@@ -189,10 +189,10 @@ unsigned STCModule::CountSongLengthMs() const { return CountSongLength() * 1000 
 
 inline void Channel::AdvanceSample() {
   if (--mSampleCounter) {
-    ++mSamplePosition;
+    mSamplePosition = (mSamplePosition + 1) % 32;
   } else if (mSample->IsRepeatable()) {
-    mSamplePosition = mSample->RepeatPosition() % 32;
-    mSampleCounter = mSample->RepeatLength() + 1;
+    mSamplePosition = mSample->RepeatPosition();
+    mSampleCounter = mSample->RepeatLength();
   }
 }
 
