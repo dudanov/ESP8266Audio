@@ -310,13 +310,11 @@ void Pt3Emu::mPlayPattern() {
 }
 
 inline void Pt3Emu::mAdvancePosition() {
-  if (++mPositionIt == mPositionEnd) {
-    mPositionIt = mModule->GetPositionBegin();
-    mSetTrackEnded();
-  }
-  auto pattern = mModule->GetPatternIndex(mPositionIt->pattern);
+  if (*++mPositionIt == 0xFF)
+    mPositionIt = mModule->GetPositionLoop();
+  auto pattern = mModule->GetPattern(mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
-    mChannels[idx].SetPatternData(mModule->GetPattern(pattern, idx));
+    mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
 void Pt3Emu::mPlaySamples() {

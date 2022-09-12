@@ -49,26 +49,27 @@ using Ornament = LoopData<int8_t>;
 using Position = uint8_t;
 using PatternData = uint8_t;
 
-struct DataOffset {
-  DataOffset() = delete;
-  DataOffset(const DataOffset &) = delete;
-  uint16_t Value() const { return get_le16(mOffset); }
-  bool IsValid() const { return Value() != 0; }
+class PT3Module {
+  struct DataOffset {
+    DataOffset() = delete;
+    DataOffset(const DataOffset &) = delete;
+    uint16_t GetDataOffset() const { return get_le16(mOffset); }
+    bool IsValid() const { return GetDataOffset() != 0; }
 
- private:
-  uint8_t mOffset[2];
-};
+   private:
+    uint8_t mOffset[2];
+  };
 
-struct Pattern {
-  Pattern() = delete;
-  Pattern(const Pattern &) = delete;
-  const DataOffset &Offset(uint8_t channel) const { return mData[channel]; }
+  struct Pattern {
+    Pattern() = delete;
+    Pattern(const Pattern &) = delete;
+    const DataOffset &GetChannelDataOffset(uint8_t channel) const { return mData[channel]; }
 
- private:
-  DataOffset mData[3];
-};
+   private:
+    DataOffset mData[3];
+  };
 
-struct PT3Module {
+ public:
   PT3Module() = delete;
   PT3Module(const PT3Module &) = delete;
   // Shared note period table.
@@ -80,10 +81,10 @@ struct PT3Module {
   uint8_t GetDelay() const { return mDelay; }
 
   // Begin position iterator.
-  const Position *GetPositionBegin() const;
+  const Position *GetPositionBegin() const { return mPositions; }
 
-  // End position iterator.
-  const Position *GetPositionEnd() const;
+  // Loop position iterator.
+  const Position *GetPositionLoop() const { return mPositions + mLoop; }
 
   // Get pattern index by specified number.
   const Pattern *GetPattern(const Position *it) const {
@@ -92,7 +93,7 @@ struct PT3Module {
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-    return mGetPointer<PatternData>(pattern->Offset(channel));
+    return mGetPointer<PatternData>(pattern->GetChannelDataOffset(channel));
   }
 
   // Get sample by specified number.
@@ -112,7 +113,7 @@ struct PT3Module {
 
  private:
   template<typename T> const T *mGetPointer(const DataOffset &offset) const {
-    return reinterpret_cast<const T *>(mIdentify + offset.Value());
+    return reinterpret_cast<const T *>(mIdentify + offset.GetDataOffset());
   }
 
   // Count pattern length. Return 0 on error.
@@ -152,7 +153,7 @@ struct PT3Module {
   // Song end.
   uint8_t mNumberOfPositions;
   // Song loop.
-  uint8_t mLoopPosition;
+  uint8_t mLoop;
   // Pattern table offset.
   DataOffset mPattern;
   // Sample offsets. Starting from sample #0.
