@@ -12,23 +12,6 @@ namespace pt3 {
 
 /* PT3 MODULE DATA DESCRIPTION */
 
-struct DataOffset {
-  DataOffset() = delete;
-  DataOffset(const DataOffset &) = delete;
-  uint16_t value() const { return get_le16(mOffset); }
-  bool valid() const { return value() != 0; }
-
- private:
-  uint8_t mOffset[2];
-};
-
-struct Pattern {
-  const DataOffset &offset(uint8_t channel) const { return mData[channel]; }
-
- private:
-  DataOffset mData[3];
-};
-
 struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
@@ -48,9 +31,9 @@ struct SampleData {
   uint8_t mTransposition[2];
 };
 
-template<typename T> struct LoopableData {
-  LoopableData() = delete;
-  LoopableData(const LoopableData &) = delete;
+template<typename T> struct LoopData {
+  LoopData() = delete;
+  LoopData(const LoopData &) = delete;
   const T *begin() const { return mData; }
   const T *loop() const { return mData + mLoop; }
   const T *end() const { return mData + mEnd; }
@@ -61,10 +44,29 @@ template<typename T> struct LoopableData {
   T mData[0];
 };
 
-using Sample = LoopableData<SampleData>;
-using Ornament = LoopableData<int8_t>;
+using Sample = LoopData<SampleData>;
+using Ornament = LoopData<int8_t>;
 using Position = uint8_t;
 using PatternData = uint8_t;
+
+struct DataOffset {
+  DataOffset() = delete;
+  DataOffset(const DataOffset &) = delete;
+  uint16_t Value() const { return get_le16(mOffset); }
+  bool IsValid() const { return Value() != 0; }
+
+ private:
+  uint8_t mOffset[2];
+};
+
+struct Pattern {
+  Pattern() = delete;
+  Pattern(const Pattern &) = delete;
+  const DataOffset &Offset(uint8_t channel) const { return mData[channel]; }
+
+ private:
+  DataOffset mData[3];
+};
 
 struct PT3Module {
   PT3Module() = delete;
@@ -90,7 +92,7 @@ struct PT3Module {
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-    return mGetPointer<PatternData>(pattern->offset(channel));
+    return mGetPointer<PatternData>(pattern->Offset(channel));
   }
 
   // Get sample by specified number.
@@ -110,7 +112,7 @@ struct PT3Module {
 
  private:
   template<typename T> const T *mGetPointer(const DataOffset &offset) const {
-    return reinterpret_cast<const T *>(mIdentify + offset.value());
+    return reinterpret_cast<const T *>(mIdentify + offset.Value());
   }
 
   // Count pattern length. Return 0 on error.
