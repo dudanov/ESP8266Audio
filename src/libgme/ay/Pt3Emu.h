@@ -127,19 +127,19 @@ struct PT3Module {
   /* PT3 MODULE HEADER DATA */
 
   // Identification: "ProTracker 3.".
-  char mIdentify[13];
+  uint8_t mIdentify[13];
   // Subversion: "3", "4", "5", "6", etc.
-  char mSubVersion;
+  uint8_t mSubVersion;
   // " compilation of " or any text of this length.
-  char mUnused0[16];
+  uint8_t mUnused0[16];
   // Track name. Unused characters are padded with spaces.
-  char mName[32];
+  uint8_t mName[32];
   // " by " or any text of this length.
-  char mUnused1[4];
+  uint8_t mUnused1[4];
   // Author's name. Unused characters are padded with spaces.
-  char mAuthor[32];
+  uint8_t mAuthor[32];
   // One space (any character).
-  char mUnused2;
+  uint8_t mUnused2;
   // Note frequency table number.
   uint8_t mNoteTable;
   // Delay value (tempo).
