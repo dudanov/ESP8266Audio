@@ -50,19 +50,6 @@ inline const Position *PT3Module::GetPositionEnd() const {
 
 inline size_t PT3Module::mGetPositionsCount() const { return mGetPointer<PositionsTable>(mPositions)->count + 1; }
 
-inline const uint8_t *PT3Module::GetPatternData(const Pattern *pattern, uint8_t channel) const {
-  return mGetPointer<uint8_t>(pattern->DataOffset(channel));
-}
-
-inline const Pattern *PT3Module::mGetPatternBegin() const { return mGetPointer<Pattern>(mPatterns); }
-
-inline const Pattern *PT3Module::GetPattern(uint8_t number) const {
-  auto it = mGetPatternBegin();
-  while (!it->HasNumber(number))
-    ++it;
-  return it;
-}
-
 inline const Ornament *PT3Module::GetOrnament(uint8_t number) const {
   auto it = mGetPointer<Ornament>(mOrnaments);
   while (!it->HasNumber(number))
@@ -77,26 +64,9 @@ inline const Sample *PT3Module::GetSample(uint8_t number) const {
   return it;
 }
 
-bool PT3Module::mCheckPatternTable() const {
-  auto it = mGetPatternBegin();
-  for (uint8_t n = 0; n != Pattern::MAX_COUNT; ++n, ++it) {
-    if (it->HasNumber(0xFF))
-      return true;
-  }
-  return false;
-}
-
-const Pattern *PT3Module::mFindPattern(uint8_t number) const {
-  for (auto it = mGetPatternBegin(); it != mGetPatternEnd(); ++it) {
-    if (it->HasNumber(number))
-      return it;
-  }
-  return nullptr;
-}
-
-uint8_t PT3Module::mCountPatternLength(const Pattern *pattern, uint8_t channel) const {
+uint8_t PT3Module::mCountPatternLength(const PatternIndex *pattern, uint8_t channel) const {
   unsigned length = 0, skip = 0;
-  for (auto it = GetPatternData(pattern, channel); *it != 0xFF; ++it) {
+  for (auto it = GetPattern(pattern, channel); *it != 0xFF; ++it) {
     const uint8_t data = *it;
     if ((data <= 0x5F) || (data == 0x80) || (data == 0x81)) {
       length += skip;
@@ -180,7 +150,7 @@ bool PT3Module::CheckIntegrity(size_t size) const {
 
 unsigned PT3Module::CountSongLength() const {
   // all patterns has same length
-  return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount() * mDelay;
+  return mCountPatternLength(GetPatternIndex(GetPositionBegin()->pattern)) * mGetPositionsCount() * mDelay;
 }
 
 unsigned PT3Module::CountSongLengthMs() const { return CountSongLength() * 1000 / FRAME_RATE; }
@@ -285,10 +255,10 @@ void Pt3Emu::mInit() {
   mDelayCounter = 1;
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
-  auto pattern = mModule->GetPattern(mPositionIt->pattern);
+  auto pattern = mModule->GetPatternIndex(mPositionIt->pattern);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
-    c.SetPatternData(mModule->GetPatternData(pattern, idx));
+    c.SetPatternData(mModule->GetPattern(pattern, idx));
     c.SetOrnament(mModule, 0);
   }
 }
@@ -344,9 +314,9 @@ inline void Pt3Emu::mAdvancePosition() {
     mPositionIt = mModule->GetPositionBegin();
     mSetTrackEnded();
   }
-  auto pattern = mModule->GetPattern(mPositionIt->pattern);
+  auto pattern = mModule->GetPatternIndex(mPositionIt->pattern);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
-    mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
+    mChannels[idx].SetPatternData(mModule->GetPattern(pattern, idx));
 }
 
 void Pt3Emu::mPlaySamples() {

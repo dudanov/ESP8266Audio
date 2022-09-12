@@ -59,30 +59,14 @@ struct Ornament {
   int8_t mData[0];
 };
 
-struct Position {
-  Position() = delete;
-  Position(const Position &) = delete;
-  uint8_t pattern;
-  uint8_t transposition;
+struct DataOffset {
+  uint8_t offset[2];
 };
 
-struct PositionsTable {
-  PositionsTable() = delete;
-  PositionsTable(const PositionsTable &) = delete;
-  uint8_t count;
-  Position position[0];
-};
+using Position = uint8_t;
 
 struct Pattern {
-  Pattern() = delete;
-  Pattern(const Pattern &) = delete;
-  static const uint8_t MAX_COUNT = 32;
-  bool HasNumber(uint8_t number) const { return mNumber == number; }
-  const uint8_t *DataOffset(uint8_t channel) const { return mDataOffset[channel]; }
-
- private:
-  uint8_t mNumber;
-  uint8_t mDataOffset[3][2];
+  DataOffset data[3];
 };
 
 struct PT3Module {
@@ -102,14 +86,18 @@ struct PT3Module {
   // End position iterator.
   const Position *GetPositionEnd() const;
 
-  // Get pattern by specified number.
-  const Pattern *GetPattern(uint8_t number) const;
+  // Get pattern index by specified number.
+  const Pattern *GetPattern(const Position *position) const {
+    return mGetPointer<Pattern>(mPattern) + *position / 3);
+  }
 
   // Get data from specified pattern.
-  const uint8_t *GetPatternData(const Pattern *pattern, uint8_t channel) const;
+  const uint8_t *GetPatternData(const DataOffset *pattern, uint8_t channel) const {
+    return mGetPointer<uint8_t>(pattern[channel]);
+  }
 
   // Get sample by specified number.
-  const Sample *GetSample(uint8_t number) const;
+  const Sample *GetSample(uint8_t number) const { GetPatternData(GetPattern(0), 3); }
 
   // Get data of specified ornament number.
   const Ornament *GetOrnament(uint8_t number) const;
@@ -124,8 +112,8 @@ struct PT3Module {
   bool CheckIntegrity(size_t size) const;
 
  private:
-  template<typename T> const T *mGetPointer(const uint8_t *offset) const {
-    return reinterpret_cast<const T *>(&mDelay + get_le16(offset));
+  template<typename T> const T *mGetPointer(const DataOffset &offset) const {
+    return reinterpret_cast<const T *>(mIdentify + get_le16(&offset));
   }
 
   // Count pattern length. Return 0 on error.
@@ -141,10 +129,6 @@ struct PT3Module {
   const Pattern *mFindPattern(uint8_t pattern) const;
 
   size_t mGetPositionsCount() const;
-
-  const Pattern *mGetPatternBegin() const;
-
-  const Pattern *mGetPatternEnd() const { return GetPattern(0xFF); }
 
   /* PT3 MODULE HEADER DATA */
 
@@ -171,13 +155,13 @@ struct PT3Module {
   // Song loop.
   uint8_t mLoopPosition;
   // Pattern table offset.
-  uint8_t mPatternOffset[2];
-  // Sample offsets. Starting from sample zero.
-  uint8_t mSampleOffset[32][2];
-  // Ornament offsets. Starting from ornament zero.
-  uint8_t mOrnamentOffset[16][2];
-  // 
-  PositionsTable mPositionList[0];
+  DataOffset mPattern;
+  // Sample offsets. Starting from sample #0.
+  DataOffset mSamples[32];
+  // Ornament offsets. Starting from ornament #0.
+  DataOffset mOrnaments[16];
+  // List of positions. Contains the pattern numbers (0...84) multiplied by 3. The table ends with 0xFF.
+  Position mPositions[0];
 };
 
 // Channel entity
@@ -245,7 +229,6 @@ class Pt3Emu : public ClassicEmu {
 
   /* PLAYER METHODS AND DATA */
 
-  uint8_t mPositionTransposition() const { return mPositionIt->transposition; }
   void mInit();
   void mPlayPattern();
   void mPlaySamples();
@@ -259,7 +242,7 @@ class Pt3Emu : public ClassicEmu {
   // Song file header
   const PT3Module *mModule;
   // Song position iterators
-  const Position *mPositionIt, *mPositionEnd;
+  const Position *mPositionIt;
   // Current emulation time
   blip_clk_time_t mEmuTime;
   // Play period 50Hz
