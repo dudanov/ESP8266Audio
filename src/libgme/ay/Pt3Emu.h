@@ -12,13 +12,27 @@ namespace pt3 {
 
 /* PT3 MODULE DATA DESCRIPTION */
 
+struct DataOffset {
+  DataOffset() = delete;
+  DataOffset(const DataOffset &) = delete;
+  uint16_t value() const { return get_le16(mOffset); }
+  bool valid() const { return value() != 0; }
+
+ private:
+  uint8_t mOffset[2];
+};
+
+struct Pattern {
+  DataOffset data[3];
+};
+
 struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
   bool EnvelopeMask() const { return mData[0] & 1; }
   uint8_t Noise() const { return mData[0] / 2 % 32; }
-  int EnvelopeSlide() const {
-    const int val = mData[0] >> 1;
+  int16_t EnvelopeSlide() const {
+    const int16_t val = mData[0] >> 1;
     return (val & 16) ? (val | ~15) : (val & 15);
   }
   uint8_t Volume() const { return mData[1] % 16; }
@@ -31,43 +45,23 @@ struct SampleData {
   uint8_t mTransposition[2];
 };
 
-struct Sample {
-  Sample() = delete;
-  Sample(const Sample &) = delete;
-  bool HasNumber(uint8_t number) const { return mNumber == number; }
-  const SampleData *Data(size_t pos) const { return mData + pos; }
-  bool IsRepeatable() const { return mRepeatPosition > 0; }
-  uint8_t RepeatPosition() const { return mRepeatPosition - 1; }
-  uint8_t RepeatLength() const { return mRepeatLength; }
+template<typename T> struct LoopableData {
+  LoopableData() = delete;
+  LoopableData(const LoopableData &) = delete;
+  const T *begin() const { return mData; }
+  const T *loop() const { return mData + mLoop; }
+  const T *end() const { return mData + mEnd; }
 
  private:
   uint8_t mLoop;
   uint8_t mEnd;
-  SampleData mData[32];
+  T mData[0];
 };
 
-struct Ornament {
-  Ornament() = delete;
-  Ornament(const Ornament &) = delete;
-  const int8_t *DataBegin() const { return mData; }
-  const int8_t *DataLoop() const { return mData + mLoop; }
-  const int8_t *DataEnd() const { return mData + mEnd; }
-
- private:
-  uint8_t mLoop;
-  uint8_t mEnd;
-  int8_t mData[0];
-};
-
-struct DataOffset {
-  uint8_t offset[2];
-};
-
+using Sample = LoopableData<SampleData>;
+using Ornament = LoopableData<int8_t>;
 using Position = uint8_t;
-
-struct Pattern {
-  DataOffset data[3];
-};
+using PatternData = uint8_t;
 
 struct PT3Module {
   PT3Module() = delete;
@@ -87,20 +81,20 @@ struct PT3Module {
   const Position *GetPositionEnd() const;
 
   // Get pattern index by specified number.
-  const Pattern *GetPattern(const Position *position) const {
-    return mGetPointer<Pattern>(mPattern) + *position / 3);
+  const Pattern *GetPattern(const Position *it) const {
+    return reinterpret_cast<const Pattern *>(mGetPointer<DataOffset>(mPattern) + *it);
   }
 
   // Get data from specified pattern.
-  const uint8_t *GetPatternData(const DataOffset *pattern, uint8_t channel) const {
-    return mGetPointer<uint8_t>(pattern[channel]);
+  const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
+    return mGetPointer<PatternData>(pattern->data[channel]);
   }
 
   // Get sample by specified number.
-  const Sample *GetSample(uint8_t number) const { GetPatternData(GetPattern(0), 3); }
+  const Sample *GetSample(uint8_t number) const { return mGetPointer<Sample>(mSamples[number]); }
 
   // Get data of specified ornament number.
-  const Ornament *GetOrnament(uint8_t number) const;
+  const Ornament *GetOrnament(uint8_t number) const { return mGetPointer<Ornament>(mOrnaments[number]); }
 
   // Return song length in frames.
   unsigned CountSongLength() const;
@@ -113,7 +107,7 @@ struct PT3Module {
 
  private:
   template<typename T> const T *mGetPointer(const DataOffset &offset) const {
-    return reinterpret_cast<const T *>(mIdentify + get_le16(&offset));
+    return reinterpret_cast<const T *>(mIdentify + offset.value());
   }
 
   // Count pattern length. Return 0 on error.
