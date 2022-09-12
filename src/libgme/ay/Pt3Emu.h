@@ -47,7 +47,7 @@ template<typename T> struct LoopData {
 };
 
 template<typename T> class LoopDataController {
-  
+  LoopData<T>::iterator it;
 };
 
 using Sample = LoopData<SampleData>;
