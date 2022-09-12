@@ -23,7 +23,10 @@ struct DataOffset {
 };
 
 struct Pattern {
-  DataOffset data[3];
+  const DataOffset &offset(uint8_t channel) const { return mData[channel]; }
+
+ private:
+  DataOffset mData[3];
 };
 
 struct SampleData {
@@ -87,7 +90,7 @@ struct PT3Module {
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-    return mGetPointer<PatternData>(pattern->data[channel]);
+    return mGetPointer<PatternData>(pattern->offset(channel));
   }
 
   // Get sample by specified number.
