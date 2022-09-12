@@ -36,9 +36,9 @@ template<typename T> struct LoopData {
   LoopData(const LoopData &) = delete;
   typedef T type;
   typedef const T *iterator;
-  const T *begin() const { return mData; }
-  const T *loop() const { return mData + mLoop; }
-  const T *end() const { return mData + mEnd; }
+  iterator begin() const { return mData; }
+  iterator loop() const { return mData + mLoop; }
+  iterator end() const { return mData + mEnd; }
 
  private:
   uint8_t mLoop;
@@ -47,7 +47,7 @@ template<typename T> struct LoopData {
 };
 
 template<typename T> class LoopDataController {
-  LoopData<T>::iterator r;
+  
 };
 
 using Sample = LoopData<SampleData>;
