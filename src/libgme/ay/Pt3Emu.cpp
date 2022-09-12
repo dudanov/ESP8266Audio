@@ -225,7 +225,6 @@ blargg_err_t Pt3Emu::mLoad(const uint8_t *data, long size) {
   mModule = reinterpret_cast<const PT3Module *>(data);
   if (!mModule->CheckIntegrity(size))
     return gme_wrong_file_type;
-  mPositionEnd = mModule->GetPositionEnd();
   mSetTrackNum(1);
   mSetChannelsNumber(AyApu::OSCS_NUM);
   mApu.SetVolume(mGetGain());
@@ -298,7 +297,7 @@ void Pt3Emu::mPlayPattern() {
         mApu.Write(mEmuTime, AyApu::R11, channel.PatternCode());
         mApu.Write(mEmuTime, AyApu::R12, 0);
         mApu.Write(mEmuTime, AyApu::R13, code % 16);
-      } else if (code == 0xFF) {
+      } else if (code == 0x00) {
         // End pattern marker. Advance to next song position and update all channels.
         mAdvancePosition();
       } else {

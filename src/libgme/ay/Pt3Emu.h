@@ -34,6 +34,8 @@ struct SampleData {
 template<typename T> struct LoopData {
   LoopData() = delete;
   LoopData(const LoopData &) = delete;
+  typedef T type;
+  typedef const T *iterator;
   const T *begin() const { return mData; }
   const T *loop() const { return mData + mLoop; }
   const T *end() const { return mData + mEnd; }
@@ -42,6 +44,10 @@ template<typename T> struct LoopData {
   uint8_t mLoop;
   uint8_t mEnd;
   T mData[0];
+};
+
+template<typename T> class LoopDataController {
+  LoopData<T>::iterator r;
 };
 
 using Sample = LoopData<SampleData>;
@@ -150,9 +156,9 @@ class PT3Module {
   uint8_t mNoteTable;
   // Delay value (tempo).
   uint8_t mDelay;
-  // Song end.
-  uint8_t mNumberOfPositions;
-  // Song loop.
+  // Song end position. Not used in player.
+  uint8_t mEnd;
+  // Song loop position.
   uint8_t mLoop;
   // Pattern table offset.
   DataOffset mPattern;
@@ -209,6 +215,14 @@ struct Channel {
   uint8_t mSkipCounter;
   uint8_t mSkipCount;
   bool mEnvelope;
+
+  uint16_t Address_In_Pattern, OrnamentPointer, SamplePointer, Ton;
+  uint8_t Loop_Ornament_Position, Ornament_Length, Position_In_Ornament, Loop_Sample_Position, Sample_Length,
+      Position_In_Sample, Volume, Number_Of_Notes_To_Skip, Note, Slide_To_Note, Amplitude;
+  bool Envelope_Enabled, Enabled, SimpleGliss;
+  int16_t Current_Amplitude_Sliding, Current_Noise_Sliding, Current_Envelope_Sliding, Ton_Slide_Count, Current_OnOff,
+      OnOff_Delay, OffOn_Delay, Ton_Slide_Delay, Current_Ton_Sliding, Ton_Accumulator, Ton_Slide_Step, Ton_Delta;
+  int8_t Note_Skip_Counter;
 };
 
 class Pt3Emu : public ClassicEmu {
