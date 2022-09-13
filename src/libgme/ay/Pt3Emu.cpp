@@ -37,6 +37,21 @@ const uint16_t PT3Module::NOTE_TABLE[96] PROGMEM = {
     0x025, 0x023, 0x021, 0x01F, 0x01D, 0x01C, 0x01A, 0x019, 0x017, 0x016, 0x015, 0x013, 0x012, 0x011, 0x010, 0x00F,
 };
 
+static const char sPTSig[] PROGMEM = {
+    'P', 'r', 'o', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', '3', '.',
+};
+static const char sVTSig[] PROGMEM = {
+    'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
+};
+
+int8_t PT3Module::mGetSubVersion() const {
+  if (!memcmp_P(mIdentify, sPTSig, sizeof(sPTSig)))
+    return mSubVersion - '0';
+  if (!memcmp_P(mIdentify, sVTSig, sizeof(sVTSig)))
+    return 6;
+  return -1;
+}
+
 inline uint16_t PT3Module::GetTonePeriod(uint8_t tone) {
   return pgm_read_word(NOTE_TABLE + ((tone <= 95) ? tone : 95));
 }

@@ -31,7 +31,8 @@ struct SampleData {
   uint8_t mTransposition[2];
 };
 
-template<typename T> struct LoopData {
+template<typename T> class LoopData {
+  public:
   LoopData() = delete;
   LoopData(const LoopData &) = delete;
   typedef T type;
@@ -121,6 +122,8 @@ class PT3Module {
   template<typename T> const T *mGetPointer(const DataOffset &offset) const {
     return reinterpret_cast<const T *>(mIdentify + offset.GetDataOffset());
   }
+
+  int8_t mGetSubVersion() const;
 
   // Count pattern length. Return 0 on error.
   uint8_t mCountPatternLength(const Pattern *pattern, uint8_t channel = 0) const;
