@@ -77,10 +77,6 @@ class PT3Module {
  public:
   PT3Module() = delete;
   PT3Module(const PT3Module &) = delete;
-  // Shared note period table.
-  static const uint16_t NOTE_TABLE[96];
-
-  static uint16_t GetTonePeriod(uint8_t tone);
 
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
@@ -247,12 +243,13 @@ class Pt3Emu : public ClassicEmu {
 
   static const uint8_t *sGetVolumeTable(uint8_t subVersion);
   static const uint16_t *sGetNoteTable(uint8_t tableID, uint8_t subVersion);
+  uint8_t GetAmplitude(uint8_t volume, uint8_t amplitude) const;
+  uint16_t GetTonePeriod(uint8_t tone) const;
 
   void mInit();
   void mPlayPattern();
   void mPlaySamples();
   void mAdvancePosition();
-  uint8_t GetAmplitude(uint8_t volume, uint8_t amplitude) const;
 
  private:
   // AY APU Emulator

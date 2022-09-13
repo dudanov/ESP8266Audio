@@ -156,13 +156,11 @@ int8_t PT3Module::mGetSubVersion() const {
   return -1;
 }
 
-uint8_t Pt3Emu::GetAmplitude(uint8_t volume, uint8_t amplitude) const {
+inline uint8_t Pt3Emu::GetAmplitude(uint8_t volume, uint8_t amplitude) const {
   return pgm_read_byte(mVolumeTable + 16 * volume + amplitude);
 }
 
-inline uint16_t PT3Module::GetTonePeriod(uint8_t tone) {
-  return pgm_read_word(NOTE_TABLE + ((tone <= 95) ? tone : 95));
-}
+inline uint16_t Pt3Emu::GetTonePeriod(uint8_t tone) const { return pgm_read_word(mNoteTable + tone); }
 
 inline const Position *PT3Module::GetPositionBegin() const { return mGetPointer<PositionsTable>(mPositions)->position; }
 
