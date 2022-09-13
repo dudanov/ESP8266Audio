@@ -245,14 +245,14 @@ class Pt3Emu : public ClassicEmu {
 
   /* PLAYER METHODS AND DATA */
 
-  typedef uint8_t(VolumeTable)[16];
-  static const VolumeTable *sGetVolumeTable(uint8_t subVersion);
+  static const uint8_t *sGetVolumeTable(uint8_t subVersion);
   static const uint16_t *sGetNoteTable(uint8_t tableID, uint8_t subVersion);
 
   void mInit();
   void mPlayPattern();
   void mPlaySamples();
   void mAdvancePosition();
+  uint8_t GetAmplitude(uint8_t volume, uint8_t amplitude) const;
 
  private:
   // AY APU Emulator
@@ -265,6 +265,8 @@ class Pt3Emu : public ClassicEmu {
   const Position *mPositionIt;
   // Pointer to notes period table
   const uint16_t *mNoteTable;
+  // Pointer to notes period table
+  const uint8_t *mVolumeTable;
   // Current emulation time
   blip_clk_time_t mEmuTime;
   // Play period 50Hz
