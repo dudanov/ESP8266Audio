@@ -123,6 +123,7 @@ class PT3Module {
     return reinterpret_cast<const T *>(mIdentify + offset.GetDataOffset());
   }
 
+  // Check module signature and return it subversion. Return -1 on error.
   int8_t mGetSubVersion() const;
 
   // Count pattern length. Return 0 on error.
