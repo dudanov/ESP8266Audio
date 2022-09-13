@@ -32,7 +32,7 @@ struct SampleData {
 };
 
 template<typename T> class LoopData {
-  public:
+ public:
   LoopData() = delete;
   LoopData(const LoopData &) = delete;
   typedef T type;
@@ -47,9 +47,7 @@ template<typename T> class LoopData {
   T mData[0];
 };
 
-template<typename T> class LoopDataController {
-  LoopData<T>::iterator it;
-};
+template<typename T> class LoopDataController { LoopData<T>::iterator it; };
 
 using Sample = LoopData<SampleData>;
 using Ornament = LoopData<int8_t>;
@@ -247,6 +245,10 @@ class Pt3Emu : public ClassicEmu {
 
   /* PLAYER METHODS AND DATA */
 
+  typedef uint8_t(VolumeTable)[16];
+  static const VolumeTable *sGetVolumeTable(uint8_t subVersion);
+  static const uint16_t *sGetNoteTable(uint8_t tableID, uint8_t subVersion);
+
   void mInit();
   void mPlayPattern();
   void mPlaySamples();
@@ -261,6 +263,8 @@ class Pt3Emu : public ClassicEmu {
   const PT3Module *mModule;
   // Song position iterators
   const Position *mPositionIt;
+  // Pointer to notes period table
+  const uint16_t *mNoteTable;
   // Current emulation time
   blip_clk_time_t mEmuTime;
   // Play period 50Hz
