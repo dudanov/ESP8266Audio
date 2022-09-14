@@ -81,7 +81,7 @@ class PT3Module {
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
 
-  uint8_t GetNoteTable() const { return mNoteTable; }
+  bool HasNoteTable(uint8_t table) const { return mNoteTable == table; }
 
   // Begin position iterator.
   const Position *GetPositionBegin() const { return mPositions; }
