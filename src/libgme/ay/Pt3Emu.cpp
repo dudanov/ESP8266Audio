@@ -147,16 +147,28 @@ inline uint8_t Player::mGetAmplitude(uint8_t volume, uint8_t amplitude) const {
 
 /* PT3 MODULE */
 
-const PT3Module *PT3Module::Find(const void *data, size_t size) {
-  static const char PT_SIG[] PROGMEM = {
-      'P', 'r', 'o', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', '3', '.',
-  };
-  static const char VT_SIG[] PROGMEM = {
-      'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
-  };
-  const void *ptr = memmem_P(data, size, PT_SIG, sizeof(PT_SIG));
+static const char PT_SIGNATURE[] PROGMEM = {
+    'P', 'r', 'o', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', '3', '.',
+};
+
+static const char VT_SIGNATURE[] PROGMEM = {
+    'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
+};
+
+const PT3Module *PT3Module::GetModule(const uint8_t *data, size_t size) {
+  if (size <= sizeof(PT3Module))
+    return nullptr;
+  if (!memcmp_P(data, PT_SIGNATURE, sizeof(PT_SIGNATURE)) || !memcmp_P(data, VT_SIGNATURE, sizeof(VT_SIGNATURE)))
+    return reinterpret_cast<const PT3Module *>(data);
+  return nullptr;
+}
+
+const PT3Module *PT3Module::FindTSModule(const uint8_t *data, size_t size) {
+  data += sizeof(PT3Module);
+  size -= sizeof(PT3Module);
+  const void *ptr = memmem_P(data, size, PT_SIGNATURE, sizeof(PT_SIGNATURE));
   if (ptr == nullptr)
-    ptr = memmem_P(data, size, VT_SIG, sizeof(VT_SIG));
+    ptr = memmem_P(data, size, VT_SIGNATURE, sizeof(VT_SIGNATURE));
   return reinterpret_cast<const PT3Module *>(ptr);
 }
 

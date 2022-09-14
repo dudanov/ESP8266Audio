@@ -78,7 +78,8 @@ class PT3Module {
   PT3Module() = delete;
   PT3Module(const PT3Module &) = delete;
 
-  static const PT3Module *Find(const void *data, size_t size);
+  static const PT3Module *GetModule(const uint8_t *data, size_t size);
+  static const PT3Module *FindTSModule(const uint8_t *data, size_t size);
 
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
