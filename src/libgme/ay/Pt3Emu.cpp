@@ -127,12 +127,12 @@ void Player::mUpdateTables() {
     mNoteTable = TABLE_ST;
     return;
   }
-  if (mModule->HasNoteTable(0))
-    mNoteTable = TABLE_PT[0];
-  else if (mModule->HasNoteTable(2))
+  if (mModule->HasNoteTable(2))
     mNoteTable = TABLE_ASM[0];
-  else
+  else if (mModule->HasNoteTable(3))
     mNoteTable = TABLE_REAL[0];
+  else
+    mNoteTable = TABLE_PT[0];
   if (mSubVersion >= 4)
     mNoteTable += 96;
 }
