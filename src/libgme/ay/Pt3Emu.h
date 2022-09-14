@@ -81,6 +81,8 @@ class PT3Module {
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
 
+  uint8_t GetNoteTable() const { return mNoteTable; }
+
   // Begin position iterator.
   const Position *GetPositionBegin() const { return mPositions; }
 
@@ -223,6 +225,27 @@ struct Channel {
   int8_t Note_Skip_Counter;
 };
 
+class Player {
+ public:
+  uint8_t GetAmplitude(uint8_t volume, uint8_t amplitude) const;
+  uint16_t GetTonePeriod(uint8_t tone) const;
+
+ private:
+  void mUpdateTables(uint8_t subVersion);
+  // AY APU Emulator
+  AyApu mApu;
+  // Channels
+  std::array<Channel, AyApu::OSCS_NUM> mChannels;
+  // Song file header
+  const PT3Module *mModule;
+  // Song position iterators
+  const Position *mPositionIt;
+  // Pointer to notes period table
+  const uint16_t *mNoteTable;
+  // Pointer to volume period table
+  const uint8_t *mVolumeTable;
+};
+
 class Pt3Emu : public ClassicEmu {
  public:
   Pt3Emu();
@@ -241,29 +264,12 @@ class Pt3Emu : public ClassicEmu {
 
   /* PLAYER METHODS AND DATA */
 
-  static const uint8_t *sGetVolumeTable(uint8_t subVersion);
-  static const uint16_t *sGetNoteTable(uint8_t tableID, uint8_t subVersion);
-  uint8_t GetAmplitude(uint8_t volume, uint8_t amplitude) const;
-  uint16_t GetTonePeriod(uint8_t tone) const;
-
   void mInit();
   void mPlayPattern();
   void mPlaySamples();
   void mAdvancePosition();
 
  private:
-  // AY APU Emulator
-  AyApu mApu;
-  // Channels
-  std::array<Channel, AyApu::OSCS_NUM> mChannels;
-  // Song file header
-  const PT3Module *mModule;
-  // Song position iterators
-  const Position *mPositionIt;
-  // Pointer to notes period table
-  const uint16_t *mNoteTable;
-  // Pointer to notes period table
-  const uint8_t *mVolumeTable;
   // Current emulation time
   blip_clk_time_t mEmuTime;
   // Play period 50Hz
