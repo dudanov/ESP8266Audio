@@ -164,6 +164,8 @@ const PT3Module *PT3Module::GetModule(const uint8_t *data, size_t size) {
 }
 
 const PT3Module *PT3Module::FindTSModule(const uint8_t *data, size_t size) {
+  if (size <= sizeof(PT3Module) * 2)
+    return nullptr;
   data += sizeof(PT3Module);
   size -= sizeof(PT3Module);
   const void *ptr = memmem_P(data, size, PT_SIGNATURE, sizeof(PT_SIGNATURE));
