@@ -123,16 +123,16 @@ void Player::mUpdateTables() {
        0x020, 0x01F, 0x01D, 0x01B, 0x01A, 0x018, 0x017, 0x016, 0x014, 0x013, 0x012, 0x011, 0x010, 0x00F, 0x00E, 0x00D},
   };
   mVolumeTable = TABLE_VOLUME[mSubVersion >= 5][0];
-  if (mModule->HasNoteTable(1)) {
+  if (mModule->HasNoteTable(0)) {
+    mNoteTable = TABLE_PT[0];
+  } else if (mModule->HasNoteTable(1)) {
     mNoteTable = TABLE_ST;
     return;
-  }
-  if (mModule->HasNoteTable(2))
+  } else if (mModule->HasNoteTable(2)) {
     mNoteTable = TABLE_ASM[0];
-  else if (mModule->HasNoteTable(3))
+  } else {
     mNoteTable = TABLE_REAL[0];
-  else
-    mNoteTable = TABLE_PT[0];
+  }
   if (mSubVersion >= 4)
     mNoteTable += 96;
 }
