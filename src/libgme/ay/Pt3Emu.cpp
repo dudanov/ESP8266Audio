@@ -28,7 +28,7 @@ static const auto FRAME_RATE = FRAMERATE_SPECTRUM;
 
 /* PT3 MODULE */
 
-void Player::mUpdateTables(uint8_t subVersion) {
+void Player::mUpdateTables() {
   static const uint8_t TABLE_VOLUME[][16][16] PROGMEM = {
       // ProTracker v3.5x and above
       {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
@@ -122,19 +122,17 @@ void Player::mUpdateTables(uint8_t subVersion) {
        0x052, 0x04D, 0x049, 0x045, 0x041, 0x03D, 0x03A, 0x036, 0x033, 0x031, 0x02E, 0x02B, 0x029, 0x027, 0x024, 0x022,
        0x020, 0x01F, 0x01D, 0x01B, 0x01A, 0x018, 0x017, 0x016, 0x014, 0x013, 0x012, 0x011, 0x010, 0x00F, 0x00E, 0x00D},
   };
-  const bool v3 = subVersion < 4;
-  mVolumeTable = TABLE_VOLUME[subVersion < 5][0];
+  mVolumeTable = TABLE_VOLUME[mSubVersion < 5][0];
+  mNoteTable = TABLE_ST;
+  const bool v3 = mSubVersion < 4;
   switch (mModule->GetNoteTable()) {
     case 0:
       mNoteTable = TABLE_PT[v3];
       break;
-    case 1:
-      mNoteTable = TABLE_ST;
-      break;
     case 2:
       mNoteTable = TABLE_ASM[v3];
       break;
-    default:
+    case 3:
       mNoteTable = TABLE_REAL[v3];
       break;
   }

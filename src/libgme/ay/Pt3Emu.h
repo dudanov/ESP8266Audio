@@ -231,7 +231,7 @@ class Player {
   uint16_t GetTonePeriod(uint8_t tone) const;
 
  private:
-  void mUpdateTables(uint8_t subVersion);
+  void mUpdateTables();
   // AY APU Emulator
   AyApu mApu;
   // Channels
@@ -244,6 +244,8 @@ class Player {
   const uint16_t *mNoteTable;
   // Pointer to volume period table
   const uint8_t *mVolumeTable;
+  // Module subversion
+  uint8_t mSubVersion;
   // Global song delay counter
   uint8_t mDelayCounter;
 };
