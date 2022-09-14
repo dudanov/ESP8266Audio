@@ -244,6 +244,8 @@ class Player {
   const uint16_t *mNoteTable;
   // Pointer to volume period table
   const uint8_t *mVolumeTable;
+  // Global song delay counter
+  uint8_t mDelayCounter;
 };
 
 class Pt3Emu : public ClassicEmu {
@@ -274,8 +276,6 @@ class Pt3Emu : public ClassicEmu {
   blip_clk_time_t mEmuTime;
   // Play period 50Hz
   blip_clk_time_t mFramePeriod;
-  // Global song delay counter
-  uint8_t mDelayCounter;
 };
 
 }  // namespace pt3
