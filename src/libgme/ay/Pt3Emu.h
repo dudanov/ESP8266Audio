@@ -78,6 +78,8 @@ class PT3Module {
   PT3Module() = delete;
   PT3Module(const PT3Module &) = delete;
 
+  static const PT3Module *Find(const void *data, size_t size);
+
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
 
@@ -120,7 +122,7 @@ class PT3Module {
   }
 
   // Check module signature and return it subversion. Return -1 on error.
-  int8_t mGetSubVersion() const;
+  uint8_t mGetSubVersion() const;
 
   // Count pattern length. Return 0 on error.
   uint8_t mCountPatternLength(const Pattern *pattern, uint8_t channel = 0) const;
@@ -229,11 +231,15 @@ class Player {
  public:
   void SetVolume(double volume) { mApu.SetVolume(volume); }
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
+  void RunClocks(blip_clk_time_t time);
 
  private:
   uint8_t mGetAmplitude(uint8_t volume, uint8_t amplitude) const;
   uint16_t mGetTonePeriod(int8_t tone) const;
   void mUpdateTables();
+  void mPlayPattern();
+  void mPlaySamples();
+  void mAdvancePosition();
   // AY APU Emulator
   AyApu mApu;
   // Channels
@@ -250,6 +256,12 @@ class Player {
   uint8_t mSubVersion;
   // Global song delay counter
   uint8_t mDelayCounter;
+
+  unsigned char Env_Base_lo;
+  unsigned char Env_Base_hi;
+  short Cur_Env_Slide, Env_Slide_Add;
+  signed char Cur_Env_Delay, Env_Delay;
+  unsigned char Noise_Base, Delay, AddToNoise, DelayCounter, CurrentPosition;
 };
 
 class Pt3Emu : public ClassicEmu {
@@ -271,9 +283,6 @@ class Pt3Emu : public ClassicEmu {
   /* PLAYER METHODS AND DATA */
 
   void mInit();
-  void mPlayPattern();
-  void mPlaySamples();
-  void mAdvancePosition();
 
  private:
   // Current emulation time

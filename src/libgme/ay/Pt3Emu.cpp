@@ -26,7 +26,7 @@ namespace pt3 {
 static const auto CLOCK_RATE = CLK_SPECTRUM;
 static const auto FRAME_RATE = FRAMERATE_SPECTRUM;
 
-/* PT3 MODULE */
+/* PT3 PLAYER */
 
 void Player::mUpdateTables() {
   static const uint8_t TABLE_VOLUME[][16][16] PROGMEM = {
@@ -137,31 +137,34 @@ void Player::mUpdateTables() {
     mNoteTable += 96;
 }
 
-static const char PT_SIGNATURE[] PROGMEM = {
-    'P', 'r', 'o', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', '3', '.',
-};
-static const char VT_SIGNATURE[] PROGMEM = {
-    'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
-};
-
-int8_t PT3Module::mGetSubVersion() const {
-  if (!memcmp_P(mIdentify, PT_SIGNATURE, sizeof(PT_SIGNATURE)))
-    return mSubVersion - '0';
-  if (!memcmp_P(mIdentify, VT_SIGNATURE, sizeof(VT_SIGNATURE)))
-    return 6;
-  return -1;
+inline uint16_t Player::mGetTonePeriod(int8_t tone) const {
+  return pgm_read_word(mNoteTable + ((tone >= 95) ? 95 : ((tone <= 0) ? 0 : tone)));
 }
 
 inline uint8_t Player::mGetAmplitude(uint8_t volume, uint8_t amplitude) const {
   return pgm_read_byte(mVolumeTable + 16 * volume + amplitude);
 }
 
-inline uint16_t Player::mGetTonePeriod(int8_t tone) const {
-  if (tone > 95)
-    tone = 95;
-  else if (tone < 0)
-    tone = 0;
-  return pgm_read_word(mNoteTable + tone);
+/* PT3 MODULE */
+
+const PT3Module *PT3Module::Find(const void *data, size_t size) {
+  static const char PT_SIG[] PROGMEM = {
+      'P', 'r', 'o', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', '3', '.',
+  };
+  static const char VT_SIG[] PROGMEM = {
+      'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
+  };
+  const void *ptr = memmem_P(data, size, PT_SIG, sizeof(PT_SIG));
+  if (ptr == nullptr)
+    ptr = memmem_P(data, size, VT_SIG, sizeof(VT_SIG));
+  return reinterpret_cast<const PT3Module *>(ptr);
+}
+
+uint8_t PT3Module::mGetSubVersion() const {
+  // Vortex Tracker?
+  if (mSubVersion == 'r')
+    return 6;
+  return mSubVersion - '0';
 }
 
 inline const Position *PT3Module::GetPositionBegin() const { return mGetPointer<PositionsTable>(mPositions)->position; }
