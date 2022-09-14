@@ -141,7 +141,7 @@ static const char PT_SIGNATURE[] PROGMEM = {
     'P', 'r', 'o', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', '3', '.',
 };
 static const char VT_SIGNATURE[] PROGMEM = {
-    'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I', ' ',
+    'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
 };
 
 int8_t PT3Module::mGetSubVersion() const {
@@ -152,11 +152,17 @@ int8_t PT3Module::mGetSubVersion() const {
   return -1;
 }
 
-inline uint8_t Player::GetAmplitude(uint8_t volume, uint8_t amplitude) const {
+inline uint8_t Player::mGetAmplitude(uint8_t volume, uint8_t amplitude) const {
   return pgm_read_byte(mVolumeTable + 16 * volume + amplitude);
 }
 
-inline uint16_t Player::GetTonePeriod(uint8_t tone) const { return pgm_read_word(mNoteTable + tone); }
+inline uint16_t Player::mGetTonePeriod(int8_t tone) const {
+  if (tone > 95)
+    tone = 95;
+  else if (tone < 0)
+    tone = 0;
+  return pgm_read_word(mNoteTable + tone);
+}
 
 inline const Position *PT3Module::GetPositionBegin() const { return mGetPointer<PositionsTable>(mPositions)->position; }
 

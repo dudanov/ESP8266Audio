@@ -227,10 +227,12 @@ struct Channel {
 
 class Player {
  public:
-  uint8_t GetAmplitude(uint8_t volume, uint8_t amplitude) const;
-  uint16_t GetTonePeriod(uint8_t tone) const;
+  void SetVolume(double volume) { mApu.SetVolume(volume); }
+  void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
 
  private:
+  uint8_t mGetAmplitude(uint8_t volume, uint8_t amplitude) const;
+  uint16_t mGetTonePeriod(int8_t tone) const;
   void mUpdateTables();
   // AY APU Emulator
   AyApu mApu;
