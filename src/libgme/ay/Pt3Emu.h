@@ -35,11 +35,9 @@ template<typename T> class LoopData {
  public:
   LoopData() = delete;
   LoopData(const LoopData &) = delete;
-  typedef T type;
-  typedef const T *iterator;
-  iterator begin() const { return mData; }
-  iterator loop() const { return mData + mLoop; }
-  iterator end() const { return mData + mEnd; }
+  const T &GetData(uint8_t idx) const { return mData[idx]; }
+  uint8_t GetLoopPosition() const { return mLoop; }
+  bool IsEndPosition(uint8_t pos) const { return mEnd == pos; }
 
  private:
   uint8_t mLoop;
@@ -47,10 +45,29 @@ template<typename T> class LoopData {
   T mData[0];
 };
 
-template<typename T> class LoopDataController { LoopData<T>::iterator it; };
+template<typename T> class LoopDataPlayer {
+ public:
+  void SetData(const LoopData<T> *data) {
+    mData = data;
+    mPos = 0;
+  }
+  void Reset() { mPos = 0; }
+  const T &Play() {
+    const T &data = mData->GetData(mPos);
+    if (mData->IsEndPosition(++mPos))
+      mPos = mData->GetLoopPosition();
+    return data;
+  }
+
+ private:
+  const LoopData<T> *mData;
+  uint8_t mPos;
+};
 
 using Sample = LoopData<SampleData>;
+using SamplePlayer = LoopDataPlayer<SampleData>;
 using Ornament = LoopData<int8_t>;
+using OrnamentPlayer = LoopDataPlayer<int8_t>;
 using Position = uint8_t;
 using PatternData = uint8_t;
 
@@ -80,6 +97,9 @@ class PT3Module {
 
   static const PT3Module *GetModule(const uint8_t *data, size_t size);
   static const PT3Module *FindTSModule(const uint8_t *data, size_t size);
+
+  // Get module format subversion.
+  uint8_t GetSubVersion() const;
 
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
@@ -121,9 +141,6 @@ class PT3Module {
   template<typename T> const T *mGetPointer(const DataOffset &offset) const {
     return reinterpret_cast<const T *>(mIdentify + offset.GetDataOffset());
   }
-
-  // Check module signature and return it subversion. Return -1 on error.
-  uint8_t mGetSubVersion() const;
 
   // Count pattern length. Return 0 on error.
   uint8_t mCountPatternLength(const Pattern *pattern, uint8_t channel = 0) const;
@@ -206,12 +223,11 @@ struct Channel {
   bool IsEmptyLocation();
 
  private:
-  // Pointer to sample.
-  const Sample *mSample;
+  SamplePlayer mSamplePlayer;
+  OrnamentPlayer mOrnamentPlayer;
+
   // Pattern data iterator.
   const uint8_t *mPatternIt;
-  // Pointer to ornament data.
-  const uint8_t *mOrnament;
   uint8_t mNote;
   uint8_t mSamplePosition;
   uint8_t mSampleCounter;
@@ -286,6 +302,10 @@ class Pt3Emu : public ClassicEmu {
   void mInit();
 
  private:
+  // Player
+  Player mPlayer;
+  // TurboSound player
+  Player *mTurboSound;
   // Current emulation time
   blip_clk_time_t mEmuTime;
   // Play period 50Hz
