@@ -20,14 +20,14 @@ template<typename T> struct LoopData {
 
 template<typename T> class LoopDataPlayer {
  public:
-  void Load(const LoopData<T> *data) {
+  inline void Load(const LoopData<T> *data) {
     mData = data->data;
     mPos = 0;
     mEnd = data->end;
     mLoop = data->loop;
   }
-  void Reset() { mPos = 0; }
-  const T &Play() {
+  inline void Reset() { mPos = 0; }
+  inline const T &Play() {
     const T &data = mData[mPos];
     if (++mPos >= mEnd)
       mPos = mLoop;
@@ -203,12 +203,12 @@ struct Channel {
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   uint8_t PatternCode() { return *mPatternIt++; }
 
-  void SetSample(const PT3Module *pt3, uint8_t number) { mSample = pt3->GetSample(number); }
-  void SetOrnament(const PT3Module *pt3, uint8_t number) { mOrnament = pt3->GetOrnament(number)->Data(); }
+  void SetSample(const PT3Module *pt3, uint8_t number) { mSamplePlayer.Load(pt3->GetSample(number)); }
+  void SetOrnament(const PT3Module *pt3, uint8_t number) { mOrnamentPlayer.Load(pt3->GetOrnament(number)); }
   void AdvanceSample();
 
-  const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
-  uint8_t GetOrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
+  const SampleData &GetSampleData() { return mSamplePlayer.Play(); }
+  uint8_t GetOrnamentNote() { return mNote + mOrnamentPlayer.Play(); }
 
   bool IsEnvelopeEnabled() const { return mEnvelope; }
   void EnvelopeEnable() { mEnvelope = true; }
