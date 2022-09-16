@@ -189,146 +189,7 @@ inline uint8_t PT3Module::GetSubVersion() const {
   return mSubVersion - '0';
 }
 
-inline const Position *PT3Module::GetPositionBegin() const { return mGetPointer<PositionsTable>(mPositions)->position; }
-
-inline const Position *PT3Module::GetPositionEnd() const {
-  auto p = mGetPointer<PositionsTable>(mPositions);
-  return p->position + p->count + 1;
-}
-
-inline size_t PT3Module::mGetPositionsCount() const { return mGetPointer<PositionsTable>(mPositions)->count + 1; }
-
-inline const Ornament *PT3Module::GetOrnament(uint8_t number) const {
-  auto it = mGetPointer<Ornament>(mOrnaments);
-  while (!it->HasNumber(number))
-    ++it;
-  return it;
-}
-
-inline const Sample *PT3Module::GetSample(uint8_t number) const {
-  auto it = mSamples;
-  while (!it->HasNumber(number))
-    ++it;
-  return it;
-}
-
-uint8_t PT3Module::mCountPatternLength(const PatternIndex *pattern, uint8_t channel) const {
-  unsigned length = 0, skip = 0;
-  for (auto it = GetPattern(pattern, channel); *it != 0xFF; ++it) {
-    const uint8_t data = *it;
-    if ((data <= 0x5F) || (data == 0x80) || (data == 0x81)) {
-      length += skip;
-    } else if (data <= 0x82) {
-      ;
-    } else if (data <= 0x8E) {
-      ++it;
-    } else if (data >= 0xA1 && data <= 0xE0) {
-      skip = data - 0xA0;
-    } else {
-      // wrong code
-      return 0;
-    }
-  }
-  return (length <= 64) ? length : 0;
-}
-
-bool PT3Module::mCheckSongData() const {
-  uint8_t PatternLength = 0;
-  for (auto PositionIt = GetPositionBegin(); PositionIt != GetPositionEnd(); ++PositionIt) {
-    auto pattern = mFindPattern(PositionIt->pattern);
-    if (pattern == nullptr)
-      return false;
-    for (uint8_t channel = 0; channel != AyApu::OSCS_NUM; ++channel) {
-      const uint8_t length = mCountPatternLength(pattern, channel);
-      if (length == 0)
-        return false;
-      if (PatternLength != 0) {
-        if (PatternLength == length)
-          continue;
-        return false;
-      }
-      PatternLength = length;
-    }
-  }
-  return true;
-}
-
-bool PT3Module::CheckIntegrity(size_t size) const {
-  // Header size
-  if (size <= sizeof(PT3Module))
-    return false;
-
-  // Checking samples section
-  constexpr uint16_t SamplesBlockOffset = sizeof(PT3Module);
-  const uint16_t PositionsTableOffset = get_le16(mPositions);
-  if (PositionsTableOffset <= SamplesBlockOffset)
-    return false;
-  const uint16_t SamplesBlockSize = PositionsTableOffset - SamplesBlockOffset;
-  if (SamplesBlockSize % sizeof(Sample))
-    return false;
-
-  // Checking positions section
-  const uint16_t PositionsBlockOffset = PositionsTableOffset + sizeof(PositionsTable);
-  const uint16_t OrnamentsBlockOffset = get_le16(mOrnaments);
-  if (OrnamentsBlockOffset <= PositionsBlockOffset)
-    return false;
-  const uint16_t PositionsBlockSize = OrnamentsBlockOffset - PositionsBlockOffset;
-  if (PositionsBlockSize % sizeof(Position))
-    return false;
-  if (PositionsBlockSize / sizeof(Position) != mGetPositionsCount())
-    return false;
-
-  // Checking ornaments section
-  const uint16_t PatternsBlockOffset = get_le16(mPatterns);
-  if (PatternsBlockOffset <= OrnamentsBlockOffset)
-    return false;
-  const uint16_t OrnamentsBlockSize = PatternsBlockOffset - OrnamentsBlockOffset;
-  if (OrnamentsBlockSize % sizeof(Ornament))
-    return false;
-
-  if (size <= OrnamentsBlockOffset)
-    return false;
-
-  // Checking pattern and song data
-  if (!mCheckPatternTable() || !mCheckSongData())
-    return false;
-
-  return true;
-}
-
-unsigned PT3Module::CountSongLength() const {
-  // all patterns has same length
-  return mCountPatternLength(GetPatternIndex(GetPositionBegin()->pattern)) * mGetPositionsCount() * mDelay;
-}
-
 unsigned PT3Module::CountSongLengthMs() const { return CountSongLength() * 1000 / FRAME_RATE; }
-
-/* CHANNEL */
-
-inline void Channel::AdvanceSample() {
-  if (--mSampleCounter) {
-    mSamplePosition++;
-  } else if (mSample->IsRepeatable()) {
-    mSamplePosition = mSample->RepeatPosition();
-    mSampleCounter = mSample->RepeatLength();
-  }
-}
-
-inline bool Channel::IsEmptyLocation() {
-  if (mSkipCounter > 0) {
-    mSkipCounter--;
-    return true;
-  }
-  mSkipCounter = mSkipCount;
-  return false;
-}
-
-/* SAMPLE DATA */
-
-inline int16_t SampleData::Transposition() const {
-  int16_t result = mData[0] / 16 * 256 + mData[2];
-  return (mData[1] & 32) ? result : -result;
-}
 
 /* PT3 EMULATOR */
 
@@ -410,53 +271,159 @@ void Pt3Emu::mInit() {
   }
 }
 
-void Pt3Emu::mPlayPattern() {
-  for (Channel &channel : mChannels) {
-    if (channel.IsEmptyLocation())
-      continue;
-    while (true) {
-      const uint8_t code = channel.PatternCode();
-      if (code <= 0x5F) {
-        // Note in semitones (00=C-1). End position.
-        channel.SetNote(code);
-        break;
-      } else if (code <= 0x6F) {
-        // Select sample (0-15).
-        channel.SetSample(mModule, code % 16);
-      } else if (code <= 0x7F) {
-        // Select ornament (0-15).
-        channel.EnvelopeDisable();
-        channel.SetOrnament(mModule, code % 16);
-      } else if (code == 0x80) {
-        // Rest (shuts channel). End position.
-        channel.Disable();
-        break;
-      } else if (code == 0x81) {
-        // Empty location. End position.
-        break;
-      } else if (code == 0x82) {
-        // Select ornament 0.
-        channel.EnvelopeDisable();
-        channel.SetOrnament(mModule, 0);
-      } else if (code <= 0x8E) {
-        // Select envelope effect (3-14).
-        channel.EnvelopeEnable();
-        channel.SetOrnament(mModule, 0);
-        mApu.Write(mEmuTime, AyApu::R11, channel.PatternCode());
-        mApu.Write(mEmuTime, AyApu::R12, 0);
-        mApu.Write(mEmuTime, AyApu::R13, code % 16);
-      } else if (code == 0x00) {
-        // End pattern marker. Advance to next song position and update all channels.
-        mAdvancePosition();
-      } else {
-        // Number of empty locations after the subsequent code (0-63).
-        channel.SetSkipCount(code - 0xA1);
+void Player::mPlayPattern() {
+  for (Channel &chan : mChannels) {
+    bool quit;
+    unsigned char flag9, flag8, flag5, flag4, flag3, flag2, flag1;
+    unsigned char counter;
+    int prnote, prsliding;
+    prnote = chan.Note;
+    prsliding = chan.Current_Ton_Sliding;
+    quit = false;
+    counter = 0;
+    flag9 = flag8 = flag5 = flag4 = flag3 = flag2 = flag1 = 0;
+    do {
+      const uint8_t val = chan.PatternCode();
+      if (val >= 0xF0) {
+        chan.SetOrnament(mModule, val - 0xF0);
+        chan.SetSample(mModule, chan.PatternCode() / 2);
+        chan.EnvelopeDisable();
+      } else if (val >= 0xD1 && val <= 0xEF) {
+        chan.SetSample(mModule, val - 0xD0);
+      } else if (val == 0xd0) {
+        quit = true;
+      } else if (val >= 0xC1 && val <= 0xCF) {
+        chan.Volume = val - 0xC0;
+      } else if (val == 0xC0) {
+        chan.ResetSample();
+        chan.ResetOrnament();
+        chan.Current_Amplitude_Sliding = 0;
+        chan.Current_Noise_Sliding = 0;
+        chan.Current_Envelope_Sliding = 0;
+        chan.Ton_Slide_Count = 0;
+        chan.Current_Ton_Sliding = 0;
+        chan.Ton_Accumulator = 0;
+        chan.Current_OnOff = 0;
+        chan.Enabled = false;
+        quit = true;
+      } else if (val >= 0xB2 && val <= 0xBF) {
+        chan.EnvelopeEnable();
+        mApu.Write(0, AyApu::R13, val - 0xB1);
+        Env_Base_hi = chan.PatternCode();
+        Env_Base_lo = chan.PatternCode();
+        chan.ResetOrnament();
+        Cur_Env_Slide = 0;
+        Cur_Env_Delay = 0;
+      } else if (val == 0xB1) {
+        chan.Number_Of_Notes_To_Skip = chan.PatternCode();
+      } else if (val == 0xB0) {
+        chan.EnvelopeDisable();
+        chan.ResetOrnament();
+      } else if (val >= 0x50 && val <= 0xAF) {
+        chan.Note = val - 0x50;
+        chan.ResetSample();
+        chan.ResetOrnament();
+        chan.Current_Amplitude_Sliding = 0;
+        chan.Current_Noise_Sliding = 0;
+        chan.Current_Envelope_Sliding = 0;
+        chan.Ton_Slide_Count = 0;
+        chan.Current_Ton_Sliding = 0;
+        chan.Ton_Accumulator = 0;
+        chan.Current_OnOff = 0;
+        chan.Enabled = true;
+        quit = true;
+      } else if (val >= 0x40 && val <= 0x4F) {
+        chan.SetOrnament(mModule, val - 0x40);
+      } else if (val >= 0x20 && val <= 0x3F) {
+        Noise_Base = val - 0x20;
+      } else if (val >= 0x10 && val <= 0x1F) {
+        if (val != 0x10) {
+          mApu.Write(0, AyApu::R13, val - 0x10);
+          Env_Base_hi = chan.PatternCode();
+          Env_Base_lo = chan.PatternCode();
+          chan.EnvelopeEnable();
+          Cur_Env_Slide = 0;
+          Cur_Env_Delay = 0;
+        } else {
+          chan.EnvelopeDisable();
+        }
+        chan.SetSample(mModule, chan.PatternCode() / 2);
+        chan.ResetOrnament();
+      } else if (val == 0x09) {
+        flag9 = ++counter;
+      } else if (val == 0x08) {
+        flag8 = ++counter;
+      } else if (val == 0x05) {
+        flag5 = ++counter;
+      } else if (val == 0x04) {
+        flag4 = ++counter;
+      } else if (val == 0x03) {
+        flag3 = ++counter;
+      } else if (val == 0x02) {
+        flag2 = ++counter;
+      } else if (val == 0x01) {
+        flag1 = ++counter;
       }
+    } while (!quit);
+
+    while (counter > 0) {
+      if (counter == flag1) {
+        chan.Ton_Slide_Delay = chan.PatternCode();
+        chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
+        chan.Ton_Slide_Step = ay_sys_getword(&module[chan.Address_In_Pattern]);
+        chan.SimpleGliss = true;
+        chan.Current_OnOff = 0;
+        if ((chan.Ton_Slide_Count == 0) && (mModule->GetSubVersion() >= 7))
+          chan.Ton_Slide_Count++;
+      } else if (counter == flag2) {
+        chan.SimpleGliss = false;
+        chan.Current_OnOff = 0;
+        chan.Ton_Slide_Delay = chan.PatternCode();
+        chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
+        chan.SkipPatternCode(2);
+        chan.Ton_Slide_Step = abs(short(ay_sys_getword(&module[chan.Address_In_Pattern])));
+        chan.Address_In_Pattern += 2;
+        chan.Ton_Delta = PT3_GetNoteFreq(info, chan.Note, chip_num) - PT3_GetNoteFreq(info, prnote, chip_num);
+        chan.Slide_To_Note = chan.Note;
+        chan.Note = prnote;
+        if (mModule->GetSubVersion() >= 6)
+          chan.Current_Ton_Sliding = prsliding;
+        if ((chan.Ton_Delta - chan.Current_Ton_Sliding) < 0)
+          chan.Ton_Slide_Step = -chan.Ton_Slide_Step;
+      } else if (counter == flag3) {
+        chan.ResetSample(chan.PatternCode());
+      } else if (counter == flag4) {
+        chan.ResetOrnament(chan.PatternCode());
+      } else if (counter == flag5) {
+        chan.OnOff_Delay = chan.PatternCode();
+        chan.OffOn_Delay = chan.PatternCode();
+        chan.Current_OnOff = chan.OnOff_Delay;
+        chan.Ton_Slide_Count = 0;
+        chan.Current_Ton_Sliding = 0;
+      } else if (counter == flag8) {
+        Env_Delay = chan.PatternCode();
+        Cur_Env_Delay = Env_Delay;
+        Env_Slide_Add = ay_sys_getword(&module[chan.Address_In_Pattern]);
+        chan.Address_In_Pattern += 2;
+      } else if (counter == flag9) {
+        Delay = chan.PatternCode();
+      }
+      counter--;
     }
+    chan.Note_Skip_Counter = chan.Number_Of_Notes_To_Skip;
   }
 }
 
-inline void Pt3Emu::mAdvancePosition() {
+inline bool SkipCounter::RunTick() {
+  if (mSkipCounter > 0) {
+    mSkipCounter--;
+    return true;
+  }
+  mSkipCounter = mSkipCount;
+  return false;
+}
+
+inline void Player::mAdvancePosition() {
   if (*++mPositionIt == 0xFF)
     mPositionIt = mModule->GetPositionLoop();
   auto pattern = mModule->GetPattern(mPositionIt);
@@ -464,7 +431,7 @@ inline void Pt3Emu::mAdvancePosition() {
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
-void Pt3Emu::mPlaySamples() {
+void Player::mPlaySamples() {
   uint8_t mixer = 0;
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx, mixer >>= 1) {
     Channel &channel = mChannels[idx];

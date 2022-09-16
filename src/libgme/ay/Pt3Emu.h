@@ -26,7 +26,7 @@ template<typename T> class LoopDataPlayer {
     mEnd = data->end;
     mLoop = data->loop;
   }
-  inline void Reset() { mPos = 0; }
+  inline void Reset(uint8_t pos = 0) { mPos = 0; }
   inline const T &Play() {
     const T &data = mData[mPos];
     if (++mPos >= mEnd)
@@ -185,6 +185,16 @@ class PT3Module {
   Position mPositions[0];
 };
 
+class SkipCounter {
+ public:
+  void SetSkipCount(uint8_t delay) { mSkipCount = mSkipCounter = delay; }
+  bool RunTick();
+
+ private:
+  uint8_t mSkipCounter;
+  uint8_t mSkipCount;
+};
+
 // Channel entity
 struct Channel {
   /* only create */
@@ -201,11 +211,18 @@ struct Channel {
   bool IsEnabled() const { return mSampleCounter > 0; }
 
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
+  void SkipPatternCode(size_t n) { mPatternIt += n; }
   uint8_t PatternCode() { return *mPatternIt++; }
+  template<typename T> T PatternCode16() {
+    const uint16_t value = get_le16(mPatternIt);
+    mPatternIt += 2;
+    return value;
+  }
 
   void SetSample(const PT3Module *pt3, uint8_t number) { mSamplePlayer.Load(pt3->GetSample(number)); }
   void SetOrnament(const PT3Module *pt3, uint8_t number) { mOrnamentPlayer.Load(pt3->GetOrnament(number)); }
-  void AdvanceSample();
+  void ResetSample(uint8_t pos = 0) { mSamplePlayer.Reset(pos); }
+  void ResetOrnament(uint8_t pos = 0) { mOrnamentPlayer.Reset(pos); }
 
   const SampleData &GetSampleData() { return mSamplePlayer.Play(); }
   uint8_t GetOrnamentNote() { return mNote + mOrnamentPlayer.Play(); }
@@ -214,8 +231,12 @@ struct Channel {
   void EnvelopeEnable() { mEnvelope = true; }
   void EnvelopeDisable() { mEnvelope = false; }
 
-  void SetSkipCount(uint8_t delay) { mSkipCount = mSkipCounter = delay; }
-  bool IsEmptyLocation();
+  uint16_t Address_In_Pattern, Ton;
+  uint8_t Volume, Number_Of_Notes_To_Skip, Note, Slide_To_Note, Amplitude;
+  bool Envelope_Enabled, Enabled, SimpleGliss;
+  int16_t Current_Amplitude_Sliding, Current_Noise_Sliding, Current_Envelope_Sliding, Ton_Slide_Count, Current_OnOff,
+      OnOff_Delay, OffOn_Delay, Ton_Slide_Delay, Current_Ton_Sliding, Ton_Accumulator, Ton_Slide_Step, Ton_Delta;
+  int8_t Note_Skip_Counter;
 
  private:
   SamplePlayer mSamplePlayer;
@@ -226,17 +247,7 @@ struct Channel {
   uint8_t mNote;
   uint8_t mSamplePosition;
   uint8_t mSampleCounter;
-  uint8_t mSkipCounter;
-  uint8_t mSkipCount;
   bool mEnvelope;
-
-  uint16_t Address_In_Pattern, OrnamentPointer, SamplePointer, Ton;
-  uint8_t Loop_Ornament_Position, Ornament_Length, Position_In_Ornament, Loop_Sample_Position, Sample_Length,
-      Position_In_Sample, Volume, Number_Of_Notes_To_Skip, Note, Slide_To_Note, Amplitude;
-  bool Envelope_Enabled, Enabled, SimpleGliss;
-  int16_t Current_Amplitude_Sliding, Current_Noise_Sliding, Current_Envelope_Sliding, Ton_Slide_Count, Current_OnOff,
-      OnOff_Delay, OffOn_Delay, Ton_Slide_Delay, Current_Ton_Sliding, Ton_Accumulator, Ton_Slide_Step, Ton_Delta;
-  int8_t Note_Skip_Counter;
 };
 
 class Player {
