@@ -12,6 +12,33 @@ namespace pt3 {
 
 /* PT3 MODULE DATA DESCRIPTION */
 
+template<typename T> struct LoopData {
+  uint8_t loop;
+  uint8_t end;
+  T data[0];
+};
+
+template<typename T> class LoopDataPlayer {
+ public:
+  void Load(const LoopData<T> *data) {
+    mData = data->data;
+    mPos = 0;
+    mEnd = data->end;
+    mLoop = data->loop;
+  }
+  void Reset() { mPos = 0; }
+  const T &Play() {
+    const T &data = mData[mPos];
+    if (++mPos >= mEnd)
+      mPos = mLoop;
+    return data;
+  }
+
+ private:
+  const T *mData;
+  uint8_t mPos, mEnd, mLoop;
+};
+
 struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
@@ -31,45 +58,13 @@ struct SampleData {
   uint8_t mTransposition[2];
 };
 
-template<typename T> class LoopData {
- public:
-  LoopData() = delete;
-  LoopData(const LoopData &) = delete;
-  const T &GetData(uint8_t idx) const { return mData[idx]; }
-  uint8_t GetLoopPosition() const { return mLoop; }
-  bool IsEndPosition(uint8_t pos) const { return mEnd == pos; }
-
- private:
-  uint8_t mLoop;
-  uint8_t mEnd;
-  T mData[0];
-};
-
-template<typename T> class LoopDataPlayer {
- public:
-  void SetData(const LoopData<T> *data) {
-    mData = data;
-    mPos = 0;
-  }
-  void Reset() { mPos = 0; }
-  const T &Play() {
-    const T &data = mData->GetData(mPos);
-    if (mData->IsEndPosition(++mPos))
-      mPos = mData->GetLoopPosition();
-    return data;
-  }
-
- private:
-  const LoopData<T> *mData;
-  uint8_t mPos;
-};
-
-using Sample = LoopData<SampleData>;
-using SamplePlayer = LoopDataPlayer<SampleData>;
-using Ornament = LoopData<int8_t>;
-using OrnamentPlayer = LoopDataPlayer<int8_t>;
-using Position = uint8_t;
 using PatternData = uint8_t;
+using OrnamentData = int8_t;
+using Sample = LoopData<SampleData>;
+using Ornament = LoopData<OrnamentData>;
+using SamplePlayer = LoopDataPlayer<SampleData>;
+using OrnamentPlayer = LoopDataPlayer<OrnamentData>;
+using Position = uint8_t;
 
 class PT3Module {
   struct DataOffset {
