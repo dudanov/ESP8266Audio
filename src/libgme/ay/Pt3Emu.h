@@ -202,13 +202,9 @@ struct Channel {
   /* not allow make copies */
   Channel(const Channel &) = delete;
 
-  void SetNote(uint8_t note) {
-    mNote = note;
-    mSamplePosition = 0;
-    mSampleCounter = 32;
-  }
-  void Disable() { mSampleCounter = 0; }
-  bool IsEnabled() const { return mSampleCounter > 0; }
+  void SetNote(uint8_t note) { mNote = note; }
+  void Disable() { Enabled = false; }
+  bool IsEnabled() const { return Enabled; }
 
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   void SkipPatternCode(size_t n) { mPatternIt += n; }
@@ -218,6 +214,8 @@ struct Channel {
     mPatternIt += 2;
     return value;
   }
+
+  void SetSkipNotes(uint8_t skip) { mSkipNotes.SetSkipCount(skip); }
 
   void SetSample(const PT3Module *pt3, uint8_t number) { mSamplePlayer.Load(pt3->GetSample(number)); }
   void SetOrnament(const PT3Module *pt3, uint8_t number) { mOrnamentPlayer.Load(pt3->GetOrnament(number)); }
@@ -241,12 +239,10 @@ struct Channel {
  private:
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
-
+  SkipCounter mSkipNotes;
   // Pattern data iterator.
   const uint8_t *mPatternIt;
   uint8_t mNote;
-  uint8_t mSamplePosition;
-  uint8_t mSampleCounter;
   bool mEnvelope;
 };
 

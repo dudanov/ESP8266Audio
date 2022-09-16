@@ -273,28 +273,27 @@ void Pt3Emu::mInit() {
 
 void Player::mPlayPattern() {
   for (Channel &chan : mChannels) {
-    bool quit;
-    unsigned char flag9, flag8, flag5, flag4, flag3, flag2, flag1;
-    unsigned char counter;
-    int prnote, prsliding;
-    prnote = chan.Note;
-    prsliding = chan.Current_Ton_Sliding;
-    quit = false;
-    counter = 0;
-    flag9 = flag8 = flag5 = flag4 = flag3 = flag2 = flag1 = 0;
-    do {
+    uint8_t counter = 0, flag1 = 0, flag2 = 0, flag3 = 0, flag4 = 0, flag5 = 0, flag8 = 0, flag9 = 0;
+    uint8_t prnote = chan.Note;
+    int16_t prsliding = chan.Current_Ton_Sliding;
+    while (true) {
       const uint8_t val = chan.PatternCode();
       if (val >= 0xF0) {
+        // Set ornament (0-15) and sample (1-31).
         chan.SetOrnament(mModule, val - 0xF0);
         chan.SetSample(mModule, chan.PatternCode() / 2);
         chan.EnvelopeDisable();
-      } else if (val >= 0xD1 && val <= 0xEF) {
+      } else if (val >= 0xD1) {
+        // Set sample (1-31).
         chan.SetSample(mModule, val - 0xD0);
-      } else if (val == 0xd0) {
-        quit = true;
-      } else if (val >= 0xC1 && val <= 0xCF) {
+      } else if (val == 0xD0) {
+        // Empty location. End position.
+        break;
+      } else if (val >= 0xC1) {
+        // Set volume (1-15).
         chan.Volume = val - 0xC0;
       } else if (val == 0xC0) {
+        // Pause. End position.
         chan.ResetSample();
         chan.ResetOrnament();
         chan.Current_Amplitude_Sliding = 0;
@@ -305,22 +304,26 @@ void Player::mPlayPattern() {
         chan.Ton_Accumulator = 0;
         chan.Current_OnOff = 0;
         chan.Enabled = false;
-        quit = true;
-      } else if (val >= 0xB2 && val <= 0xBF) {
+        break;
+      } else if (val >= 0xB2) {
+        // Select envelope effect (1-14) with specified period.
         chan.EnvelopeEnable();
+        chan.ResetOrnament();
         mApu.Write(0, AyApu::R13, val - 0xB1);
         Env_Base_hi = chan.PatternCode();
         Env_Base_lo = chan.PatternCode();
-        chan.ResetOrnament();
         Cur_Env_Slide = 0;
         Cur_Env_Delay = 0;
       } else if (val == 0xB1) {
-        chan.Number_Of_Notes_To_Skip = chan.PatternCode();
+        // Number of empty locations after the subsequent code (0-255).
+        chan.SetSkipNotes(chan.PatternCode());
       } else if (val == 0xB0) {
+        // Disable envelope.
         chan.EnvelopeDisable();
         chan.ResetOrnament();
-      } else if (val >= 0x50 && val <= 0xAF) {
-        chan.Note = val - 0x50;
+      } else if (val >= 0x50) {
+        // Set note in semitones (0-95). End position.
+        chan.SetNote(val - 0x50);
         chan.ResetSample();
         chan.ResetOrnament();
         chan.Current_Amplitude_Sliding = 0;
@@ -331,17 +334,19 @@ void Player::mPlayPattern() {
         chan.Ton_Accumulator = 0;
         chan.Current_OnOff = 0;
         chan.Enabled = true;
-        quit = true;
-      } else if (val >= 0x40 && val <= 0x4F) {
+        break;
+      } else if (val >= 0x40) {
+        // Set ornament (0-15).
         chan.SetOrnament(mModule, val - 0x40);
-      } else if (val >= 0x20 && val <= 0x3F) {
+      } else if (val >= 0x20) {
+        // Set noise offset (occurs only in channel B).
         Noise_Base = val - 0x20;
-      } else if (val >= 0x10 && val <= 0x1F) {
+      } else if (val >= 0x10) {
         if (val != 0x10) {
+          chan.EnvelopeEnable();
           mApu.Write(0, AyApu::R13, val - 0x10);
           Env_Base_hi = chan.PatternCode();
           Env_Base_lo = chan.PatternCode();
-          chan.EnvelopeEnable();
           Cur_Env_Slide = 0;
           Cur_Env_Delay = 0;
         } else {
@@ -363,10 +368,12 @@ void Player::mPlayPattern() {
         flag2 = ++counter;
       } else if (val == 0x01) {
         flag1 = ++counter;
+      } else {
+        mAdvancePosition();
       }
-    } while (!quit);
+    }
 
-    while (counter > 0) {
+    for (; counter > 0; --counter) {
       if (counter == flag1) {
         chan.Ton_Slide_Delay = chan.PatternCode();
         chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
@@ -382,8 +389,7 @@ void Player::mPlayPattern() {
         chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
         chan.SkipPatternCode(2);
         chan.Ton_Slide_Step = abs(short(ay_sys_getword(&module[chan.Address_In_Pattern])));
-        chan.Address_In_Pattern += 2;
-        chan.Ton_Delta = PT3_GetNoteFreq(info, chan.Note, chip_num) - PT3_GetNoteFreq(info, prnote, chip_num);
+        chan.Ton_Delta = mGetTonePeriod(chan.Note) - mGetTonePeriod(prnote);
         chan.Slide_To_Note = chan.Note;
         chan.Note = prnote;
         if (mModule->GetSubVersion() >= 6)
@@ -404,13 +410,10 @@ void Player::mPlayPattern() {
         Env_Delay = chan.PatternCode();
         Cur_Env_Delay = Env_Delay;
         Env_Slide_Add = ay_sys_getword(&module[chan.Address_In_Pattern]);
-        chan.Address_In_Pattern += 2;
       } else if (counter == flag9) {
         Delay = chan.PatternCode();
       }
-      counter--;
     }
-    chan.Note_Skip_Counter = chan.Number_Of_Notes_To_Skip;
   }
 }
 
