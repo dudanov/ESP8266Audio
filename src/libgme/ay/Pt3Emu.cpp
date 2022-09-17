@@ -377,7 +377,7 @@ void Player::mPlayPattern() {
       if (counter == flag1) {
         chan.Ton_Slide_Delay = chan.PatternCode();
         chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
-        chan.Ton_Slide_Step = ay_sys_getword(&module[chan.Address_In_Pattern]);
+        chan.Ton_Slide_Step = chan.PatternCode16();
         chan.SimpleGliss = true;
         chan.Current_OnOff = 0;
         if ((chan.Ton_Slide_Count == 0) && (mModule->GetSubVersion() >= 7))
@@ -388,7 +388,10 @@ void Player::mPlayPattern() {
         chan.Ton_Slide_Delay = chan.PatternCode();
         chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
         chan.SkipPatternCode(2);
-        chan.Ton_Slide_Step = abs(short(ay_sys_getword(&module[chan.Address_In_Pattern])));
+        int16_t step = chan.PatternCode16();
+        if (step < 0)
+          step = -step;
+        chan.Ton_Slide_Step = step;
         chan.Ton_Delta = mGetTonePeriod(chan.Note) - mGetTonePeriod(prnote);
         chan.Slide_To_Note = chan.Note;
         chan.Note = prnote;
@@ -409,7 +412,7 @@ void Player::mPlayPattern() {
       } else if (counter == flag8) {
         Env_Delay = chan.PatternCode();
         Cur_Env_Delay = Env_Delay;
-        Env_Slide_Add = ay_sys_getword(&module[chan.Address_In_Pattern]);
+        Env_Slide_Add = chan.PatternCode16();
       } else if (counter == flag9) {
         Delay = chan.PatternCode();
       }

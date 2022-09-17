@@ -209,8 +209,8 @@ struct Channel {
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   void SkipPatternCode(size_t n) { mPatternIt += n; }
   uint8_t PatternCode() { return *mPatternIt++; }
-  template<typename T> T PatternCode16() {
-    const uint16_t value = get_le16(mPatternIt);
+  int16_t PatternCode16() {
+    const int16_t value = get_le16(mPatternIt);
     mPatternIt += 2;
     return value;
   }
