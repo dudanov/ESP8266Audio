@@ -273,7 +273,7 @@ void Pt3Emu::mInit() {
 
 void Player::mPlayPattern() {
   for (Channel &chan : mChannels) {
-    uint8_t counter = 0, flag1 = 0, flag2 = 0, flag3 = 0, flag4 = 0, flag5 = 0, flag8 = 0, flag9 = 0;
+    uint8_t counter = 0, cmd1 = 0, cmd2 = 0, cmd3 = 0, cmd4 = 0, cmd5 = 0, cmd8 = 0, cmd9 = 0;
     uint8_t prnote = chan.Note;
     int16_t prsliding = chan.Current_Ton_Sliding;
     while (true) {
@@ -355,26 +355,26 @@ void Player::mPlayPattern() {
         chan.SetSample(mModule, chan.PatternCode() / 2);
         chan.ResetOrnament();
       } else if (val == 0x09) {
-        flag9 = ++counter;
+        cmd9 = ++counter;
       } else if (val == 0x08) {
-        flag8 = ++counter;
+        cmd8 = ++counter;
       } else if (val == 0x05) {
-        flag5 = ++counter;
+        cmd5 = ++counter;
       } else if (val == 0x04) {
-        flag4 = ++counter;
+        cmd4 = ++counter;
       } else if (val == 0x03) {
-        flag3 = ++counter;
+        cmd3 = ++counter;
       } else if (val == 0x02) {
-        flag2 = ++counter;
+        cmd2 = ++counter;
       } else if (val == 0x01) {
-        flag1 = ++counter;
-      } else {
+        cmd1 = ++counter;
+      } else if (val == 0x00) {
         mAdvancePosition();
       }
     }
 
     for (; counter > 0; --counter) {
-      if (counter == flag1) {
+      if (counter == cmd1) {
         chan.Ton_Slide_Delay = chan.PatternCode();
         chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
         chan.Ton_Slide_Step = chan.PatternCode16();
@@ -382,7 +382,7 @@ void Player::mPlayPattern() {
         chan.Current_OnOff = 0;
         if ((chan.Ton_Slide_Count == 0) && (mModule->GetSubVersion() >= 7))
           chan.Ton_Slide_Count++;
-      } else if (counter == flag2) {
+      } else if (counter == cmd2) {
         chan.SimpleGliss = false;
         chan.Current_OnOff = 0;
         chan.Ton_Slide_Delay = chan.PatternCode();
@@ -399,21 +399,21 @@ void Player::mPlayPattern() {
           chan.Current_Ton_Sliding = prsliding;
         if ((chan.Ton_Delta - chan.Current_Ton_Sliding) < 0)
           chan.Ton_Slide_Step = -chan.Ton_Slide_Step;
-      } else if (counter == flag3) {
+      } else if (counter == cmd3) {
         chan.ResetSample(chan.PatternCode());
-      } else if (counter == flag4) {
+      } else if (counter == cmd4) {
         chan.ResetOrnament(chan.PatternCode());
-      } else if (counter == flag5) {
+      } else if (counter == cmd5) {
         chan.OnOff_Delay = chan.PatternCode();
         chan.OffOn_Delay = chan.PatternCode();
         chan.Current_OnOff = chan.OnOff_Delay;
         chan.Ton_Slide_Count = 0;
         chan.Current_Ton_Sliding = 0;
-      } else if (counter == flag8) {
+      } else if (counter == cmd8) {
         Env_Delay = chan.PatternCode();
         Cur_Env_Delay = Env_Delay;
         Env_Slide_Add = chan.PatternCode16();
-      } else if (counter == flag9) {
+      } else if (counter == cmd9) {
         Delay = chan.PatternCode();
       }
     }
