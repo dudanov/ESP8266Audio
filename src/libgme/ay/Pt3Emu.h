@@ -288,8 +288,8 @@ class Player {
   uint16_t mGetTonePeriod(int8_t tone) const;
   void mInit();
   void mSetEnvelope(Channel &chan, uint8_t shape);
-  void mGlissEffect(Channel &chan);
-  void mPortamento(Channel &chan);
+  void mGliss(Channel &chan);
+  void mPortamento(Channel &chan, uint8_t prevNote, int16_t prevSliding);
   void mUpdateTables();
   void mPlayPattern();
   void mPlaySamples();
@@ -313,10 +313,10 @@ class Player {
   // Global song delay counter
   uint8_t mDelayCounter;
 
-  uint16_t EnvelopeBase;
-  short CurEnvSlide, EnvSlideAdd;
-  signed char CurEnvDelay, EnvDelay;
-  unsigned char NoiseBase, Delay, AddToNoise;
+  uint16_t mEnvelopeBase;
+  short mCurEnvSlide, mEnvSlideAdd;
+  signed char mCurEnvDelay, mEnvDelay;
+  unsigned char mNoiseBase, mDelay, mAddToNoise;
 };
 
 class Pt3Emu : public ClassicEmu {

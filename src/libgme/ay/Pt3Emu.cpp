@@ -274,16 +274,43 @@ void Player::mSetEnvelope(Channel &channel, uint8_t shape) {
   mApu.Write(mEmuTime, AyApu::AY_ENV_SHAPE, shape);
   channel.EnvelopeEnable();
   channel.ResetOrnament();
-  EnvelopeBase = channel.PatternCodeBE16();
-  CurEnvSlide = 0;
-  CurEnvDelay = 0;
+  mEnvelopeBase = channel.PatternCodeBE16();
+  mCurEnvSlide = 0;
+  mCurEnvDelay = 0;
+}
+
+void Player::mGliss(Channel &chan) {
+  chan.SimpleGliss = true;
+  chan.CurrentOnOff = 0;
+  chan.TonSlideCount = chan.Ton_Slide_Delay = chan.PatternCode();
+  chan.TonSlideStep = chan.PatternCodeLE16();
+  if ((chan.TonSlideCount == 0) && (mModule->GetSubVersion() >= 7))
+    chan.TonSlideCount++;
+}
+
+void Player::mPortamento(Channel &chan, uint8_t prevNote, int16_t prevSliding) {
+  chan.SimpleGliss = false;
+  chan.CurrentOnOff = 0;
+  chan.TonSlideCount = chan.Ton_Slide_Delay = chan.PatternCode();
+  chan.SkipPatternCode(2);
+  int16_t step = chan.PatternCodeLE16();
+  if (step < 0)
+    step = -step;
+  chan.TonSlideStep = step;
+  chan.TonDelta = mGetTonePeriod(chan.Note) - mGetTonePeriod(prevNote);
+  chan.SlideToNote = chan.Note;
+  chan.Note = prevNote;
+  if (mModule->GetSubVersion() >= 6)
+    chan.CurrentTonSliding = prevSliding;
+  if ((chan.TonDelta - chan.CurrentTonSliding) < 0)
+    chan.TonSlideStep = -chan.TonSlideStep;
 }
 
 void Player::mPlayPattern() {
   for (Channel &chan : mChannels) {
     uint8_t counter = 0, cmd1 = 0, cmd2 = 0, cmd3 = 0, cmd4 = 0, cmd5 = 0, cmd8 = 0, cmd9 = 0;
-    uint8_t prnote = chan.Note;
-    int16_t prsliding = chan.CurrentTonSliding;
+    uint8_t prevNote = chan.Note;
+    int16_t prevSliding = chan.CurrentTonSliding;
     while (true) {
       const uint8_t val = chan.PatternCode();
       if (val >= 0xF0) {
@@ -326,7 +353,7 @@ void Player::mPlayPattern() {
         chan.SetOrnament(mModule->GetOrnament(val - 0x40));
       } else if (val >= 0x20) {
         // Set noise offset (occurs only in channel B).
-        NoiseBase = val - 0x20;
+        mNoiseBase = val - 0x20;
       } else if (val >= 0x11) {
         // Set envelope and sample.
         mSetEnvelope(chan, val - 0x10);
@@ -357,28 +384,9 @@ void Player::mPlayPattern() {
 
     for (; counter > 0; --counter) {
       if (counter == cmd1) {
-        chan.SimpleGliss = true;
-        chan.CurrentOnOff = 0;
-        chan.TonSlideCount = chan.Ton_Slide_Delay = chan.PatternCode();
-        chan.TonSlideStep = chan.PatternCodeLE16();
-        if ((chan.TonSlideCount == 0) && (mModule->GetSubVersion() >= 7))
-          chan.TonSlideCount++;
+        mGliss(chan);
       } else if (counter == cmd2) {
-        chan.SimpleGliss = false;
-        chan.CurrentOnOff = 0;
-        chan.TonSlideCount = chan.Ton_Slide_Delay = chan.PatternCode();
-        chan.SkipPatternCode(2);
-        int16_t step = chan.PatternCodeLE16();
-        if (step < 0)
-          step = -step;
-        chan.TonSlideStep = step;
-        chan.TonDelta = mGetTonePeriod(chan.Note) - mGetTonePeriod(prnote);
-        chan.SlideToNote = chan.Note;
-        chan.Note = prnote;
-        if (mModule->GetSubVersion() >= 6)
-          chan.CurrentTonSliding = prsliding;
-        if ((chan.TonDelta - chan.CurrentTonSliding) < 0)
-          chan.TonSlideStep = -chan.TonSlideStep;
+        mPortamento(chan, prevNote, prevSliding);
       } else if (counter == cmd3) {
         chan.ResetSample(chan.PatternCode());
       } else if (counter == cmd4) {
@@ -388,10 +396,10 @@ void Player::mPlayPattern() {
         chan.OffOnDelay = chan.PatternCode();
         chan.CurrentTonSliding = chan.TonSlideCount = 0;
       } else if (counter == cmd8) {
-        CurEnvDelay = EnvDelay = chan.PatternCode();
-        EnvSlideAdd = chan.PatternCodeLE16();
+        mCurEnvDelay = mEnvDelay = chan.PatternCode();
+        mEnvSlideAdd = chan.PatternCodeLE16();
       } else if (counter == cmd9) {
-        Delay = chan.PatternCode();
+        mDelay = chan.PatternCode();
       }
     }
   }
