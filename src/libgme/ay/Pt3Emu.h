@@ -203,8 +203,9 @@ struct Channel {
   Channel(const Channel &) = delete;
 
   void SetNote(uint8_t note) { mNote = note; }
-  void Disable() { Enabled = false; }
-  bool IsEnabled() const { return Enabled; }
+  void Enable() { mEnabled = true; }
+  void Disable() { mEnabled = false; }
+  bool IsEnabled() const { return mEnabled; }
 
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   void SkipPatternCode(size_t n) { mPatternIt += n; }
@@ -222,8 +223,22 @@ struct Channel {
 
   void SetSkipNotes(uint8_t skip) { mSkipNotes.SetSkipCount(skip); }
 
-  void SetSample(const PT3Module *pt3, uint8_t number) { mSamplePlayer.Load(pt3->GetSample(number)); }
-  void SetOrnament(const PT3Module *pt3, uint8_t number) { mOrnamentPlayer.Load(pt3->GetOrnament(number)); }
+  void Reset() {
+    mSamplePlayer.Reset();
+    mOrnamentPlayer.Reset();
+    // ResetSample();
+    // ResetOrnament();
+    Current_Amplitude_Sliding = 0;
+    Current_Noise_Sliding = 0;
+    Current_Envelope_Sliding = 0;
+    TonSlideCount = 0;
+    CurrentTonSliding = 0;
+    Ton_Accumulator = 0;
+    CurrentOnOff = 0;
+  }
+
+  void SetSample(const Sample *sample) { mSamplePlayer.Load(sample); }
+  void SetOrnament(const Ornament *ornament) { mOrnamentPlayer.Load(ornament); }
   void ResetSample(uint8_t pos = 0) { mSamplePlayer.Reset(pos); }
   void ResetOrnament(uint8_t pos = 0) { mOrnamentPlayer.Reset(pos); }
 
@@ -234,12 +249,23 @@ struct Channel {
   void EnvelopeEnable() { mEnvelope = true; }
   void EnvelopeDisable() { mEnvelope = false; }
 
-  uint16_t Address_In_Pattern, Ton;
-  uint8_t Volume, Number_Of_Notes_To_Skip, Note, Slide_To_Note, Amplitude;
-  bool Envelope_Enabled, Enabled, SimpleGliss;
-  int16_t Current_Amplitude_Sliding, Current_Noise_Sliding, Current_Envelope_Sliding, Ton_Slide_Count, Current_OnOff,
-      OnOff_Delay, OffOn_Delay, Ton_Slide_Delay, Current_Ton_Sliding, Ton_Accumulator, Ton_Slide_Step, Ton_Delta;
-  int8_t Note_Skip_Counter;
+  uint8_t Volume, Note;
+  bool mEnabled;
+  // Gliss and Portamento
+  uint16_t Ton;
+  int16_t TonSlideCount, Ton_Slide_Delay, CurrentTonSliding, Ton_Accumulator, TonSlideStep, TonDelta;
+  uint8_t SlideToNote;
+  bool SimpleGliss;
+  // Amplitude
+  int16_t Current_Amplitude_Sliding;
+  uint8_t Amplitude;
+  // Vibrato
+  int16_t CurrentOnOff, OnOffDelay, OffOnDelay;
+  // Envelope
+  int16_t Current_Envelope_Sliding;
+  bool Envelope_Enabled;
+  // Noise
+  int16_t Current_Noise_Sliding;
 
  private:
   SamplePlayer mSamplePlayer;
@@ -247,7 +273,7 @@ struct Channel {
   SkipCounter mSkipNotes;
   // Pattern data iterator.
   const uint8_t *mPatternIt;
-  uint8_t mNote;
+  //uint8_t mNote;
   bool mEnvelope;
 };
 
@@ -262,6 +288,8 @@ class Player {
   uint16_t mGetTonePeriod(int8_t tone) const;
   void mInit();
   void mSetEnvelope(Channel &chan, uint8_t shape);
+  void mGlissEffect(Channel &chan);
+  void mPortamento(Channel &chan);
   void mUpdateTables();
   void mPlayPattern();
   void mPlaySamples();
@@ -285,10 +313,10 @@ class Player {
   // Global song delay counter
   uint8_t mDelayCounter;
 
-  uint16_t Env_Base;
-  short Cur_Env_Slide, Env_Slide_Add;
-  signed char Cur_Env_Delay, Env_Delay;
-  unsigned char Noise_Base, Delay, AddToNoise, DelayCounter, CurrentPosition;
+  uint16_t EnvelopeBase;
+  short CurEnvSlide, EnvSlideAdd;
+  signed char CurEnvDelay, EnvDelay;
+  unsigned char NoiseBase, Delay, AddToNoise;
 };
 
 class Pt3Emu : public ClassicEmu {
@@ -308,7 +336,6 @@ class Pt3Emu : public ClassicEmu {
   void mUpdateEq(BlipEq const &) override;
 
   /* PLAYER METHODS AND DATA */
-
 
  private:
   // Player

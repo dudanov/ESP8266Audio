@@ -274,82 +274,68 @@ void Player::mSetEnvelope(Channel &channel, uint8_t shape) {
   mApu.Write(mEmuTime, AyApu::AY_ENV_SHAPE, shape);
   channel.EnvelopeEnable();
   channel.ResetOrnament();
-  Env_Base = channel.PatternCodeBE16();
-  Cur_Env_Slide = 0;
-  Cur_Env_Delay = 0;
+  EnvelopeBase = channel.PatternCodeBE16();
+  CurEnvSlide = 0;
+  CurEnvDelay = 0;
 }
 
 void Player::mPlayPattern() {
   for (Channel &chan : mChannels) {
     uint8_t counter = 0, cmd1 = 0, cmd2 = 0, cmd3 = 0, cmd4 = 0, cmd5 = 0, cmd8 = 0, cmd9 = 0;
     uint8_t prnote = chan.Note;
-    int16_t prsliding = chan.Current_Ton_Sliding;
+    int16_t prsliding = chan.CurrentTonSliding;
     while (true) {
       const uint8_t val = chan.PatternCode();
       if (val >= 0xF0) {
-        // Set ornament (0-15) and sample (1-31).
-        chan.SetOrnament(mModule, val - 0xF0);
-        chan.SetSample(mModule, chan.PatternCode() / 2);
+        // Set ornament and sample. Envelope disable.
+        chan.SetOrnament(mModule->GetOrnament(val - 0xF0));
+        chan.SetSample(mModule->GetSample(chan.PatternCode() / 2));
         chan.EnvelopeDisable();
       } else if (val >= 0xD1) {
-        // Set sample (1-31).
-        chan.SetSample(mModule, val - 0xD0);
+        // Set sample.
+        chan.SetSample(mModule->GetSample(val - 0xD0));
       } else if (val == 0xD0) {
         // Empty location. End position.
         break;
       } else if (val >= 0xC1) {
-        // Set volume (1-15).
+        // Set volume.
         chan.Volume = val - 0xC0;
       } else if (val == 0xC0) {
         // Pause. End position.
-        chan.ResetSample();
-        chan.ResetOrnament();
-        chan.Current_Amplitude_Sliding = 0;
-        chan.Current_Noise_Sliding = 0;
-        chan.Current_Envelope_Sliding = 0;
-        chan.Ton_Slide_Count = 0;
-        chan.Current_Ton_Sliding = 0;
-        chan.Ton_Accumulator = 0;
-        chan.Current_OnOff = 0;
-        chan.Enabled = false;
+        chan.Disable();
+        chan.Reset();
         break;
       } else if (val >= 0xB2) {
-        // Select envelope effect (1-14) with specified period.
+        // Set envelope.
         mSetEnvelope(chan, val - 0xB1);
       } else if (val == 0xB1) {
-        // Number of empty locations after the subsequent code (0-255).
+        // Set number of empty locations after the subsequent code.
         chan.SetSkipNotes(chan.PatternCode());
       } else if (val == 0xB0) {
         // Disable envelope.
         chan.EnvelopeDisable();
         chan.ResetOrnament();
       } else if (val >= 0x50) {
-        // Set note in semitones (0-95). End position.
+        // Set note in semitones. End position.
         chan.SetNote(val - 0x50);
-        chan.ResetSample();
-        chan.ResetOrnament();
-        chan.Current_Amplitude_Sliding = 0;
-        chan.Current_Noise_Sliding = 0;
-        chan.Current_Envelope_Sliding = 0;
-        chan.Ton_Slide_Count = 0;
-        chan.Current_Ton_Sliding = 0;
-        chan.Ton_Accumulator = 0;
-        chan.Current_OnOff = 0;
-        chan.Enabled = true;
+        chan.Reset();
+        chan.Enable();
         break;
       } else if (val >= 0x40) {
-        // Set ornament (0-15).
-        chan.SetOrnament(mModule, val - 0x40);
+        // Set ornament.
+        chan.SetOrnament(mModule->GetOrnament(val - 0x40));
       } else if (val >= 0x20) {
         // Set noise offset (occurs only in channel B).
-        Noise_Base = val - 0x20;
+        NoiseBase = val - 0x20;
       } else if (val >= 0x11) {
+        // Set envelope and sample.
         mSetEnvelope(chan, val - 0x10);
-        chan.SetSample(mModule, chan.PatternCode() / 2);
+        chan.SetSample(mModule->GetSample(chan.PatternCode() / 2));
       } else if (val == 0x10) {
-        chan.SetSample(mModule, chan.PatternCode() / 2);
-        chan.ResetOrnament();
+        // Disable envelope, reset ornament and set sample.
         chan.EnvelopeDisable();
+        chan.ResetOrnament();
+        chan.SetSample(mModule->GetSample(chan.PatternCode() / 2));
       } else if (val == 0x09) {
         cmd9 = ++counter;
       } else if (val == 0x08) {
@@ -371,44 +357,39 @@ void Player::mPlayPattern() {
 
     for (; counter > 0; --counter) {
       if (counter == cmd1) {
-        chan.Ton_Slide_Delay = chan.PatternCode();
-        chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
-        chan.Ton_Slide_Step = chan.PatternCodeLE16();
         chan.SimpleGliss = true;
-        chan.Current_OnOff = 0;
-        if ((chan.Ton_Slide_Count == 0) && (mModule->GetSubVersion() >= 7))
-          chan.Ton_Slide_Count++;
+        chan.CurrentOnOff = 0;
+        chan.TonSlideCount = chan.Ton_Slide_Delay = chan.PatternCode();
+        chan.TonSlideStep = chan.PatternCodeLE16();
+        if ((chan.TonSlideCount == 0) && (mModule->GetSubVersion() >= 7))
+          chan.TonSlideCount++;
       } else if (counter == cmd2) {
         chan.SimpleGliss = false;
-        chan.Current_OnOff = 0;
-        chan.Ton_Slide_Delay = chan.PatternCode();
-        chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
+        chan.CurrentOnOff = 0;
+        chan.TonSlideCount = chan.Ton_Slide_Delay = chan.PatternCode();
         chan.SkipPatternCode(2);
         int16_t step = chan.PatternCodeLE16();
         if (step < 0)
           step = -step;
-        chan.Ton_Slide_Step = step;
-        chan.Ton_Delta = mGetTonePeriod(chan.Note) - mGetTonePeriod(prnote);
-        chan.Slide_To_Note = chan.Note;
+        chan.TonSlideStep = step;
+        chan.TonDelta = mGetTonePeriod(chan.Note) - mGetTonePeriod(prnote);
+        chan.SlideToNote = chan.Note;
         chan.Note = prnote;
         if (mModule->GetSubVersion() >= 6)
-          chan.Current_Ton_Sliding = prsliding;
-        if ((chan.Ton_Delta - chan.Current_Ton_Sliding) < 0)
-          chan.Ton_Slide_Step = -chan.Ton_Slide_Step;
+          chan.CurrentTonSliding = prsliding;
+        if ((chan.TonDelta - chan.CurrentTonSliding) < 0)
+          chan.TonSlideStep = -chan.TonSlideStep;
       } else if (counter == cmd3) {
         chan.ResetSample(chan.PatternCode());
       } else if (counter == cmd4) {
         chan.ResetOrnament(chan.PatternCode());
       } else if (counter == cmd5) {
-        chan.OnOff_Delay = chan.PatternCode();
-        chan.OffOn_Delay = chan.PatternCode();
-        chan.Current_OnOff = chan.OnOff_Delay;
-        chan.Ton_Slide_Count = 0;
-        chan.Current_Ton_Sliding = 0;
+        chan.CurrentOnOff = chan.OnOffDelay = chan.PatternCode();
+        chan.OffOnDelay = chan.PatternCode();
+        chan.CurrentTonSliding = chan.TonSlideCount = 0;
       } else if (counter == cmd8) {
-        Env_Delay = chan.PatternCode();
-        Cur_Env_Delay = Env_Delay;
-        Env_Slide_Add = chan.PatternCodeLE16();
+        CurEnvDelay = EnvDelay = chan.PatternCode();
+        EnvSlideAdd = chan.PatternCodeLE16();
       } else if (counter == cmd9) {
         Delay = chan.PatternCode();
       }
