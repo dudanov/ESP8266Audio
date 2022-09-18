@@ -252,12 +252,11 @@ void Pt3Emu::mSetTempo(double temp) {
 
 blargg_err_t Pt3Emu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
-  mInit();
   SetTempo(mGetTempo());
   return nullptr;
 }
 
-void Pt3Emu::mInit() {
+void Player::mInit() {
   mApu.Reset();
   mEmuTime = 0;
   mDelayCounter = 1;
@@ -269,6 +268,15 @@ void Pt3Emu::mInit() {
     c.SetPatternData(mModule->GetPattern(pattern, idx));
     c.SetOrnament(mModule, 0);
   }
+}
+
+void Player::mSetEnvelope(Channel &channel, uint8_t shape) {
+  mApu.Write(mEmuTime, AyApu::AY_ENV_SHAPE, shape);
+  channel.EnvelopeEnable();
+  channel.ResetOrnament();
+  Env_Base = channel.PatternCodeBE16();
+  Cur_Env_Slide = 0;
+  Cur_Env_Delay = 0;
 }
 
 void Player::mPlayPattern() {
@@ -307,13 +315,7 @@ void Player::mPlayPattern() {
         break;
       } else if (val >= 0xB2) {
         // Select envelope effect (1-14) with specified period.
-        chan.EnvelopeEnable();
-        chan.ResetOrnament();
-        mApu.Write(0, AyApu::R13, val - 0xB1);
-        Env_Base_hi = chan.PatternCode();
-        Env_Base_lo = chan.PatternCode();
-        Cur_Env_Slide = 0;
-        Cur_Env_Delay = 0;
+        mSetEnvelope(chan, val - 0xB1);
       } else if (val == 0xB1) {
         // Number of empty locations after the subsequent code (0-255).
         chan.SetSkipNotes(chan.PatternCode());
@@ -341,19 +343,13 @@ void Player::mPlayPattern() {
       } else if (val >= 0x20) {
         // Set noise offset (occurs only in channel B).
         Noise_Base = val - 0x20;
-      } else if (val >= 0x10) {
-        if (val != 0x10) {
-          chan.EnvelopeEnable();
-          mApu.Write(0, AyApu::R13, val - 0x10);
-          Env_Base_hi = chan.PatternCode();
-          Env_Base_lo = chan.PatternCode();
-          Cur_Env_Slide = 0;
-          Cur_Env_Delay = 0;
-        } else {
-          chan.EnvelopeDisable();
-        }
+      } else if (val >= 0x11) {
+        mSetEnvelope(chan, val - 0x10);
+        chan.SetSample(mModule, chan.PatternCode() / 2);
+      } else if (val == 0x10) {
         chan.SetSample(mModule, chan.PatternCode() / 2);
         chan.ResetOrnament();
+        chan.EnvelopeDisable();
       } else if (val == 0x09) {
         cmd9 = ++counter;
       } else if (val == 0x08) {
@@ -377,7 +373,7 @@ void Player::mPlayPattern() {
       if (counter == cmd1) {
         chan.Ton_Slide_Delay = chan.PatternCode();
         chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
-        chan.Ton_Slide_Step = chan.PatternCode16();
+        chan.Ton_Slide_Step = chan.PatternCodeLE16();
         chan.SimpleGliss = true;
         chan.Current_OnOff = 0;
         if ((chan.Ton_Slide_Count == 0) && (mModule->GetSubVersion() >= 7))
@@ -388,7 +384,7 @@ void Player::mPlayPattern() {
         chan.Ton_Slide_Delay = chan.PatternCode();
         chan.Ton_Slide_Count = chan.Ton_Slide_Delay;
         chan.SkipPatternCode(2);
-        int16_t step = chan.PatternCode16();
+        int16_t step = chan.PatternCodeLE16();
         if (step < 0)
           step = -step;
         chan.Ton_Slide_Step = step;
@@ -412,7 +408,7 @@ void Player::mPlayPattern() {
       } else if (counter == cmd8) {
         Env_Delay = chan.PatternCode();
         Cur_Env_Delay = Env_Delay;
-        Env_Slide_Add = chan.PatternCode16();
+        Env_Slide_Add = chan.PatternCodeLE16();
       } else if (counter == cmd9) {
         Delay = chan.PatternCode();
       }
@@ -447,23 +443,23 @@ void Player::mPlaySamples() {
       continue;
     }
 
-    auto sample = channel.GetSampleData();
+    auto &sample = channel.GetSampleData();
 
-    if (!sample->NoiseMask())
-      mApu.Write(mEmuTime, AyApu::R6, sample->Noise());
+    if (!sample.NoiseMask())
+      mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, sample.Noise());
 
-    mixer |= 64 * sample->NoiseMask() | 8 * sample->ToneMask();
+    mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
 
     const uint8_t note = channel.GetOrnamentNote() + mPositionTransposition();
-    const uint16_t period = (PT3Module::GetTonePeriod(note) + sample->Transposition()) % 4096;
+    const uint16_t period = (mGetTonePeriod(note) + sample.Transposition()) % 4096;
 
-    mApu.Write(mEmuTime, AyApu::R0 + idx * 2, period % 256);
-    mApu.Write(mEmuTime, AyApu::R1 + idx * 2, period / 256);
-    mApu.Write(mEmuTime, AyApu::R8 + idx, sample->Volume() + 16 * channel.IsEnvelopeEnabled());
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, period % 256);
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, period / 256);
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, sample.Volume() + 16 * channel.IsEnvelopeEnabled());
 
     channel.AdvanceSample();
   }
-  mApu.Write(mEmuTime, AyApu::R7, mixer);
+  mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
 }
 
 blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {

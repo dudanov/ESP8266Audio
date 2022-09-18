@@ -325,9 +325,9 @@ void StcEmu::mPlayPattern() {
         // Select envelope effect (3-14).
         channel.EnvelopeEnable();
         channel.SetOrnament(mModule, 0);
-        mApu.Write(mEmuTime, AyApu::R11, channel.PatternCode());
-        mApu.Write(mEmuTime, AyApu::R12, 0);
-        mApu.Write(mEmuTime, AyApu::R13, code % 16);
+        mApu.Write(mEmuTime, AyApu::AY_ENV_FINE, channel.PatternCode());
+        mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, 0);
+        mApu.Write(mEmuTime, AyApu::AY_ENV_SHAPE, code % 16);
       } else if (code == 0xFF) {
         // End pattern marker. Advance to next song position and update all channels.
         mAdvancePosition();
@@ -362,20 +362,20 @@ void StcEmu::mPlaySamples() {
     auto sample = channel.GetSampleData();
 
     if (!sample->NoiseMask())
-      mApu.Write(mEmuTime, AyApu::R6, sample->Noise());
+      mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, sample->Noise());
 
     mixer |= 64 * sample->NoiseMask() | 8 * sample->ToneMask();
 
     const uint8_t note = channel.GetOrnamentNote() + mPositionTransposition();
     const uint16_t period = (STCModule::GetTonePeriod(note) + sample->Transposition()) % 4096;
 
-    mApu.Write(mEmuTime, AyApu::R0 + idx * 2, period % 256);
-    mApu.Write(mEmuTime, AyApu::R1 + idx * 2, period / 256);
-    mApu.Write(mEmuTime, AyApu::R8 + idx, sample->Volume() + 16 * channel.IsEnvelopeEnabled());
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, period % 256);
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, period / 256);
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, sample->Volume() + 16 * channel.IsEnvelopeEnabled());
 
     channel.AdvanceSample();
   }
-  mApu.Write(mEmuTime, AyApu::R7, mixer);
+  mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
 }
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {

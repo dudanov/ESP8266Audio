@@ -95,28 +95,28 @@ void AyApu::Reset() {
     osc.mPhase = 0;
   }
   mRegs.fill(0x00);
-  mWriteRegister(R7, 0xFF);
-  mWriteRegister(R13, 0x00);
+  mWriteRegister(AY_MIXER, 0xFF);
+  mWriteRegister(AY_ENV_SHAPE, 0x00);
 }
 
 void AyApu::mWriteRegister(unsigned addr, uint8_t data) {
   assert(addr < RNUM);
 
-  mRegs[R0 + addr] = data;
+  mRegs[addr] = data;
 
   // handle period changes accurately
-  if (addr <= R5)
+  if (addr <= AY_CHNL_C_COARSE)
     return mPeriodUpdate(addr / 2);
 
   // TODO: same as above for envelope timer, and it also has a divide by two after it
 
   // envelope mode
-  if (addr == R13)
+  if (addr == AY_ENV_SHAPE)
     return mEnvelope.SetMode(data);
 }
 
 inline void AyApu::mPeriodUpdate(unsigned channel) {
-  blip_clk_time_t period = get_le16(&mRegs[R0 + channel * 2]) % 4096 * CLOCK_PSC;
+  blip_clk_time_t period = get_le16(&mRegs[AY_CHNL_A_FINE + channel * 2]) % 4096 * CLOCK_PSC;
   if (period == 0)
     period = CLOCK_PSC;
   // adjust time of next timer expiration based on change in period
@@ -131,7 +131,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
 
   // noise period and initial values
   constexpr blip_clk_time_t NOISE_PSC = CLOCK_PSC * 2;  // verified
-  blip_clk_time_t noise_period = mRegs[R6] % 32 * NOISE_PSC;
+  blip_clk_time_t noise_period = mRegs[AY_NOISE_PERIOD] % 32 * NOISE_PSC;
   if (noise_period == 0)
     noise_period = NOISE_PSC;
   const blargg_ulong old_noise_lfsr = mNoise.mLfsr;
@@ -139,7 +139,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
 
   // envelope period
   constexpr blip_clk_time_t ENVELOPE_PSC = CLOCK_PSC * 2;  // verified
-  blip_clk_time_t env_period = get_le16(&mRegs[R11]) * ENVELOPE_PSC;
+  blip_clk_time_t env_period = get_le16(&mRegs[AY_ENV_FINE]) * ENVELOPE_PSC;
   if (env_period == 0)
     env_period = ENVELOPE_PSC;  // same as period 1 on my AY chip
   if (mEnvelope.mDelay == 0)
@@ -148,7 +148,7 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
   // run each osc separately
   for (int idx = 0; idx < OSCS_NUM; idx++) {
     Square &osc = mSquare[idx];
-    uint8_t mode = mRegs[R7] >> idx;
+    uint8_t mode = mRegs[AY_MIXER] >> idx;
 
     // output
     BlipBuffer *const out = osc.mOutput;
@@ -167,13 +167,13 @@ void AyApu::mRunUntil(const blip_clk_time_t end_clk_time) {
     // envelope
     blip_clk_time_t start_time = mLastClkTime;
     blip_clk_time_t end_time = end_clk_time;
-    const uint8_t amp_ctrl = mRegs[R8 + idx];
+    const uint8_t amp_ctrl = mRegs[AY_CHNL_A_VOL + idx];
     int volume = Envelope::GetAmp(amp_ctrl & 0b1111, half_vol);
     // int osc_env_pos = mEnvelope.mPos;
     if (amp_ctrl & 0x10) {
       volume = mEnvelope.GetAmp(half_vol);
       // use envelope only if it's a repeating wave or a ramp that hasn't finished
-      if (!(mRegs[R13] & 1) || mEnvelope.InRampPhase()) {
+      if (!(mRegs[AY_ENV_SHAPE] & 1) || mEnvelope.InRampPhase()) {
         end_time = start_time + mEnvelope.mDelay;
         if (end_time >= end_clk_time)
           end_time = end_clk_time;

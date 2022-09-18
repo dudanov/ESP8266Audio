@@ -209,8 +209,13 @@ struct Channel {
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   void SkipPatternCode(size_t n) { mPatternIt += n; }
   uint8_t PatternCode() { return *mPatternIt++; }
-  int16_t PatternCode16() {
+  int16_t PatternCodeLE16() {
     const int16_t value = get_le16(mPatternIt);
+    mPatternIt += 2;
+    return value;
+  }
+  int16_t PatternCodeBE16() {
+    const int16_t value = get_be16(mPatternIt);
     mPatternIt += 2;
     return value;
   }
@@ -255,6 +260,8 @@ class Player {
  private:
   uint8_t mGetAmplitude(uint8_t volume, uint8_t amplitude) const;
   uint16_t mGetTonePeriod(int8_t tone) const;
+  void mInit();
+  void mSetEnvelope(Channel &chan, uint8_t shape);
   void mUpdateTables();
   void mPlayPattern();
   void mPlaySamples();
@@ -271,13 +278,14 @@ class Player {
   const uint16_t *mNoteTable;
   // Pointer to volume period table
   const uint8_t *mVolumeTable;
+  // Current emulation time
+  blip_clk_time_t mEmuTime;
   // Module subversion
   uint8_t mSubVersion;
   // Global song delay counter
   uint8_t mDelayCounter;
 
-  unsigned char Env_Base_lo;
-  unsigned char Env_Base_hi;
+  uint16_t Env_Base;
   short Cur_Env_Slide, Env_Slide_Add;
   signed char Cur_Env_Delay, Env_Delay;
   unsigned char Noise_Base, Delay, AddToNoise, DelayCounter, CurrentPosition;
@@ -301,7 +309,6 @@ class Pt3Emu : public ClassicEmu {
 
   /* PLAYER METHODS AND DATA */
 
-  void mInit();
 
  private:
   // Player

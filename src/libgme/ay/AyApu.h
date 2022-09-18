@@ -25,7 +25,25 @@ class AyApu {
  public:
   AyApu();
 
-  enum Reg { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, RNUM };
+  enum {
+    AY_CHNL_A_FINE,
+    AY_CHNL_A_COARSE,
+    AY_CHNL_B_FINE,
+    AY_CHNL_B_COARSE,
+    AY_CHNL_C_FINE,
+    AY_CHNL_C_COARSE,
+    AY_NOISE_PERIOD,
+    AY_MIXER,
+    AY_CHNL_A_VOL,
+    AY_CHNL_B_VOL,
+    AY_CHNL_C_VOL,
+    AY_ENV_FINE,
+    AY_ENV_COARSE,
+    AY_ENV_SHAPE,
+    AY_GPIO_A,
+    AY_GPIO_B,
+    RNUM,
+  };
 
   static const unsigned OSCS_NUM = 3;
   static const unsigned AMP_RANGE = 255;
