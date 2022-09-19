@@ -43,17 +43,18 @@ struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
   bool EnvelopeMask() const { return mData[0] & 1; }
-  uint8_t Noise() const { return mData[0] / 2 % 32; }
-  int16_t EnvelopeSlide() const {
-    const int16_t val = mData[0] >> 1;
-    return (val & 16) ? (val | ~15) : (val & 15);
-  }
-  uint8_t Volume() const { return mData[1] % 16; }
-  bool ToneMask() const { return mData[1] & 16; }
-  bool NoiseMask() const { return mData[1] & 128; }
+  void NoiseSlide(uint8_t &step, uint8_t &store) const;
+  void EnvelopeSlide(int8_t &step, int8_t &store) const;
+  void VolumeSlide(int8_t &value, int8_t &store) const;
+  bool ToneMask() const { return mData[1] & 0x10; }
+  bool ToneStore() const { return mData[1] & 0x40; }
+  bool NoiseMask() const { return mData[1] & 0x80; }
   int16_t Transposition() const { return get_le16(mTransposition); }
 
  private:
+  int8_t mVolume() const { return mData[1] & 0x0F; }
+  bool mVolumeSlide() const { return mData[0] & 0x80; }
+  bool mVolumeSlideUp() const { return mData[0] & 0x40; }
   uint8_t mData[2];
   uint8_t mTransposition[2];
 };
@@ -202,7 +203,7 @@ struct Channel {
   /* not allow make copies */
   Channel(const Channel &) = delete;
 
-  void SetNote(uint8_t note) { mNote = note; }
+  void SetNote(uint8_t note) { Note = note; }
   void Enable() { mEnabled = true; }
   void Disable() { mEnabled = false; }
   bool IsEnabled() const { return mEnabled; }
@@ -228,12 +229,12 @@ struct Channel {
     mOrnamentPlayer.Reset();
     // ResetSample();
     // ResetOrnament();
-    Current_Amplitude_Sliding = 0;
-    Current_Noise_Sliding = 0;
-    Current_Envelope_Sliding = 0;
+    CurrentAmplitudeSliding = 0;
+    CurrentNoiseSliding = 0;
+    CurrentEnvelopeSliding = 0;
     TonSlideCount = 0;
     CurrentTonSliding = 0;
-    Ton_Accumulator = 0;
+    TonAccumulator = 0;
     CurrentOnOff = 0;
   }
 
@@ -243,7 +244,7 @@ struct Channel {
   void ResetOrnament(uint8_t pos = 0) { mOrnamentPlayer.Reset(pos); }
 
   const SampleData &GetSampleData() { return mSamplePlayer.Play(); }
-  uint8_t GetOrnamentNote() { return mNote + mOrnamentPlayer.Play(); }
+  uint8_t GetOrnamentNote() { return Note + mOrnamentPlayer.Play(); }
 
   bool IsEnvelopeEnabled() const { return mEnvelope; }
   void EnvelopeEnable() { mEnvelope = true; }
@@ -253,19 +254,19 @@ struct Channel {
   bool mEnabled;
   // Gliss and Portamento
   uint16_t Ton;
-  int16_t TonSlideCount, Ton_Slide_Delay, CurrentTonSliding, Ton_Accumulator, TonSlideStep, TonDelta;
+  int16_t TonSlideCount, TonSlideDelay, CurrentTonSliding, TonAccumulator, TonSlideStep, TonDelta;
   uint8_t SlideToNote;
   bool SimpleGliss;
   // Amplitude
-  int16_t Current_Amplitude_Sliding;
-  uint8_t Amplitude;
+  int8_t CurrentAmplitudeSliding;
+  int8_t Amplitude;
   // Vibrato
   int16_t CurrentOnOff, OnOffDelay, OffOnDelay;
   // Envelope
-  int16_t Current_Envelope_Sliding;
-  bool Envelope_Enabled;
+  int8_t CurrentEnvelopeSliding;
+  bool mEnvelope;
   // Noise
-  int16_t Current_Noise_Sliding;
+  uint8_t CurrentNoiseSliding;
 
  private:
   SamplePlayer mSamplePlayer;
@@ -273,8 +274,7 @@ struct Channel {
   SkipCounter mSkipNotes;
   // Pattern data iterator.
   const uint8_t *mPatternIt;
-  //uint8_t mNote;
-  bool mEnvelope;
+  // uint8_t mNote;
 };
 
 class Player {
@@ -284,8 +284,8 @@ class Player {
   void RunClocks(blip_clk_time_t time);
 
  private:
-  uint8_t mGetAmplitude(uint8_t volume, uint8_t amplitude) const;
-  uint16_t mGetTonePeriod(int8_t tone) const;
+  void mUpdateAmplitude(int8_t &amplitude, uint8_t volume) const;
+  uint16_t mGetNotePeriod(int8_t tone) const;
   void mInit();
   void mSetEnvelope(Channel &chan, uint8_t shape);
   void mGliss(Channel &chan);
@@ -305,7 +305,7 @@ class Player {
   // Pointer to notes period table
   const uint16_t *mNoteTable;
   // Pointer to volume period table
-  const uint8_t *mVolumeTable;
+  const int8_t *mVolumeTable;
   // Current emulation time
   blip_clk_time_t mEmuTime;
   // Module subversion

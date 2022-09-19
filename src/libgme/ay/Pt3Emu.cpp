@@ -29,7 +29,7 @@ static const auto FRAME_RATE = FRAMERATE_SPECTRUM;
 /* PT3 PLAYER */
 
 void Player::mUpdateTables() {
-  static const uint8_t TABLE_VOLUME[][16][16] PROGMEM = {
+  static const int8_t TABLE_VOLUME[][16][16] PROGMEM = {
       // ProTracker v3.3x-v3.4x
       {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01},
@@ -145,12 +145,12 @@ void Player::mUpdateTables() {
     mNoteTable += 96;
 }
 
-inline uint16_t Player::mGetTonePeriod(int8_t tone) const {
+inline uint16_t Player::mGetNotePeriod(int8_t tone) const {
   return pgm_read_word(mNoteTable + ((tone >= 95) ? 95 : ((tone <= 0) ? 0 : tone)));
 }
 
-inline uint8_t Player::mGetAmplitude(uint8_t volume, uint8_t amplitude) const {
-  return pgm_read_byte(mVolumeTable + 16 * volume + amplitude);
+inline void Player::mUpdateAmplitude(int8_t &amplitude, uint8_t volume) const {
+  amplitude = pgm_read_byte(mVolumeTable + 16 * volume + amplitude);
 }
 
 /* PT3 MODULE */
@@ -282,7 +282,7 @@ void Player::mSetEnvelope(Channel &channel, uint8_t shape) {
 void Player::mGliss(Channel &chan) {
   chan.SimpleGliss = true;
   chan.CurrentOnOff = 0;
-  chan.TonSlideCount = chan.Ton_Slide_Delay = chan.PatternCode();
+  chan.TonSlideCount = chan.TonSlideDelay = chan.PatternCode();
   chan.TonSlideStep = chan.PatternCodeLE16();
   if ((chan.TonSlideCount == 0) && (mModule->GetSubVersion() >= 7))
     chan.TonSlideCount++;
@@ -291,13 +291,13 @@ void Player::mGliss(Channel &chan) {
 void Player::mPortamento(Channel &chan, uint8_t prevNote, int16_t prevSliding) {
   chan.SimpleGliss = false;
   chan.CurrentOnOff = 0;
-  chan.TonSlideCount = chan.Ton_Slide_Delay = chan.PatternCode();
+  chan.TonSlideCount = chan.TonSlideDelay = chan.PatternCode();
   chan.SkipPatternCode(2);
   int16_t step = chan.PatternCodeLE16();
   if (step < 0)
     step = -step;
   chan.TonSlideStep = step;
-  chan.TonDelta = mGetTonePeriod(chan.Note) - mGetTonePeriod(prevNote);
+  chan.TonDelta = mGetNotePeriod(chan.Note) - mGetNotePeriod(prevNote);
   chan.SlideToNote = chan.Note;
   chan.Note = prevNote;
   if (mModule->GetSubVersion() >= 6)
@@ -422,31 +422,90 @@ inline void Player::mAdvancePosition() {
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
+void SampleData::NoiseSlide(uint8_t &step, uint8_t &store) const {
+  uint8_t tmp = mData[0] / 2 % 32;
+  step = tmp + store;
+  if (mData[1] & 32)
+    store = step;
+}
+
+void SampleData::EnvelopeSlide(int8_t &step, int8_t &store) const {
+  int8_t tmp = mData[0] >> 1;
+  tmp = (tmp & 16) ? (tmp | ~15) : (tmp & 15);
+  tmp += store;
+  step += tmp;
+  if (mData[1] & 32)
+    store = tmp;
+}
+
+void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
+  if (mVolumeSlide()) {
+    if (mVolumeSlideUp()) {
+      if (store < 15)
+        store++;
+    } else if (store > -15) {
+      store--;
+    }
+  }
+  value = mVolume() + store;
+  if (value > 15)
+    value = 15;
+  else if (value < 0)
+    value = 0;
+}
+
 void Player::mPlaySamples() {
+  int8_t AddToEnv = 0;
   uint8_t mixer = 0;
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx, mixer >>= 1) {
-    Channel &channel = mChannels[idx];
-
-    if (!channel.IsEnabled()) {
-      mixer |= 64 | 8;
-      continue;
+    Channel &chan = mChannels[idx];
+    // unsigned char j, b1, b0;
+    if (chan.IsEnabled()) {
+      const SampleData &sample = chan.GetSampleData();
+      chan.Ton = sample.Transposition();
+      chan.Ton += chan.TonAccumulator;
+      // b0 = module[chan.SamplePointer + chan.Position_In_Sample * 4];
+      // b1 = module[chan.SamplePointer + chan.Position_In_Sample * 4 + 1];
+      if (sample.ToneStore())
+        chan.TonAccumulator = chan.Ton;
+      chan.Ton = (mGetNotePeriod(chan.GetOrnamentNote()) + chan.Ton + chan.CurrentTonSliding) & 0xfff;
+      if (chan.TonSlideCount > 0) {
+        chan.TonSlideCount--;
+        if (chan.TonSlideCount == 0) {
+          chan.CurrentTonSliding += chan.TonSlideStep;
+          chan.TonSlideCount = chan.TonSlideDelay;
+          if (!chan.SimpleGliss) {
+            if (((chan.TonSlideStep < 0) && (chan.CurrentTonSliding <= chan.TonDelta)) ||
+                ((chan.TonSlideStep >= 0) && (chan.CurrentTonSliding >= chan.TonDelta))) {
+              chan.Note = chan.SlideToNote;
+              chan.TonSlideCount = 0;
+              chan.CurrentTonSliding = 0;
+            }
+          }
+        }
+      }
+      sample.VolumeSlide(chan.Amplitude, chan.CurrentAmplitudeSliding);
+      mUpdateAmplitude(chan.Amplitude, chan.Volume);
+      if (chan.IsEnvelopeEnabled() && !sample.EnvelopeMask())
+        chan.Amplitude = chan.Amplitude | 16;
+      if (sample.NoiseMask())
+        sample.EnvelopeSlide(AddToEnv, chan.CurrentEnvelopeSliding);
+      else
+        sample.NoiseSlide(mAddToNoise, chan.CurrentNoiseSliding);
+      mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
+    } else {
+      chan.Amplitude = 0;
     }
-
-    auto &sample = channel.GetSampleData();
-
-    if (!sample.NoiseMask())
-      mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, sample.Noise());
-
-    mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
-
-    const uint8_t note = channel.GetOrnamentNote() + mPositionTransposition();
-    const uint16_t period = (mGetTonePeriod(note) + sample.Transposition()) % 4096;
-
-    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, period % 256);
-    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, period / 256);
-    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, sample.Volume() + 16 * channel.IsEnvelopeEnabled());
-
-    channel.AdvanceSample();
+    if (chan.CurrentOnOff > 0) {
+      chan.CurrentOnOff--;
+      if (chan.CurrentOnOff == 0) {
+        chan.mEnabled = !chan.mEnabled;
+        if (chan.mEnabled)
+          chan.CurrentOnOff = chan.OnOffDelay;
+        else
+          chan.CurrentOnOff = chan.OffOnDelay;
+      }
+    }
   }
   mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
 }
