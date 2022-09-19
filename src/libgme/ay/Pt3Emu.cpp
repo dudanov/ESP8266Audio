@@ -260,6 +260,7 @@ blargg_err_t Pt3Emu::mStartTrack(int track) {
 
 void Player::mInit() {
   mApu.Reset();
+  mUpdateTables();
   mDelay = mModule->GetDelay();
   mDelayCounter = 1;
   mPositionIt = mModule->GetPositionBegin();
