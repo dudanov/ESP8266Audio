@@ -455,56 +455,76 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
 }
 
 void Player::mPlaySamples() {
-  int8_t AddToEnv = 0;
+  int8_t envAdd = 0;
   uint8_t mixer = 0;
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx, mixer >>= 1) {
-    Channel &chan = mChannels[idx];
-    // unsigned char j, b1, b0;
-    if (chan.IsEnabled()) {
-      const SampleData &sample = chan.GetSampleData();
-      chan.Ton = sample.Transposition() + chan.TonAccumulator;
-      if (sample.ToneStore())
-        chan.TonAccumulator = chan.Ton;
-      chan.Ton = (chan.Ton + mGetNotePeriod(chan.GetOrnamentNote()) + chan.CurrentTonSliding) % 4096;
-      if (chan.TonSlideCount > 0) {
-        chan.TonSlideCount--;
-        if (chan.TonSlideCount == 0) {
-          chan.CurrentTonSliding += chan.TonSlideStep;
-          chan.TonSlideCount = chan.TonSlideDelay;
-          if (!chan.SimpleGliss) {
-            if (((chan.TonSlideStep < 0) && (chan.CurrentTonSliding <= chan.TonDelta)) ||
-                ((chan.TonSlideStep >= 0) && (chan.CurrentTonSliding >= chan.TonDelta))) {
-              chan.Note = chan.SlideToNote;
-              chan.TonSlideCount = 0;
-              chan.CurrentTonSliding = 0;
-            }
+    Channel &channel = mChannels[idx];
+
+    if (!channel.IsEnabled()) {
+      channel.RunVibrato();
+      mixer |= 64 | 8;
+      continue;
+    }
+
+    const SampleData &sample = channel.GetSampleData();
+
+    channel.Ton = sample.Transposition() + channel.TonAccumulator;
+
+    if (sample.ToneStore())
+      channel.TonAccumulator = channel.Ton;
+
+    channel.Ton = (channel.Ton + mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentTonSliding) % 4096;
+
+    if (channel.TonSlideCount > 0) {
+      channel.TonSlideCount--;
+      if (channel.TonSlideCount == 0) {
+        channel.CurrentTonSliding += channel.TonSlideStep;
+        channel.TonSlideCount = channel.TonSlideDelay;
+        if (!channel.SimpleGliss) {
+          if (((channel.TonSlideStep < 0) && (channel.CurrentTonSliding <= channel.TonDelta)) ||
+              ((channel.TonSlideStep >= 0) && (channel.CurrentTonSliding >= channel.TonDelta))) {
+            channel.Note = channel.SlideToNote;
+            channel.TonSlideCount = 0;
+            channel.CurrentTonSliding = 0;
           }
         }
       }
-      sample.VolumeSlide(chan.Amplitude, chan.CurrentAmplitudeSliding);
-      mUpdateAmplitude(chan.Amplitude, chan.Volume);
-      if (chan.IsEnvelopeEnabled() && !sample.EnvelopeMask())
-        chan.Amplitude |= 16;
-      if (sample.NoiseMask())
-        sample.EnvelopeSlide(AddToEnv, chan.CurrentEnvelopeSliding);
-      else
-        sample.NoiseSlide(mAddToNoise, chan.CurrentNoiseSliding);
-      mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
-    } else {
-      chan.Amplitude = 0;
     }
-    if (chan.CurrentOnOff > 0) {
-      chan.CurrentOnOff--;
-      if (chan.CurrentOnOff == 0) {
-        chan.mEnabled = !chan.mEnabled;
-        if (chan.mEnabled)
-          chan.CurrentOnOff = chan.OnOffDelay;
-        else
-          chan.CurrentOnOff = chan.OffOnDelay;
-      }
+
+    int8_t amplitude = 0;
+
+    sample.VolumeSlide(amplitude, channel.CurrentAmplitudeSliding);
+    mUpdateAmplitude(amplitude, channel.Volume);
+
+    if (channel.IsEnvelopeEnabled() && !sample.EnvelopeMask())
+      amplitude |= 16;
+
+    if (!sample.NoiseMask())
+      sample.NoiseSlide(mAddToNoise, channel.CurrentNoiseSliding);
+    else
+      sample.EnvelopeSlide(envAdd, channel.CurrentEnvelopeSliding);
+
+    mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, amplitude);
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, channel.Ton % 256);
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, channel.Ton / 256);
+
+    channel.RunVibrato();
+  }
+
+  const uint16_t envelope = mEnvelopeBase + envAdd + mCurEnvSlide;
+  mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
+  mApu.Write(mEmuTime, AyApu::AY_ENV_FINE, envelope % 256);
+  mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, envelope / 256);
+  mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, (mNoiseBase + mAddToNoise) % 32);
+
+  if (mCurEnvDelay > 0) {
+    mCurEnvDelay--;
+    if (mCurEnvDelay == 0) {
+      mCurEnvDelay = mEnvDelay;
+      mCurEnvSlide += mEnvSlideAdd;
     }
   }
-  mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
 }
 
 blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {

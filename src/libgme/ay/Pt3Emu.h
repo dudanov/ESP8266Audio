@@ -250,6 +250,11 @@ struct Channel {
   void EnvelopeEnable() { mEnvelope = true; }
   void EnvelopeDisable() { mEnvelope = false; }
 
+  void RunVibrato() {
+    if (CurrentOnOff > 0 && --CurrentOnOff == 0)
+      CurrentOnOff = (mEnabled = !mEnabled) ? OnOffDelay : OffOnDelay;
+  }
+
   uint8_t Volume, Note;
   bool mEnabled;
   // Gliss and Portamento
@@ -259,7 +264,6 @@ struct Channel {
   bool SimpleGliss;
   // Amplitude
   int8_t CurrentAmplitudeSliding;
-  int8_t Amplitude;
   // Vibrato
   int16_t CurrentOnOff, OnOffDelay, OffOnDelay;
   // Envelope
@@ -314,9 +318,9 @@ class Player {
   uint8_t mDelayCounter;
 
   uint16_t mEnvelopeBase;
-  short mCurEnvSlide, mEnvSlideAdd;
-  signed char mCurEnvDelay, mEnvDelay;
-  unsigned char mNoiseBase, mDelay, mAddToNoise;
+  int16_t mCurEnvSlide, mEnvSlideAdd;
+  int8_t mCurEnvDelay, mEnvDelay;
+  uint8_t mNoiseBase, mDelay, mAddToNoise;
 };
 
 class Pt3Emu : public ClassicEmu {
