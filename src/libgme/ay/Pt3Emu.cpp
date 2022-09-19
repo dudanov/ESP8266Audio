@@ -269,7 +269,7 @@ void Player::mInit() {
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
-    c.SetSample(mModule->GetSample(1));
+    //c.SetSample(mModule->GetSample(1));
     c.SetOrnament(mModule->GetOrnament(0));
     c.Volume = 15;
     c.SetSkipLocations(1);
