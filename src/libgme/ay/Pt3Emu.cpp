@@ -421,10 +421,8 @@ void Player::mPlayPattern() {
 }
 
 inline bool SkipCounter::RunTick() {
-  if (mSkipCounter > 0) {
-    mSkipCounter--;
+  if (--mSkipCounter > 0)
     return true;
-  }
   mSkipCounter = mSkipCount;
   return false;
 }
@@ -517,7 +515,7 @@ void Player::mPlaySamples() {
   mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
   mApu.Write(mEmuTime, AyApu::AY_ENV_FINE, envelope % 256);
   mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, envelope / 256);
-  //mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, (mNoiseBase + mAddToNoise) % 32);
+  mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, (mNoiseBase + mAddToNoise) % 32);
 
   mRunSlideEnvelope();
 }
