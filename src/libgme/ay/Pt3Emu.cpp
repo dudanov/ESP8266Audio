@@ -205,7 +205,7 @@ Pt3Emu::Pt3Emu() {
 Pt3Emu::~Pt3Emu() {}
 
 blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, int track) const {
-  out->length = mModule->CountSongLengthMs();
+  // out->length = mModule->CountSongLengthMs();
   return nullptr;
 }
 
@@ -216,14 +216,14 @@ struct Pt3File : GmeInfo {
 
   blargg_err_t mLoad(const uint8_t *data, long size) override {
     mModule = reinterpret_cast<const PT3Module *>(data);
-    if (!mModule->CheckIntegrity(size))
-      return gme_wrong_file_type;
+    // if (!mModule->CheckIntegrity(size))
+    // return gme_wrong_file_type;
     mSetTrackNum(1);
     return nullptr;
   }
 
   blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override {
-    out->length = mModule->CountSongLengthMs();
+    // out->length = mModule->CountSongLengthMs();
     return nullptr;
   }
 };
@@ -231,18 +231,19 @@ struct Pt3File : GmeInfo {
 // Setup
 
 blargg_err_t Pt3Emu::mLoad(const uint8_t *data, long size) {
-  mModule = reinterpret_cast<const PT3Module *>(data);
-  if (!mModule->CheckIntegrity(size))
+  auto module = PT3Module::GetModule(data, size);
+  if (module == nullptr)
     return gme_wrong_file_type;
   mSetTrackNum(1);
   mSetChannelsNumber(AyApu::OSCS_NUM);
-  mApu.SetVolume(mGetGain());
+  mPlayer.SetVolume(mGetGain());
+  mPlayer.Load(module);
   return mSetupBuffer(CLOCK_RATE);
 }
 
-void Pt3Emu::mUpdateEq(BlipEq const &eq) { mApu.SetTrebleEq(eq); }
+void Pt3Emu::mUpdateEq(BlipEq const &eq) {}  // mApu.SetTrebleEq(eq); }
 
-void Pt3Emu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) { mApu.SetOscOutput(i, center); }
+void Pt3Emu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) { mPlayer.SetOscOutput(i, center); }
 
 // Emulation
 
@@ -258,15 +259,15 @@ blargg_err_t Pt3Emu::mStartTrack(int track) {
 
 void Player::mInit() {
   mApu.Reset();
-  mEmuTime = 0;
+  mDelay = mModule->GetDelay();
   mDelayCounter = 1;
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
-  auto pattern = mModule->GetPatternIndex(mPositionIt->pattern);
+  auto pattern = mModule->GetPattern(mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
-    c.SetPatternData(mModule->GetPattern(pattern, idx));
-    c.SetOrnament(mModule, 0);
+    c.SetPatternData(mModule->GetPatternData(pattern, idx));
+    c.SetOrnament(mModule->GetOrnament(0));
   }
 }
 
@@ -279,7 +280,7 @@ void Player::mSetEnvelope(Channel &channel, uint8_t shape) {
   mCurEnvDelay = 0;
 }
 
-void Player::mGliss(Channel &channel) {
+void Player::mSetupGlissEffect(Channel &channel) {
   channel.SimpleGliss = true;
   channel.CurrentOnOff = 0;
   channel.TonSlideCount = channel.TonSlideDelay = channel.PatternCode();
@@ -288,7 +289,7 @@ void Player::mGliss(Channel &channel) {
     channel.TonSlideCount++;
 }
 
-void Player::mPortamento(Channel &channel, uint8_t prevNote, int16_t prevSliding) {
+void Player::mSetupPortamentoEffect(Channel &channel, uint8_t prevNote, int16_t prevSliding) {
   channel.SimpleGliss = false;
   channel.CurrentOnOff = 0;
   channel.TonSlideCount = channel.TonSlideDelay = channel.PatternCode();
@@ -307,7 +308,12 @@ void Player::mPortamento(Channel &channel, uint8_t prevNote, int16_t prevSliding
 }
 
 void Player::mPlayPattern() {
+  if (--mDelayCounter > 0)
+    return;
+  mDelayCounter = mDelay;
   for (Channel &channel : mChannels) {
+    if (channel.IsEmptyLocation())
+      continue;
     uint8_t counter = 0, cmd1 = 0, cmd2 = 0, cmd3 = 0, cmd4 = 0, cmd5 = 0, cmd8 = 0, cmd9 = 0;
     const uint8_t prevNote = channel.Note;
     const int16_t prevSliding = channel.CurrentTonSliding;
@@ -337,7 +343,7 @@ void Player::mPlayPattern() {
         mSetEnvelope(channel, val - 0xB1);
       } else if (val == 0xB1) {
         // Set number of empty locations after the subsequent code.
-        channel.SetSkipNotes(channel.PatternCode());
+        channel.SetSkipLocations(channel.PatternCode());
       } else if (val == 0xB0) {
         // Disable envelope.
         channel.EnvelopeDisable();
@@ -384,21 +390,28 @@ void Player::mPlayPattern() {
 
     for (; counter > 0; --counter) {
       if (counter == cmd1) {
-        mGliss(channel);
+        // Gliss Effect
+        mSetupGlissEffect(channel);
       } else if (counter == cmd2) {
-        mPortamento(channel, prevNote, prevSliding);
+        // Portamento Effect
+        mSetupPortamentoEffect(channel, prevNote, prevSliding);
       } else if (counter == cmd3) {
+        // Play Sample From Custom Position
         channel.ResetSample(channel.PatternCode());
       } else if (counter == cmd4) {
+        // Play Ornament From Custom Position
         channel.ResetOrnament(channel.PatternCode());
       } else if (counter == cmd5) {
+        // Vibrate Effect
         channel.CurrentOnOff = channel.OnOffDelay = channel.PatternCode();
         channel.OffOnDelay = channel.PatternCode();
         channel.CurrentTonSliding = channel.TonSlideCount = 0;
       } else if (counter == cmd8) {
+        // Slide Envelope Effect
         mCurEnvDelay = mEnvDelay = channel.PatternCode();
         mEnvSlideAdd = channel.PatternCodeLE16();
       } else if (counter == cmd9) {
+        // Song Delay
         mDelay = channel.PatternCode();
       }
     }
@@ -474,22 +487,7 @@ void Player::mPlaySamples() {
       channel.TonAccumulator = channel.Ton;
 
     channel.Ton = (channel.Ton + mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentTonSliding) % 4096;
-
-    if (channel.TonSlideCount > 0) {
-      channel.TonSlideCount--;
-      if (channel.TonSlideCount == 0) {
-        channel.CurrentTonSliding += channel.TonSlideStep;
-        channel.TonSlideCount = channel.TonSlideDelay;
-        if (!channel.SimpleGliss) {
-          if (((channel.TonSlideStep < 0) && (channel.CurrentTonSliding <= channel.TonDelta)) ||
-              ((channel.TonSlideStep >= 0) && (channel.CurrentTonSliding >= channel.TonDelta))) {
-            channel.Note = channel.SlideToNote;
-            channel.TonSlideCount = 0;
-            channel.CurrentTonSliding = 0;
-          }
-        }
-      }
-    }
+    channel.RunGlissPortamento();
 
     int8_t amplitude = 0;
 
@@ -505,6 +503,7 @@ void Player::mPlaySamples() {
       sample.EnvelopeSlide(envelopAddition, channel.EnvelopeSlideStore);
 
     mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
+
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, amplitude);
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, channel.Ton % 256);
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, channel.Ton / 256);
@@ -518,22 +517,15 @@ void Player::mPlaySamples() {
   mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, envelope / 256);
   mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, (mNoiseBase + mAddToNoise) % 32);
 
-  if (mCurEnvDelay > 0 && --mCurEnvDelay == 0) {
-    mCurEnvDelay = mEnvDelay;
-    mCurEnvSlide += mEnvSlideAdd;
-  }
+  mRunSlideEnvelope();
 }
 
 blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
-    if (--mDelayCounter == 0) {
-      mDelayCounter = mModule->GetDelay();
-      mPlayPattern();
-    }
-    mPlaySamples();
+    mPlayer.RunUntil(mEmuTime);
   }
   mEmuTime -= duration;
-  mApu.EndFrame(duration);
+  mPlayer.EndFrame(duration);
   return nullptr;
 }
 

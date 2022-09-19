@@ -222,7 +222,8 @@ struct Channel {
     return value;
   }
 
-  void SetSkipNotes(uint8_t skip) { mSkipNotes.SetSkipCount(skip); }
+  void SetSkipLocations(uint8_t skip) { mSkipNotes.SetSkipCount(skip); }
+  bool IsEmptyLocation() { return mSkipNotes.RunTick(); }
 
   void Reset() {
     mSamplePlayer.Reset();
@@ -255,6 +256,21 @@ struct Channel {
       CurrentOnOff = (mEnabled = !mEnabled) ? OnOffDelay : OffOnDelay;
   }
 
+  void RunGlissPortamento() {
+    if (TonSlideCount == 0 || --TonSlideCount > 0)
+      return;
+    CurrentTonSliding += TonSlideStep;
+    TonSlideCount = TonSlideDelay;
+    if (SimpleGliss)
+      return;
+    if (((TonSlideStep < 0) && (CurrentTonSliding <= TonDelta)) ||
+        ((TonSlideStep >= 0) && (CurrentTonSliding >= TonDelta))) {
+      Note = SlideToNote;
+      TonSlideCount = 0;
+      CurrentTonSliding = 0;
+    }
+  }
+
   uint8_t Volume, Note;
   bool mEnabled;
   // Gliss and Portamento
@@ -283,20 +299,35 @@ struct Channel {
 
 class Player {
  public:
+  void Load(const PT3Module *module) {
+    mModule = module;
+    mInit();
+  }
   void SetVolume(double volume) { mApu.SetVolume(volume); }
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
-  void RunClocks(blip_clk_time_t time);
+  void RunUntil(blip_clk_time_t time) {
+    mEmuTime = time;
+    mPlayPattern();
+    mPlaySamples();
+  }
+  void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
 
  private:
   void mUpdateAmplitude(int8_t &amplitude, uint8_t volume) const;
   uint16_t mGetNotePeriod(int8_t tone) const;
   void mInit();
   void mSetEnvelope(Channel &chan, uint8_t shape);
-  void mGliss(Channel &chan);
-  void mPortamento(Channel &chan, uint8_t prevNote, int16_t prevSliding);
+  void mSetupGlissEffect(Channel &chan);
+  void mSetupPortamentoEffect(Channel &chan, uint8_t prevNote, int16_t prevSliding);
   void mUpdateTables();
   void mPlayPattern();
   void mPlaySamples();
+  void mRunSlideEnvelope() {
+    if (mCurEnvDelay == 0 || --mCurEnvDelay > 0)
+      return;
+    mCurEnvDelay = mEnvDelay;
+    mCurEnvSlide += mEnvSlideAdd;
+  }
   void mAdvancePosition();
   // AY APU Emulator
   AyApu mApu;
@@ -313,14 +344,13 @@ class Player {
   // Current emulation time
   blip_clk_time_t mEmuTime;
   // Module subversion
-  uint8_t mSubVersion;
-  // Global song delay counter
-  uint8_t mDelayCounter;
-
+  // uint8_t mSubVersion;
   uint16_t mEnvelopeBase;
   int16_t mCurEnvSlide, mEnvSlideAdd;
-  int8_t mCurEnvDelay, mEnvDelay;
-  uint8_t mNoiseBase, mDelay, mAddToNoise;
+  uint8_t mCurEnvDelay, mEnvDelay;
+  uint8_t mNoiseBase, mAddToNoise;
+  // Global song delay counter
+  uint8_t mDelayCounter, mDelay;
 };
 
 class Pt3Emu : public ClassicEmu {
