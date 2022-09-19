@@ -279,90 +279,90 @@ void Player::mSetEnvelope(Channel &channel, uint8_t shape) {
   mCurEnvDelay = 0;
 }
 
-void Player::mGliss(Channel &chan) {
-  chan.SimpleGliss = true;
-  chan.CurrentOnOff = 0;
-  chan.TonSlideCount = chan.TonSlideDelay = chan.PatternCode();
-  chan.TonSlideStep = chan.PatternCodeLE16();
-  if ((chan.TonSlideCount == 0) && (mModule->GetSubVersion() >= 7))
-    chan.TonSlideCount++;
+void Player::mGliss(Channel &channel) {
+  channel.SimpleGliss = true;
+  channel.CurrentOnOff = 0;
+  channel.TonSlideCount = channel.TonSlideDelay = channel.PatternCode();
+  channel.TonSlideStep = channel.PatternCodeLE16();
+  if ((channel.TonSlideCount == 0) && (mModule->GetSubVersion() >= 7))
+    channel.TonSlideCount++;
 }
 
-void Player::mPortamento(Channel &chan, uint8_t prevNote, int16_t prevSliding) {
-  chan.SimpleGliss = false;
-  chan.CurrentOnOff = 0;
-  chan.TonSlideCount = chan.TonSlideDelay = chan.PatternCode();
-  chan.SkipPatternCode(2);
-  int16_t step = chan.PatternCodeLE16();
+void Player::mPortamento(Channel &channel, uint8_t prevNote, int16_t prevSliding) {
+  channel.SimpleGliss = false;
+  channel.CurrentOnOff = 0;
+  channel.TonSlideCount = channel.TonSlideDelay = channel.PatternCode();
+  channel.SkipPatternCode(2);
+  int16_t step = channel.PatternCodeLE16();
   if (step < 0)
     step = -step;
-  chan.TonSlideStep = step;
-  chan.TonDelta = mGetNotePeriod(chan.Note) - mGetNotePeriod(prevNote);
-  chan.SlideToNote = chan.Note;
-  chan.Note = prevNote;
+  channel.TonSlideStep = step;
+  channel.TonDelta = mGetNotePeriod(channel.Note) - mGetNotePeriod(prevNote);
+  channel.SlideToNote = channel.Note;
+  channel.Note = prevNote;
   if (mModule->GetSubVersion() >= 6)
-    chan.CurrentTonSliding = prevSliding;
-  if ((chan.TonDelta - chan.CurrentTonSliding) < 0)
-    chan.TonSlideStep = -chan.TonSlideStep;
+    channel.CurrentTonSliding = prevSliding;
+  if ((channel.TonDelta - channel.CurrentTonSliding) < 0)
+    channel.TonSlideStep = -channel.TonSlideStep;
 }
 
 void Player::mPlayPattern() {
-  for (Channel &chan : mChannels) {
+  for (Channel &channel : mChannels) {
     uint8_t counter = 0, cmd1 = 0, cmd2 = 0, cmd3 = 0, cmd4 = 0, cmd5 = 0, cmd8 = 0, cmd9 = 0;
-    uint8_t prevNote = chan.Note;
-    int16_t prevSliding = chan.CurrentTonSliding;
+    const uint8_t prevNote = channel.Note;
+    const int16_t prevSliding = channel.CurrentTonSliding;
     while (true) {
-      const uint8_t val = chan.PatternCode();
+      const uint8_t val = channel.PatternCode();
       if (val >= 0xF0) {
         // Set ornament and sample. Envelope disable.
-        chan.SetOrnament(mModule->GetOrnament(val - 0xF0));
-        chan.SetSample(mModule->GetSample(chan.PatternCode() / 2));
-        chan.EnvelopeDisable();
+        channel.SetOrnament(mModule->GetOrnament(val - 0xF0));
+        channel.SetSample(mModule->GetSample(channel.PatternCode() / 2));
+        channel.EnvelopeDisable();
       } else if (val >= 0xD1) {
         // Set sample.
-        chan.SetSample(mModule->GetSample(val - 0xD0));
+        channel.SetSample(mModule->GetSample(val - 0xD0));
       } else if (val == 0xD0) {
         // Empty location. End position.
         break;
       } else if (val >= 0xC1) {
         // Set volume.
-        chan.Volume = val - 0xC0;
+        channel.Volume = val - 0xC0;
       } else if (val == 0xC0) {
         // Pause. End position.
-        chan.Disable();
-        chan.Reset();
+        channel.Disable();
+        channel.Reset();
         break;
       } else if (val >= 0xB2) {
         // Set envelope.
-        mSetEnvelope(chan, val - 0xB1);
+        mSetEnvelope(channel, val - 0xB1);
       } else if (val == 0xB1) {
         // Set number of empty locations after the subsequent code.
-        chan.SetSkipNotes(chan.PatternCode());
+        channel.SetSkipNotes(channel.PatternCode());
       } else if (val == 0xB0) {
         // Disable envelope.
-        chan.EnvelopeDisable();
-        chan.ResetOrnament();
+        channel.EnvelopeDisable();
+        channel.ResetOrnament();
       } else if (val >= 0x50) {
         // Set note in semitones. End position.
-        chan.SetNote(val - 0x50);
-        chan.Reset();
-        chan.Enable();
+        channel.SetNote(val - 0x50);
+        channel.Reset();
+        channel.Enable();
         break;
       } else if (val >= 0x40) {
         // Set ornament.
-        chan.SetOrnament(mModule->GetOrnament(val - 0x40));
+        channel.SetOrnament(mModule->GetOrnament(val - 0x40));
       } else if (val >= 0x20) {
         // Set noise offset (occurs only in channel B).
         mNoiseBase = val - 0x20;
       } else if (val >= 0x11) {
         // Set envelope and sample.
-        mSetEnvelope(chan, val - 0x10);
-        chan.SetSample(mModule->GetSample(chan.PatternCode() / 2));
+        mSetEnvelope(channel, val - 0x10);
+        channel.SetSample(mModule->GetSample(channel.PatternCode() / 2));
       } else if (val == 0x10) {
         // Disable envelope, reset ornament and set sample.
-        chan.EnvelopeDisable();
-        chan.ResetOrnament();
-        chan.SetSample(mModule->GetSample(chan.PatternCode() / 2));
+        channel.EnvelopeDisable();
+        channel.ResetOrnament();
+        channel.SetSample(mModule->GetSample(channel.PatternCode() / 2));
       } else if (val == 0x09) {
         cmd9 = ++counter;
       } else if (val == 0x08) {
@@ -384,22 +384,22 @@ void Player::mPlayPattern() {
 
     for (; counter > 0; --counter) {
       if (counter == cmd1) {
-        mGliss(chan);
+        mGliss(channel);
       } else if (counter == cmd2) {
-        mPortamento(chan, prevNote, prevSliding);
+        mPortamento(channel, prevNote, prevSliding);
       } else if (counter == cmd3) {
-        chan.ResetSample(chan.PatternCode());
+        channel.ResetSample(channel.PatternCode());
       } else if (counter == cmd4) {
-        chan.ResetOrnament(chan.PatternCode());
+        channel.ResetOrnament(channel.PatternCode());
       } else if (counter == cmd5) {
-        chan.CurrentOnOff = chan.OnOffDelay = chan.PatternCode();
-        chan.OffOnDelay = chan.PatternCode();
-        chan.CurrentTonSliding = chan.TonSlideCount = 0;
+        channel.CurrentOnOff = channel.OnOffDelay = channel.PatternCode();
+        channel.OffOnDelay = channel.PatternCode();
+        channel.CurrentTonSliding = channel.TonSlideCount = 0;
       } else if (counter == cmd8) {
-        mCurEnvDelay = mEnvDelay = chan.PatternCode();
-        mEnvSlideAdd = chan.PatternCodeLE16();
+        mCurEnvDelay = mEnvDelay = channel.PatternCode();
+        mEnvSlideAdd = channel.PatternCodeLE16();
       } else if (counter == cmd9) {
-        mDelay = chan.PatternCode();
+        mDelay = channel.PatternCode();
       }
     }
   }
@@ -455,7 +455,7 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
 }
 
 void Player::mPlaySamples() {
-  int8_t envAdd = 0;
+  int8_t envelopAddition = 0;
   uint8_t mixer = 0;
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx, mixer >>= 1) {
     Channel &channel = mChannels[idx];
@@ -500,9 +500,9 @@ void Player::mPlaySamples() {
       amplitude |= 16;
 
     if (!sample.NoiseMask())
-      sample.NoiseSlide(mAddToNoise, channel.CurrentNoiseSliding);
+      sample.NoiseSlide(mAddToNoise, channel.NoiseSlideStore);
     else
-      sample.EnvelopeSlide(envAdd, channel.CurrentEnvelopeSliding);
+      sample.EnvelopeSlide(envelopAddition, channel.EnvelopeSlideStore);
 
     mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, amplitude);
@@ -512,18 +512,15 @@ void Player::mPlaySamples() {
     channel.RunVibrato();
   }
 
-  const uint16_t envelope = mEnvelopeBase + envAdd + mCurEnvSlide;
+  const uint16_t envelope = mEnvelopeBase + envelopAddition + mCurEnvSlide;
   mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
   mApu.Write(mEmuTime, AyApu::AY_ENV_FINE, envelope % 256);
   mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, envelope / 256);
   mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, (mNoiseBase + mAddToNoise) % 32);
 
-  if (mCurEnvDelay > 0) {
-    mCurEnvDelay--;
-    if (mCurEnvDelay == 0) {
-      mCurEnvDelay = mEnvDelay;
-      mCurEnvSlide += mEnvSlideAdd;
-    }
+  if (mCurEnvDelay > 0 && --mCurEnvDelay == 0) {
+    mCurEnvDelay = mEnvDelay;
+    mCurEnvSlide += mEnvSlideAdd;
   }
 }
 

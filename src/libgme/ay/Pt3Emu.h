@@ -230,8 +230,8 @@ struct Channel {
     // ResetSample();
     // ResetOrnament();
     CurrentAmplitudeSliding = 0;
-    CurrentNoiseSliding = 0;
-    CurrentEnvelopeSliding = 0;
+    NoiseSlideStore = 0;
+    EnvelopeSlideStore = 0;
     TonSlideCount = 0;
     CurrentTonSliding = 0;
     TonAccumulator = 0;
@@ -267,10 +267,10 @@ struct Channel {
   // Vibrato
   int16_t CurrentOnOff, OnOffDelay, OffOnDelay;
   // Envelope
-  int8_t CurrentEnvelopeSliding;
+  int8_t EnvelopeSlideStore;
   bool mEnvelope;
   // Noise
-  uint8_t CurrentNoiseSliding;
+  uint8_t NoiseSlideStore;
 
  private:
   SamplePlayer mSamplePlayer;
