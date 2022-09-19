@@ -43,8 +43,8 @@ struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
   bool EnvelopeMask() const { return mData[0] & 1; }
-  void NoiseSlide(uint8_t &step, uint8_t &store) const;
-  void EnvelopeSlide(int8_t &step, int8_t &store) const;
+  void NoiseSlide(uint8_t &value, uint8_t &store) const;
+  void EnvelopeSlide(int8_t &value, int8_t &store) const;
   void VolumeSlide(int8_t &value, int8_t &store) const;
   bool ToneMask() const { return mData[1] & 0x10; }
   bool ToneStore() const { return mData[1] & 0x40; }

@@ -422,18 +422,18 @@ inline void Player::mAdvancePosition() {
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
-void SampleData::NoiseSlide(uint8_t &step, uint8_t &store) const {
+void SampleData::NoiseSlide(uint8_t &value, uint8_t &store) const {
   uint8_t tmp = mData[0] / 2 % 32;
-  step = tmp + store;
+  value = tmp + store;
   if (mData[1] & 32)
-    store = step;
+    store = value;
 }
 
-void SampleData::EnvelopeSlide(int8_t &step, int8_t &store) const {
+void SampleData::EnvelopeSlide(int8_t &value, int8_t &store) const {
   int8_t tmp = mData[0] >> 1;
   tmp = (tmp & 16) ? (tmp | ~15) : (tmp & 15);
   tmp += store;
-  step += tmp;
+  value += tmp;
   if (mData[1] & 32)
     store = tmp;
 }
@@ -462,13 +462,10 @@ void Player::mPlaySamples() {
     // unsigned char j, b1, b0;
     if (chan.IsEnabled()) {
       const SampleData &sample = chan.GetSampleData();
-      chan.Ton = sample.Transposition();
-      chan.Ton += chan.TonAccumulator;
-      // b0 = module[chan.SamplePointer + chan.Position_In_Sample * 4];
-      // b1 = module[chan.SamplePointer + chan.Position_In_Sample * 4 + 1];
+      chan.Ton = sample.Transposition() + chan.TonAccumulator;
       if (sample.ToneStore())
         chan.TonAccumulator = chan.Ton;
-      chan.Ton = (mGetNotePeriod(chan.GetOrnamentNote()) + chan.Ton + chan.CurrentTonSliding) & 0xfff;
+      chan.Ton = (chan.Ton + mGetNotePeriod(chan.GetOrnamentNote()) + chan.CurrentTonSliding) % 4096;
       if (chan.TonSlideCount > 0) {
         chan.TonSlideCount--;
         if (chan.TonSlideCount == 0) {
@@ -487,7 +484,7 @@ void Player::mPlaySamples() {
       sample.VolumeSlide(chan.Amplitude, chan.CurrentAmplitudeSliding);
       mUpdateAmplitude(chan.Amplitude, chan.Volume);
       if (chan.IsEnvelopeEnabled() && !sample.EnvelopeMask())
-        chan.Amplitude = chan.Amplitude | 16;
+        chan.Amplitude |= 16;
       if (sample.NoiseMask())
         sample.EnvelopeSlide(AddToEnv, chan.CurrentEnvelopeSliding);
       else
