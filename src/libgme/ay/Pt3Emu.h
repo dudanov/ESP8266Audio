@@ -299,10 +299,8 @@ struct Channel {
 
 class Player {
  public:
-  void Load(const PT3Module *module) {
-    mModule = module;
-    mInit();
-  }
+  void Load(const PT3Module *module) { mModule = module; }
+  void Init() { mInit(); }
   void SetVolume(double volume) { mApu.SetVolume(volume); }
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
   void RunUntil(blip_clk_time_t time) {

@@ -253,6 +253,7 @@ void Pt3Emu::mSetTempo(double temp) {
 
 blargg_err_t Pt3Emu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
+  mPlayer.Init();
   SetTempo(mGetTempo());
   return nullptr;
 }
