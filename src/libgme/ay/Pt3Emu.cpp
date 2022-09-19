@@ -505,6 +505,9 @@ void Player::mPlaySamples() {
 
     mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
 
+    channel.AdvanceSample();
+    channel.AdvanceOrnament();
+
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, amplitude);
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, channel.Ton % 256);
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, channel.Ton / 256);

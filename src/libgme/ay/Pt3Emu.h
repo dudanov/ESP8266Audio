@@ -27,11 +27,10 @@ template<typename T> class LoopDataPlayer {
     mLoop = data->loop;
   }
   inline void Reset(uint8_t pos = 0) { mPos = 0; }
-  inline const T &Play() {
-    const T &data = mData[mPos];
+  inline const T &GetData() const { return mData[mPos]; }
+  inline void Advance() {
     if (++mPos >= mEnd)
       mPos = mLoop;
-    return data;
   }
 
  private:
@@ -244,8 +243,10 @@ struct Channel {
   void ResetSample(uint8_t pos = 0) { mSamplePlayer.Reset(pos); }
   void ResetOrnament(uint8_t pos = 0) { mOrnamentPlayer.Reset(pos); }
 
-  const SampleData &GetSampleData() { return mSamplePlayer.Play(); }
-  uint8_t GetOrnamentNote() { return Note + mOrnamentPlayer.Play(); }
+  const SampleData &GetSampleData() const { return mSamplePlayer.GetData(); }
+  void AdvanceSample() { mSamplePlayer.Advance(); }
+  uint8_t GetOrnamentNote() { return Note + mOrnamentPlayer.GetData(); }
+  void AdvanceOrnament() { mOrnamentPlayer.Advance(); }
 
   bool IsEnvelopeEnabled() const { return mEnvelope; }
   void EnvelopeEnable() { mEnvelope = true; }
