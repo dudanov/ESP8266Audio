@@ -270,6 +270,7 @@ void Player::mInit() {
     Channel &c = mChannels[idx];
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
     c.SetOrnament(mModule->GetOrnament(0));
+    c.SetSkipLocations(1);
   }
 }
 
