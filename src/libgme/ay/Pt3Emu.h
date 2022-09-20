@@ -256,10 +256,10 @@ struct Channel {
     CurrentAmplitudeSliding = 0;
     NoiseSlideStore = 0;
     EnvelopeSlideStore = 0;
-    mTonSlideRunner.Disable();
-    CurrentTonSliding = 0;
+    mToneSlideRunner.Disable();
+    CurrentToneSliding = 0;
     TranspositionAccumulator = 0;
-    CurrentOnOff = 0;
+    mVibratoCounter = 0;
   }
 
   void SetSample(const Sample *sample) { mSamplePlayer.Load(sample); }
@@ -278,40 +278,38 @@ struct Channel {
   void EnvelopeEnable() { mEnvelopeEnable = true; }
   void EnvelopeDisable() { mEnvelopeEnable = false; }
 
-  void ToneSlideDisable() { mTonSlideRunner.Disable(); }
-  void ToneSlideEnable(uint8_t delay) { mTonSlideRunner.Enable(delay); }
+  void ToneSlideDisable() { mToneSlideRunner.Disable(); }
+  void ToneSlideEnable(uint8_t delay) { mToneSlideRunner.Enable(delay); }
 
   void RunVibrato() {
-    if (CurrentOnOff > 0 && --CurrentOnOff == 0)
-      CurrentOnOff = (mEnable = !mEnable) ? OnOffDelay : OffOnDelay;
+    if (mVibratoCounter && !--mVibratoCounter)
+      mVibratoCounter = (mEnable = !mEnable) ? mVibratoDelayOff : mVibratoDelayOn;
   }
 
   void RunGlissPortamento();
 
   // Gliss and Portamento
-  int16_t TranspositionAccumulator, TonDelta, CurrentTonSliding, TonSlideStep;
-  DelayRunner mTonSlideRunner;
+  int16_t TranspositionAccumulator, ToneDelta, CurrentToneSliding, ToneSlideStep;
   uint8_t Note, SlideToNote;
   uint8_t Volume;
-  bool mEnable;
+  bool mEnable, mEnvelopeEnable;
   bool SimpleGliss;
   // Amplitude
   int8_t CurrentAmplitudeSliding;
   // Vibrato
-  int16_t CurrentOnOff, OnOffDelay, OffOnDelay;
+  uint8_t mVibratoCounter, mVibratoDelayOff, mVibratoDelayOn;
   // Envelope
   int8_t EnvelopeSlideStore;
-  bool mEnvelopeEnable;
   // Noise
   uint8_t NoiseSlideStore;
 
  private:
+  // Pattern data iterator.
+  const uint8_t *mPatternIt;
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
   SkipCounter mSkipNotes;
-  // Pattern data iterator.
-  const uint8_t *mPatternIt;
-  // uint8_t mNote;
+  DelayRunner mToneSlideRunner;
 };
 
 class Player {
@@ -331,22 +329,19 @@ class Player {
   void mUpdateAmplitude(int8_t &amplitude, uint8_t volume) const;
   int16_t mGetNotePeriod(int8_t tone) const;
   void mInit();
-  void mSetEnvelope(Channel &chan, uint8_t shape);
+  void mSetupEnvelope(Channel &chan, uint8_t shape);
   void mSetupGlissEffect(Channel &chan);
   void mSetupPortamentoEffect(Channel &chan, uint8_t prevNote, int16_t prevSliding);
   void mUpdateTables();
   void mPlayPattern();
   void mPlaySamples();
   uint16_t mPlayTone(Channel &channel);
-  void mRunSlideEnvelope() {
-    if (mEnvSlideRunner.Run())
-      mCurEnvSlide += mEnvSlideAdd;
-  }
   void mAdvancePosition();
   // AY APU Emulator
   AyApu mApu;
   // Channels
   std::array<Channel, AyApu::OSCS_NUM> mChannels;
+  // Pattern commands stack
   std::stack<uint8_t> mCmdStack;
   // Song file header
   const PT3Module *mModule;
@@ -361,10 +356,9 @@ class Player {
   // Module subversion
   // uint8_t mSubVersion;
   SkipCounter mDelay;
+  DelayRunner mEnvelopeSlide;
   uint16_t mEnvelopeBase;
   int16_t mCurEnvSlide, mEnvSlideAdd;
-  DelayRunner mEnvSlideRunner;
-  // uint8_t mCurEnvDelay, mEnvDelay;
   uint8_t mNoiseBase, mAddToNoise;
 };
 
