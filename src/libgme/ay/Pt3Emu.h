@@ -42,13 +42,13 @@ struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
   bool EnvelopeMask() const { return mData[0] & 1; }
-  void NoiseSlide(uint8_t &value, uint8_t &store) const;
   void EnvelopeSlide(int8_t &value, int8_t &store) const;
-  void VolumeSlide(int8_t &value, int8_t &store) const;
   bool ToneMask() const { return mData[1] & 0x10; }
   bool ToneStore() const { return mData[1] & 0x40; }
   bool NoiseMask() const { return mData[1] & 0x80; }
-  int16_t Transposition() const { return get_le16(mTransposition); }
+  void NoiseSlide(uint8_t &value, uint8_t &store) const;
+  void VolumeSlide(int8_t &value, int8_t &store) const;
+  uint16_t Transposition() const { return get_le16(mTransposition); }
 
  private:
   int8_t mVolume() const { return mData[1] & 0x0F; }
@@ -244,9 +244,11 @@ struct Channel {
   void ResetOrnament(uint8_t pos = 0) { mOrnamentPlayer.Reset(pos); }
 
   const SampleData &GetSampleData() const { return mSamplePlayer.GetData(); }
-  void AdvanceSample() { mSamplePlayer.Advance(); }
-  uint8_t GetOrnamentNote() { return Note + mOrnamentPlayer.GetData(); }
-  void AdvanceOrnament() { mOrnamentPlayer.Advance(); }
+  uint8_t GetOrnamentNote() const { return Note + mOrnamentPlayer.GetData(); }
+  void Advance() {
+    mSamplePlayer.Advance();
+    mOrnamentPlayer.Advance();
+  }
 
   bool IsEnvelopeEnabled() const { return mEnvelope; }
   void EnvelopeEnable() { mEnvelope = true; }
@@ -275,8 +277,8 @@ struct Channel {
   uint8_t Volume, Note;
   bool mEnabled;
   // Gliss and Portamento
-  uint16_t Ton;
-  int16_t TonSlideCount, TonSlideDelay, CurrentTonSliding, TonAccumulator, TonSlideStep, TonDelta;
+  uint16_t TonAccumulator;
+  int16_t TonSlideCount, TonSlideDelay, CurrentTonSliding, TonSlideStep, TonDelta;
   uint8_t SlideToNote;
   bool SimpleGliss;
   // Amplitude
@@ -321,6 +323,7 @@ class Player {
   void mUpdateTables();
   void mPlayPattern();
   void mPlaySamples();
+  uint16_t mPlayTone(Channel &channel);
   void mRunSlideEnvelope() {
     if (mCurEnvDelay == 0 || --mCurEnvDelay > 0)
       return;

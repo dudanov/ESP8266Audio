@@ -471,6 +471,16 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
     value = 0;
 }
 
+uint16_t Player::mPlayTone(Channel &channel) {
+  auto &sample = channel.GetSampleData();
+  uint16_t ton = sample.Transposition() + channel.TonAccumulator;
+  if (sample.ToneStore())
+    channel.TonAccumulator = ton;
+  ton = (ton + mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentTonSliding) % 4096;
+  channel.RunGlissPortamento();
+  return ton;
+}
+
 void Player::mPlaySamples() {
   int8_t envelopAddition = 0;
   uint8_t mixer = 0;
@@ -484,14 +494,6 @@ void Player::mPlaySamples() {
     }
 
     const SampleData &sample = channel.GetSampleData();
-
-    channel.Ton = sample.Transposition() + channel.TonAccumulator;
-
-    if (sample.ToneStore())
-      channel.TonAccumulator = channel.Ton;
-
-    channel.Ton = (channel.Ton + mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentTonSliding) % 4096;
-    channel.RunGlissPortamento();
 
     int8_t amplitude = 0;
 
@@ -508,13 +510,13 @@ void Player::mPlaySamples() {
 
     mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
 
-    channel.AdvanceSample();
-    channel.AdvanceOrnament();
+    const uint16_t tone = mPlayTone(channel);
 
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, amplitude);
-    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, channel.Ton % 256);
-    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, channel.Ton / 256);
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, tone % 256);
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, tone / 256);
 
+    channel.Advance();
     channel.RunVibrato();
   }
 
