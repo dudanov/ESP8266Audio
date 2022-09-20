@@ -262,8 +262,7 @@ blargg_err_t Pt3Emu::mStartTrack(int track) {
 void Player::mInit() {
   mApu.Reset();
   mUpdateTables();
-  mDelay = mModule->GetDelay();
-  mDelayCounter = 1;
+  mDelay.SetDelay(mModule->GetDelay(), 1);
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
   auto pattern = mModule->GetPattern(mPositionIt);
@@ -312,9 +311,8 @@ void Player::mSetupPortamentoEffect(Channel &channel, uint8_t prevNote, int16_t 
 }
 
 void Player::mPlayPattern() {
-  if (--mDelayCounter > 0)
+  if (!mDelay.Run())
     return;
-  mDelayCounter = mDelay;
   for (Channel &channel : mChannels) {
     if (channel.IsEmptyLocation())
       continue;
@@ -410,18 +408,11 @@ void Player::mPlayPattern() {
           break;
         case 9:
           // Song Delay
-          mDelay = channel.PatternCode();
+          mDelay.SetDelay(channel.PatternCode());
           break;
       }
     }
   }
-}
-
-inline bool SkipCounter::RunTick() {
-  if (--mSkipCounter > 0)
-    return true;
-  mSkipCounter = mSkipCount;
-  return false;
 }
 
 inline void Player::mAdvancePosition() {
@@ -464,14 +455,29 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
     value = 0;
 }
 
+void Channel::RunGlissPortamento() {
+  if (TonSlideCount == 0 || --TonSlideCount > 0)
+    return;
+  TonSlideCount = TonSlideDelay;
+  CurrentTonSliding += TonSlideStep;
+  if (SimpleGliss)
+    return;
+  if (((TonSlideStep < 0) && (CurrentTonSliding <= TonDelta)) ||
+      ((TonSlideStep >= 0) && (CurrentTonSliding >= TonDelta))) {
+    Note = SlideToNote;
+    TonSlideCount = 0;
+    CurrentTonSliding = 0;
+  }
+}
+
 uint16_t Player::mPlayTone(Channel &channel) {
   auto &sample = channel.GetSampleData();
-  int16_t ton = sample.Transposition() + channel.TonAccumulator;
+  int16_t tone = sample.Transposition() + channel.TranspositionAccumulator;
   if (sample.ToneStore())
-    channel.TonAccumulator = ton;
-  ton = (ton + mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentTonSliding) & 0x0FFF;
+    channel.TranspositionAccumulator = tone;
+  tone += mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentTonSliding;
   channel.RunGlissPortamento();
-  return ton;
+  return tone & 0xFFF;
 }
 
 void Player::mPlaySamples() {

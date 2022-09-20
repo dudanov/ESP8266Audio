@@ -186,14 +186,36 @@ class PT3Module {
   Position mPositions[0];
 };
 
-class SkipCounter {
- public:
-  void SetSkipCount(uint8_t delay) { mSkipCount = mSkipCounter = delay; }
-  bool RunTick();
+class DelayRunner {
+  void Enable(uint8_t delay) { mDelay = mDelayCounter = delay; }
+  void Disable() { mDelayCounter = 0; }
+  bool Run() {
+    if (!mDelayCounter || --mDelayCounter)
+      return false;
+    mDelayCounter = mDelay;
+    return true;
+  }
 
  private:
-  uint8_t mSkipCounter;
-  uint8_t mSkipCount;
+  uint8_t mDelayCounter, mDelay;
+};
+
+class SkipCounter {
+ public:
+  void SetDelay(uint8_t delay) { mDelay = mDelayCounter = delay; }
+  void SetDelay(uint8_t delay, uint8_t init) {
+    mDelayCounter = init;
+    mDelay = delay;
+  }
+  bool Run() {
+    if (--mDelayCounter)
+      return false;
+    mDelayCounter = mDelay;
+    return true;
+  }
+
+ private:
+  uint8_t mDelayCounter, mDelay;
 };
 
 // Channel entity
@@ -222,8 +244,8 @@ struct Channel {
     return value;
   }
 
-  void SetSkipLocations(uint8_t skip) { mSkipNotes.SetSkipCount(skip); }
-  bool IsEmptyLocation() { return mSkipNotes.RunTick(); }
+  void SetSkipLocations(uint8_t skip) { mSkipNotes.SetDelay(skip); }
+  bool IsEmptyLocation() { return !mSkipNotes.Run(); }
 
   void Reset() {
     mSamplePlayer.Reset();
@@ -235,7 +257,7 @@ struct Channel {
     EnvelopeSlideStore = 0;
     TonSlideCount = 0;
     CurrentTonSliding = 0;
-    TonAccumulator = 0;
+    TranspositionAccumulator = 0;
     CurrentOnOff = 0;
   }
 
@@ -260,23 +282,10 @@ struct Channel {
       CurrentOnOff = (mEnable = !mEnable) ? OnOffDelay : OffOnDelay;
   }
 
-  void RunGlissPortamento() {
-    if (TonSlideCount == 0 || --TonSlideCount > 0)
-      return;
-    TonSlideCount = TonSlideDelay;
-    CurrentTonSliding += TonSlideStep;
-    if (SimpleGliss)
-      return;
-    if (((TonSlideStep < 0) && (CurrentTonSliding <= TonDelta)) ||
-        ((TonSlideStep >= 0) && (CurrentTonSliding >= TonDelta))) {
-      Note = SlideToNote;
-      TonSlideCount = 0;
-      CurrentTonSliding = 0;
-    }
-  }
+  void RunGlissPortamento();
 
   // Gliss and Portamento
-  int16_t TonAccumulator, TonDelta, CurrentTonSliding, TonSlideStep;
+  int16_t TranspositionAccumulator, TonDelta, CurrentTonSliding, TonSlideStep;
   uint8_t Note, SlideToNote, TonSlideCount, TonSlideDelay;
   uint8_t Volume;
   bool mEnable;
@@ -348,12 +357,11 @@ class Player {
   blip_clk_time_t mEmuTime;
   // Module subversion
   // uint8_t mSubVersion;
+  SkipCounter mDelay;
   uint16_t mEnvelopeBase;
   int16_t mCurEnvSlide, mEnvSlideAdd;
   uint8_t mCurEnvDelay, mEnvDelay;
   uint8_t mNoiseBase, mAddToNoise;
-  // Global song delay counter
-  uint8_t mDelayCounter, mDelay;
 };
 
 class Pt3Emu : public ClassicEmu {
