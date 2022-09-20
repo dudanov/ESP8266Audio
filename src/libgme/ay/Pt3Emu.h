@@ -4,6 +4,7 @@
 
 #include "AyApu.h"
 #include "../ClassicEmu.h"
+#include <stack>
 
 namespace gme {
 namespace emu {
@@ -335,6 +336,7 @@ class Player {
   AyApu mApu;
   // Channels
   std::array<Channel, AyApu::OSCS_NUM> mChannels;
+  std::stack<uint8_t> mCmdStack;
   // Song file header
   const PT3Module *mModule;
   // Song position iterators

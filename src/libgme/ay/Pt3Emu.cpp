@@ -320,7 +320,6 @@ void Player::mPlayPattern() {
   for (Channel &channel : mChannels) {
     if (channel.IsEmptyLocation())
       continue;
-    uint8_t counter = 0, cmd1 = 0, cmd2 = 0, cmd3 = 0, cmd4 = 0, cmd5 = 0, cmd8 = 0, cmd9 = 0;
     const uint8_t prevNote = channel.Note;
     const int16_t prevSliding = channel.CurrentTonSliding;
     while (true) {
@@ -375,50 +374,46 @@ void Player::mPlayPattern() {
         channel.EnvelopeDisable();
         channel.ResetOrnament();
         channel.SetSample(mModule->GetSample(channel.PatternCode() / 2));
-      } else if (val == 0x09) {
-        cmd9 = ++counter;
-      } else if (val == 0x08) {
-        cmd8 = ++counter;
-      } else if (val == 0x05) {
-        cmd5 = ++counter;
-      } else if (val == 0x04) {
-        cmd4 = ++counter;
-      } else if (val == 0x03) {
-        cmd3 = ++counter;
-      } else if (val == 0x02) {
-        cmd2 = ++counter;
-      } else if (val == 0x01) {
-        cmd1 = ++counter;
-      } else if (val == 0x00) {
+      } else if (val != 0x00) {
+        mCmdStack.push(val);
+      } else {
         mAdvancePosition();
       }
     }
 
-    for (; counter > 0; --counter) {
-      if (counter == cmd1) {
-        // Gliss Effect
-        mSetupGlissEffect(channel);
-      } else if (counter == cmd2) {
-        // Portamento Effect
-        mSetupPortamentoEffect(channel, prevNote, prevSliding);
-      } else if (counter == cmd3) {
-        // Play Sample From Custom Position
-        channel.ResetSample(channel.PatternCode());
-      } else if (counter == cmd4) {
-        // Play Ornament From Custom Position
-        channel.ResetOrnament(channel.PatternCode());
-      } else if (counter == cmd5) {
-        // Vibrate Effect
-        channel.CurrentOnOff = channel.OnOffDelay = channel.PatternCode();
-        channel.OffOnDelay = channel.PatternCode();
-        channel.CurrentTonSliding = channel.TonSlideCount = 0;
-      } else if (counter == cmd8) {
-        // Slide Envelope Effect
-        mCurEnvDelay = mEnvDelay = channel.PatternCode();
-        mEnvSlideAdd = channel.PatternCodeLE16();
-      } else if (counter == cmd9) {
-        // Song Delay
-        mDelay = channel.PatternCode();
+    for (; !mCmdStack.empty(); mCmdStack.pop()) {
+      switch (mCmdStack.top()) {
+        case 1:
+          // Gliss Effect
+          mSetupGlissEffect(channel);
+          break;
+        case 2:
+          // Portamento Effect
+          mSetupPortamentoEffect(channel, prevNote, prevSliding);
+          break;
+        case 3:
+          // Play Sample From Custom Position
+          channel.ResetSample(channel.PatternCode());
+          break;
+        case 4:
+          // Play Ornament From Custom Position
+          channel.ResetOrnament(channel.PatternCode());
+          break;
+        case 5:
+          // Vibrate Effect
+          channel.CurrentOnOff = channel.OnOffDelay = channel.PatternCode();
+          channel.OffOnDelay = channel.PatternCode();
+          channel.CurrentTonSliding = channel.TonSlideCount = 0;
+          break;
+        case 8:
+          // Slide Envelope Effect
+          mCurEnvDelay = mEnvDelay = channel.PatternCode();
+          mEnvSlideAdd = channel.PatternCodeLE16();
+          break;
+        case 9:
+          // Song Delay
+          mDelay = channel.PatternCode();
+          break;
       }
     }
   }
