@@ -288,16 +288,17 @@ void Player::mSetEnvelope(Channel &channel, uint8_t shape) {
 void Player::mSetupGlissEffect(Channel &channel) {
   channel.SimpleGliss = true;
   channel.CurrentOnOff = 0;
-  channel.TonSlideCount = channel.TonSlideDelay = channel.PatternCode();
+  uint8_t delay = channel.PatternCode();
   channel.TonSlideStep = channel.PatternCodeLE16();
-  if ((channel.TonSlideCount == 0) && (mModule->GetSubVersion() >= 7))
-    channel.TonSlideCount++;
+  if ((delay == 0) && (mModule->GetSubVersion() >= 7))
+    delay++;
+  channel.ToneSlideEnable(delay);
 }
 
 void Player::mSetupPortamentoEffect(Channel &channel, uint8_t prevNote, int16_t prevSliding) {
   channel.SimpleGliss = false;
   channel.CurrentOnOff = 0;
-  channel.TonSlideCount = channel.TonSlideDelay = channel.PatternCode();
+  channel.ToneSlideEnable(channel.PatternCode());
   channel.SkipPatternCode(2);
   const int16_t step = channel.PatternCodeLE16();
   channel.TonSlideStep = (step >= 0) ? step : -step;
@@ -399,7 +400,8 @@ void Player::mPlayPattern() {
           // Vibrate Effect
           channel.CurrentOnOff = channel.OnOffDelay = channel.PatternCode();
           channel.OffOnDelay = channel.PatternCode();
-          channel.CurrentTonSliding = channel.TonSlideCount = 0;
+          channel.CurrentTonSliding = 0;
+          channel.ToneSlideDisable();
           break;
         case 8:
           // Slide Envelope Effect
@@ -456,16 +458,15 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
 }
 
 void Channel::RunGlissPortamento() {
-  if (TonSlideCount == 0 || --TonSlideCount > 0)
+  if (!mTonSlideRunner.Run())
     return;
-  TonSlideCount = TonSlideDelay;
   CurrentTonSliding += TonSlideStep;
   if (SimpleGliss)
     return;
   if (((TonSlideStep < 0) && (CurrentTonSliding <= TonDelta)) ||
       ((TonSlideStep >= 0) && (CurrentTonSliding >= TonDelta))) {
     Note = SlideToNote;
-    TonSlideCount = 0;
+    mTonSlideRunner.Disable();
     CurrentTonSliding = 0;
   }
 }

@@ -187,6 +187,7 @@ class PT3Module {
 };
 
 class DelayRunner {
+ public:
   void Enable(uint8_t delay) { mDelay = mDelayCounter = delay; }
   void Disable() { mDelayCounter = 0; }
   bool Run() {
@@ -204,8 +205,8 @@ class SkipCounter {
  public:
   void SetDelay(uint8_t delay) { mDelay = mDelayCounter = delay; }
   void SetDelay(uint8_t delay, uint8_t init) {
-    mDelayCounter = init;
     mDelay = delay;
+    mDelayCounter = init;
   }
   bool Run() {
     if (--mDelayCounter)
@@ -255,7 +256,7 @@ struct Channel {
     CurrentAmplitudeSliding = 0;
     NoiseSlideStore = 0;
     EnvelopeSlideStore = 0;
-    TonSlideCount = 0;
+    mTonSlideRunner.Disable();
     CurrentTonSliding = 0;
     TranspositionAccumulator = 0;
     CurrentOnOff = 0;
@@ -277,6 +278,9 @@ struct Channel {
   void EnvelopeEnable() { mEnvelopeEnable = true; }
   void EnvelopeDisable() { mEnvelopeEnable = false; }
 
+  void ToneSlideDisable() { mTonSlideRunner.Disable(); }
+  void ToneSlideEnable(uint8_t delay) { mTonSlideRunner.Enable(delay); }
+
   void RunVibrato() {
     if (CurrentOnOff > 0 && --CurrentOnOff == 0)
       CurrentOnOff = (mEnable = !mEnable) ? OnOffDelay : OffOnDelay;
@@ -286,7 +290,8 @@ struct Channel {
 
   // Gliss and Portamento
   int16_t TranspositionAccumulator, TonDelta, CurrentTonSliding, TonSlideStep;
-  uint8_t Note, SlideToNote, TonSlideCount, TonSlideDelay;
+  DelayRunner mTonSlideRunner;
+  uint8_t Note, SlideToNote;
   uint8_t Volume;
   bool mEnable;
   bool SimpleGliss;
