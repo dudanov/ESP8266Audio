@@ -263,8 +263,8 @@ struct Channel {
   void RunGlissPortamento() {
     if (TonSlideCount == 0 || --TonSlideCount > 0)
       return;
-    CurrentTonSliding += TonSlideStep;
     TonSlideCount = TonSlideDelay;
+    CurrentTonSliding += TonSlideStep;
     if (SimpleGliss)
       return;
     if (((TonSlideStep < 0) && (CurrentTonSliding <= TonDelta)) ||
@@ -278,8 +278,8 @@ struct Channel {
   uint8_t Volume, Note;
   bool mEnabled;
   // Gliss and Portamento
-  uint16_t TonAccumulator;
-  int16_t TonSlideCount, TonSlideDelay, CurrentTonSliding, TonSlideStep, TonDelta;
+  uint16_t TonAccumulator, TonSlideCount, TonSlideDelay;
+  int16_t TonDelta, CurrentTonSliding, TonSlideStep;
   uint8_t SlideToNote;
   bool SimpleGliss;
   // Amplitude
@@ -316,7 +316,7 @@ class Player {
 
  private:
   void mUpdateAmplitude(int8_t &amplitude, uint8_t volume) const;
-  uint16_t mGetNotePeriod(int8_t tone) const;
+  int16_t mGetNotePeriod(int8_t tone) const;
   void mInit();
   void mSetEnvelope(Channel &chan, uint8_t shape);
   void mSetupGlissEffect(Channel &chan);
@@ -342,7 +342,7 @@ class Player {
   // Song position iterators
   const Position *mPositionIt;
   // Pointer to notes period table
-  const uint16_t *mNoteTable;
+  const int16_t *mNoteTable;
   // Pointer to volume period table
   const int8_t *mVolumeTable;
   // Current emulation time
