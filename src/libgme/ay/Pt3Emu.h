@@ -49,7 +49,7 @@ struct SampleData {
   bool NoiseMask() const { return mData[1] & 0x80; }
   void NoiseSlide(uint8_t &value, uint8_t &store) const;
   void VolumeSlide(int8_t &value, int8_t &store) const;
-  uint16_t Transposition() const { return get_le16(mTransposition); }
+  int16_t Transposition() const { return get_le16(mTransposition); }
 
  private:
   int8_t mVolume() const { return mData[1] & 0x0F; }
@@ -204,9 +204,9 @@ struct Channel {
   Channel(const Channel &) = delete;
 
   void SetNote(uint8_t note) { Note = note; }
-  void Enable() { mEnabled = true; }
-  void Disable() { mEnabled = false; }
-  bool IsEnabled() const { return mEnabled; }
+  void Enable() { mEnable = true; }
+  void Disable() { mEnable = false; }
+  bool IsEnabled() const { return mEnable; }
 
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   void SkipPatternCode(size_t n) { mPatternIt += n; }
@@ -251,13 +251,13 @@ struct Channel {
     mOrnamentPlayer.Advance();
   }
 
-  bool IsEnvelopeEnabled() const { return mEnvelope; }
-  void EnvelopeEnable() { mEnvelope = true; }
-  void EnvelopeDisable() { mEnvelope = false; }
+  bool IsEnvelopeEnabled() const { return mEnvelopeEnable; }
+  void EnvelopeEnable() { mEnvelopeEnable = true; }
+  void EnvelopeDisable() { mEnvelopeEnable = false; }
 
   void RunVibrato() {
     if (CurrentOnOff > 0 && --CurrentOnOff == 0)
-      CurrentOnOff = (mEnabled = !mEnabled) ? OnOffDelay : OffOnDelay;
+      CurrentOnOff = (mEnable = !mEnable) ? OnOffDelay : OffOnDelay;
   }
 
   void RunGlissPortamento() {
@@ -275,12 +275,11 @@ struct Channel {
     }
   }
 
-  uint8_t Volume, Note;
-  bool mEnabled;
   // Gliss and Portamento
-  uint16_t TonAccumulator, TonSlideCount, TonSlideDelay;
-  int16_t TonDelta, CurrentTonSliding, TonSlideStep;
-  uint8_t SlideToNote;
+  int16_t TonAccumulator, TonDelta, CurrentTonSliding, TonSlideStep;
+  uint8_t Note, SlideToNote, TonSlideCount, TonSlideDelay;
+  uint8_t Volume;
+  bool mEnable;
   bool SimpleGliss;
   // Amplitude
   int8_t CurrentAmplitudeSliding;
@@ -288,7 +287,7 @@ struct Channel {
   int16_t CurrentOnOff, OnOffDelay, OffOnDelay;
   // Envelope
   int8_t EnvelopeSlideStore;
-  bool mEnvelope;
+  bool mEnvelopeEnable;
   // Noise
   uint8_t NoiseSlideStore;
 

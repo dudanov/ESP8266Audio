@@ -300,13 +300,11 @@ void Player::mSetupPortamentoEffect(Channel &channel, uint8_t prevNote, int16_t 
   channel.CurrentOnOff = 0;
   channel.TonSlideCount = channel.TonSlideDelay = channel.PatternCode();
   channel.SkipPatternCode(2);
-  int16_t step = channel.PatternCodeLE16();
-  // if (step < 0)
-  // step = -step;
-  channel.TonSlideStep = step;
-  channel.TonDelta = mGetNotePeriod(channel.Note) - mGetNotePeriod(prevNote);
+  const int16_t step = channel.PatternCodeLE16();
+  channel.TonSlideStep = (step >= 0) ? step : -step;
   channel.SlideToNote = channel.Note;
   channel.Note = prevNote;
+  channel.TonDelta = mGetNotePeriod(channel.SlideToNote) - mGetNotePeriod(channel.Note);
   if (mModule->GetSubVersion() >= 6)
     channel.CurrentTonSliding = prevSliding;
   if (channel.TonDelta < channel.CurrentTonSliding)
@@ -468,10 +466,10 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
 
 uint16_t Player::mPlayTone(Channel &channel) {
   auto &sample = channel.GetSampleData();
-  uint16_t ton = sample.Transposition() + channel.TonAccumulator;
+  int16_t ton = sample.Transposition() + channel.TonAccumulator;
   if (sample.ToneStore())
     channel.TonAccumulator = ton;
-  ton = (ton + mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentTonSliding) % 4096;
+  ton = (ton + mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentTonSliding) & 0x0FFF;
   channel.RunGlissPortamento();
   return ton;
 }
