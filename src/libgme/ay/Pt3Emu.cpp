@@ -282,7 +282,7 @@ void Player::mSetEnvelope(Channel &channel, uint8_t shape) {
   channel.ResetOrnament();
   mEnvelopeBase = channel.PatternCodeBE16();
   mCurEnvSlide = 0;
-  mCurEnvDelay = 0;
+  mEnvSlideRunner.Disable();
 }
 
 void Player::mSetupGlissEffect(Channel &channel) {
@@ -405,7 +405,7 @@ void Player::mPlayPattern() {
           break;
         case 8:
           // Slide Envelope Effect
-          mCurEnvDelay = mEnvDelay = channel.PatternCode();
+          mEnvSlideRunner.Enable(channel.PatternCode());
           mEnvSlideAdd = channel.PatternCodeLE16();
           break;
         case 9:

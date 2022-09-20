@@ -339,10 +339,8 @@ class Player {
   void mPlaySamples();
   uint16_t mPlayTone(Channel &channel);
   void mRunSlideEnvelope() {
-    if (mCurEnvDelay == 0 || --mCurEnvDelay > 0)
-      return;
-    mCurEnvDelay = mEnvDelay;
-    mCurEnvSlide += mEnvSlideAdd;
+    if (mEnvSlideRunner.Run())
+      mCurEnvSlide += mEnvSlideAdd;
   }
   void mAdvancePosition();
   // AY APU Emulator
@@ -365,7 +363,8 @@ class Player {
   SkipCounter mDelay;
   uint16_t mEnvelopeBase;
   int16_t mCurEnvSlide, mEnvSlideAdd;
-  uint8_t mCurEnvDelay, mEnvDelay;
+  DelayRunner mEnvSlideRunner;
+  // uint8_t mCurEnvDelay, mEnvDelay;
   uint8_t mNoiseBase, mAddToNoise;
 };
 
