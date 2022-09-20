@@ -477,7 +477,7 @@ uint16_t Player::mPlayTone(Channel &channel) {
   if (sample.ToneStore())
     channel.TranspositionAccumulator = tone;
   tone += mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentToneSliding;
-  channel.RunGlissPortamento();
+  //channel.RunGlissPortamento();
   return tone & 0xFFF;
 }
 
