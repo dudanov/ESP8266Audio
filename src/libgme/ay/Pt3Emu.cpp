@@ -484,6 +484,7 @@ void Player::mPlaySamples() {
     if (!channel.IsEnabled()) {
       channel.VibratoRun();
       mixer |= 64 | 8;
+      mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, 0);
       continue;
     }
 
