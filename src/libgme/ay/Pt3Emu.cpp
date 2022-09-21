@@ -262,7 +262,7 @@ blargg_err_t Pt3Emu::mStartTrack(int track) {
 void Player::mInit() {
   mApu.Reset();
   mUpdateTables();
-  mDelay.SetDelay(mModule->GetDelay(), 1);
+  mSongDelay.SetDelay(mModule->GetDelay(), 1);
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
   auto pattern = mModule->GetPattern(mPositionIt);
@@ -314,7 +314,7 @@ void Channel::SetupPortamento(const Player *player, uint8_t prevNote, int16_t pr
 }
 
 void Player::mPlayPattern() {
-  if (!mDelay.Run())
+  if (!mSongDelay.Run())
     return;
   for (Channel &channel : mChannels) {
     if (channel.IsEmptyLocation())
@@ -409,7 +409,7 @@ void Player::mPlayPattern() {
           break;
         case 9:
           // Song Delay
-          mDelay.SetDelay(channel.PatternCode());
+          mSongDelay.SetDelay(channel.PatternCode());
           break;
       }
     }
@@ -424,14 +424,14 @@ inline void Player::mAdvancePosition() {
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
-void SampleData::NoiseSlide(uint8_t &value, uint8_t &store) const {
+inline void SampleData::NoiseSlide(uint8_t &value, uint8_t &store) const {
   uint8_t tmp = mData[0] / 2 % 32;
   value = tmp + store;
   if (mData[1] & 32)
     store = value;
 }
 
-void SampleData::EnvelopeSlide(int8_t &value, int8_t &store) const {
+inline void SampleData::EnvelopeSlide(int8_t &value, int8_t &store) const {
   int8_t tmp = mData[0] >> 1;
   tmp = (tmp & 16) ? (tmp | ~15) : (tmp & 15);
   tmp += store;
@@ -440,7 +440,7 @@ void SampleData::EnvelopeSlide(int8_t &value, int8_t &store) const {
     store = tmp;
 }
 
-void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
+inline void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
   if (mVolumeSlide()) {
     if (mVolumeSlideUp()) {
       if (store < 15)

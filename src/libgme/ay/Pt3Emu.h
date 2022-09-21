@@ -316,13 +316,12 @@ struct Channel {
       mVibratoCounter = (mEnable = !mEnable) ? mVibratoOnTime : mVibratoOffTime;
   }
 
-  void SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding);
-  void SetupGliss(const Player *player);
-  void mRunPortamento();
   uint16_t PlayTone(const Player *player);
+  void SetupGliss(const Player *player);
+  void SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding);
+  void mRunPortamento();
 
   uint8_t Note, mSlideToNote;
-  bool mEnable, mEnvelopeEnable;
   // Amplitude
   int8_t CurrentAmplitudeSliding;
   // Envelope
@@ -344,6 +343,7 @@ struct Channel {
   // Vibrato
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
   uint8_t mVolume;
+  bool mEnable, mEnvelopeEnable;
   bool mPortamento;
 };
 
@@ -361,7 +361,6 @@ class Player {
   void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
   int16_t GetNotePeriod(int8_t tone) const;
   uint8_t GetSubVersion() const { return mModule->GetSubVersion(); }
-  // const PT3Module &GetModule() const { return *mModule; }
 
  private:
   void mUpdateAmplitude(int8_t &amplitude, uint8_t volume) const;
@@ -387,15 +386,9 @@ class Player {
   const int8_t *mVolumeTable;
   // Current emulation time
   blip_clk_time_t mEmuTime;
-  // Module subversion
-  // uint8_t mSubVersion;
-  SkipCounter mDelay;
-  uint16_t mEnvelopeBase;
-
+  SkipCounter mSongDelay;
   SimpleSlider mEnvelopeSlider;
-  // DelayRunner mEnvelopeSlide;
-  // int16_t mEnvelopeSlideAccumulator, mEnvelopeSlideStep;
-
+  uint16_t mEnvelopeBase;
   uint8_t mNoiseBase, mAddToNoise;
 };
 
