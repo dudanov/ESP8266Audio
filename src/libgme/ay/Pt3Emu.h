@@ -302,7 +302,7 @@ struct Channel {
 
   void mSetToneSlideStep(int16_t step, int16_t init = 0) { mToneSlide.SetStep(step, init); }
   void ToneSlideDisable() { mToneSlide.Disable(); }
-  int16_t GetToneSlide() const { mToneSlide.GetValue(); }
+  int16_t GetToneSlide() const { return mToneSlide.GetValue(); }
 
   uint8_t GetVolume() const { return mVolume; }
   void SetVolume(uint8_t volume) { mVolume = volume; }
