@@ -205,15 +205,14 @@ class SimpleSlider {
  public:
   int16_t GetValue() const { return mValue; }
   int16_t GetStep() const { return mStep; }
-  void SetStep(int16_t step, int16_t init = 0) {
-    mValue = init;
-    mStep = step;
+  void SetValue(int16_t value) { mValue = value; }
+  void Reset() {
+    SetValue(0);
+    Disable();
   }
+  void SetStep(int16_t step) { mStep = step; }
   void Enable(uint8_t delay) { mDelay.Enable(delay); }
-  void Disable(int16_t value = 0) {
-    mDelay.Disable();
-    mValue = value;
-  }
+  void Disable() { mDelay.Disable(); }
   void Run() {
     if (mDelay.Run())
       mValue += mStep;
@@ -276,8 +275,8 @@ struct Channel {
   void Reset() {
     ResetSample();
     ResetOrnament();
-    ToneSlideDisable();
     mVibratoDisable();
+    mToneSlide.Reset();
     CurrentAmplitudeSliding = 0;
     NoiseSlideStore = 0;
     EnvelopeSlideStore = 0;
@@ -300,8 +299,8 @@ struct Channel {
   void EnvelopeEnable() { mEnvelopeEnable = true; }
   void EnvelopeDisable() { mEnvelopeEnable = false; }
 
-  void mSetToneSlideStep(int16_t step, int16_t init = 0) { mToneSlide.SetStep(step, init); }
-  void ToneSlideDisable() { mToneSlide.Disable(); }
+  // void mSetToneSlideStep(int16_t step, int16_t init = 0) { mToneSlide.SetStep(step, init); }
+  // void ToneSlideDisable() { mToneSlide.Disable(); }
   int16_t GetToneSlide() const { return mToneSlide.GetValue(); }
 
   uint8_t GetVolume() const { return mVolume; }
@@ -332,7 +331,7 @@ struct Channel {
   uint8_t NoiseSlideStore;
 
  private:
-  //void mToneSlideEnable(uint8_t delay) { mToneSlide.Enable(delay); }
+  // void mToneSlideEnable(uint8_t delay) { mToneSlide.Enable(delay); }
   void mVibratoDisable() { mVibratoCounter = 0; }
   // Pattern data iterator.
   const uint8_t *mPatternIt;
@@ -362,7 +361,7 @@ class Player {
   void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
   int16_t GetNotePeriod(int8_t tone) const;
   uint8_t GetSubVersion() const { return mModule->GetSubVersion(); }
-  //const PT3Module &GetModule() const { return *mModule; }
+  // const PT3Module &GetModule() const { return *mModule; }
 
  private:
   void mUpdateAmplitude(int8_t &amplitude, uint8_t volume) const;

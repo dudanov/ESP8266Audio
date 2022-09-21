@@ -281,7 +281,7 @@ void Player::mSetupEnvelope(Channel &channel, uint8_t shape) {
   channel.EnvelopeEnable();
   channel.ResetOrnament();
   mEnvelopeBase = channel.PatternCodeBE16();
-  mEnvelopeSlider.Disable();
+  mEnvelopeSlider.Reset();
 }
 
 void Channel::SetupGlissEffect(const Player *player) {
@@ -291,7 +291,7 @@ void Channel::SetupGlissEffect(const Player *player) {
   if ((delay == 0) && (player->GetSubVersion() >= 7))
     delay++;
   mToneSlide.Enable(delay);
-  mSetToneSlideStep(PatternCodeLE16());
+  mToneSlide.SetStep(PatternCodeLE16());
 }
 
 void Channel::SetupPortamentoEffect(const Player *player, uint8_t prevNote, int16_t prevSliding) {
@@ -305,12 +305,11 @@ void Channel::SetupPortamentoEffect(const Player *player, uint8_t prevNote, int1
   mSlideToNote = Note;
   Note = prevNote;
   mToneDelta = player->GetNotePeriod(mSlideToNote) - player->GetNotePeriod(Note);
-  int16_t init = 0;
   if (player->GetSubVersion() >= 6)
-    init = prevSliding;
-  if (mToneDelta < init)
+    mToneSlide.SetValue(prevSliding);
+  if (mToneDelta < mToneSlide.GetValue())
     step = -step;
-  mSetToneSlideStep(step, init);
+  mToneSlide.SetStep(step);
 }
 
 void Player::mPlayPattern() {
@@ -462,7 +461,7 @@ void Channel::mRunGlissPortamento() {
     return;
   if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
       ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
-    ToneSlideDisable();
+    mToneSlide.Reset();
     Note = mSlideToNote;
   }
 }
@@ -472,7 +471,7 @@ uint16_t Channel::PlayTone(const Player *player) {
   int16_t tone = sample.Transposition() + mTranspositionAccumulator;
   if (sample.ToneStore())
     mTranspositionAccumulator = tone;
-  tone += player->GetNotePeriod(GetOrnamentNote()) + GetToneSlide();
+  tone += player->GetNotePeriod(GetOrnamentNote()) + mToneSlide.GetValue();
   mRunGlissPortamento();
   return tone & 0xFFF;
 }
