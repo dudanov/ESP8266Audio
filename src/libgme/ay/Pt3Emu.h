@@ -201,6 +201,29 @@ class DelayRunner {
   uint8_t mDelayCounter, mDelay;
 };
 
+class SimpleSlider {
+ public:
+  void Enable(uint8_t delay, int16_t value = 0) {
+    mDelay.Enable(delay);
+    mAccumulator = value;
+  }
+  void Disable(int16_t value = 0) {
+    mDelay.Disable();
+    mAccumulator = value;
+  }
+  void SetStep(int16_t value) { mStep = value; }
+  int16_t Run() {
+    const int16_t value = mAccumulator;
+    if (mDelay.Run())
+      mAccumulator += mStep;
+    return value;
+  }
+
+ private:
+  DelayRunner mDelay;
+  int16_t mAccumulator, mStep;
+};
+
 class SkipCounter {
  public:
   void SetDelay(uint8_t delay) { mDelay = mDelayCounter = delay; }
@@ -361,9 +384,12 @@ class Player {
   // Module subversion
   // uint8_t mSubVersion;
   SkipCounter mDelay;
-  DelayRunner mEnvelopeSlide;
   uint16_t mEnvelopeBase;
-  int16_t mCurEnvSlide, mEnvSlideAdd;
+
+  SimpleSlider mEnvelopeSlider;
+  // DelayRunner mEnvelopeSlide;
+  // int16_t mEnvelopeSlideAccumulator, mEnvelopeSlideStep;
+
   uint8_t mNoiseBase, mAddToNoise;
 };
 

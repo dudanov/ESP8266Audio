@@ -281,8 +281,7 @@ void Player::mSetupEnvelope(Channel &channel, uint8_t shape) {
   channel.EnvelopeEnable();
   channel.ResetOrnament();
   mEnvelopeBase = channel.PatternCodeBE16();
-  mCurEnvSlide = 0;
-  mEnvelopeSlide.Disable();
+  mEnvelopeSlider.Disable();
 }
 
 void Player::mSetupGlissEffect(Channel &channel) {
@@ -403,8 +402,8 @@ void Player::mPlayPattern() {
           break;
         case 8:
           // Slide Envelope Effect
-          mEnvelopeSlide.Enable(channel.PatternCode());
-          mEnvSlideAdd = channel.PatternCodeLE16();
+          mEnvelopeSlider.Enable(channel.PatternCode());
+          mEnvelopeSlider.SetStep(channel.PatternCodeLE16());
           break;
         case 9:
           // Song Delay
@@ -517,14 +516,11 @@ void Player::mPlaySamples() {
     channel.VibratoRun();
   }
 
-  const uint16_t envelope = mEnvelopeBase + envelopAddition + mCurEnvSlide;
+  const uint16_t envelope = mEnvelopeBase + envelopAddition + mEnvelopeSlider.Run();
   mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
   mApu.Write(mEmuTime, AyApu::AY_ENV_FINE, envelope % 256);
   mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, envelope / 256);
   mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, (mNoiseBase + mAddToNoise) % 32);
-
-  if (mEnvelopeSlide.Run())
-    mCurEnvSlide += mEnvSlideAdd;
 }
 
 blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {
