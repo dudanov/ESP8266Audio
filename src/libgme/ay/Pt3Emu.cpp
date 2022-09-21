@@ -268,6 +268,7 @@ void Player::mInit() {
   auto pattern = mModule->GetPattern(mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
+    c.Reset();
     c.SetVolume(15);
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
     c.SetSample(mModule->GetSample(1));
@@ -456,8 +457,7 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
 }
 
 void Channel::mRunGlissPortamento() {
-  mToneSlide.Run();
-  if (mSimpleGliss)
+  if (!mToneSlide.Run() || mSimpleGliss)
     return;
   if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
       ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {

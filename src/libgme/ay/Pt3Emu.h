@@ -213,9 +213,11 @@ class SimpleSlider {
   void SetStep(int16_t step) { mStep = step; }
   void Enable(uint8_t delay) { mDelay.Enable(delay); }
   void Disable() { mDelay.Disable(); }
-  void Run() {
-    if (mDelay.Run())
+  bool Run() {
+    const bool run = mDelay.Run();
+    if (run)
       mValue += mStep;
+    return run;
   }
 
  private:
