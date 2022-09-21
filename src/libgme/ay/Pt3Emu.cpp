@@ -516,7 +516,7 @@ void Player::mPlaySamples() {
     channel.VibratoRun();
   }
 
-  const uint16_t envelope = mEnvelopeBase + envelopAddition + mEnvelopeSlider.Run();
+  const uint16_t envelope = mEnvelopeBase + envelopAddition + mEnvelopeSlider++;
   mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
   mApu.Write(mEmuTime, AyApu::AY_ENV_FINE, envelope % 256);
   mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, envelope / 256);

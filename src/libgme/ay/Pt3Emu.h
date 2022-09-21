@@ -212,14 +212,21 @@ class SimpleSlider {
     mAccumulator = value;
   }
   void SetStep(int16_t value) { mStep = value; }
-  int16_t Run() {
+  int16_t operator++(int) {
     const int16_t value = mAccumulator;
-    if (mDelay.Run())
-      mAccumulator += mStep;
+    mRun();
     return value;
+  }
+  int16_t operator++() {
+    mRun();
+    return mAccumulator;
   }
 
  private:
+  void mRun() {
+    if (mDelay.Run())
+      mAccumulator += mStep;
+  }
   DelayRunner mDelay;
   int16_t mAccumulator, mStep;
 };
