@@ -282,12 +282,12 @@ struct Channel {
   }
 
   void VibratoEnable() {
-    mVibratoCounter = mVibratoDelayOff = PatternCode();
-    mVibratoDelayOn = PatternCode();
+    mVibratoCounter = mVibratoOnTime = PatternCode();
+    mVibratoOffTime = PatternCode();
   }
   void VibratoRun() {
     if (mVibratoCounter && !--mVibratoCounter)
-      mVibratoCounter = (mEnable = !mEnable) ? mVibratoDelayOff : mVibratoDelayOn;
+      mVibratoCounter = (mEnable = !mEnable) ? mVibratoOnTime : mVibratoOffTime;
   }
   void VibratoDisable() { mVibratoCounter = 0; }
 
@@ -314,7 +314,7 @@ struct Channel {
   SkipCounter mSkipNotes;
   DelayRunner mToneSlide;
   // Vibrato
-  uint8_t mVibratoCounter, mVibratoDelayOff, mVibratoDelayOn;
+  uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
 };
 
 class Player {
