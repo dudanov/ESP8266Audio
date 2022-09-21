@@ -356,6 +356,7 @@ void StcEmu::mPlaySamples() {
 
     if (!channel.IsEnabled()) {
       mixer |= 64 | 8;
+      mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, 0);
       continue;
     }
 
