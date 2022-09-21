@@ -249,17 +249,14 @@ struct Channel {
   bool IsEmptyLocation() { return !mSkipNotes.Run(); }
 
   void Reset() {
-    mSamplePlayer.Reset();
-    mOrnamentPlayer.Reset();
-    // ResetSample();
-    // ResetOrnament();
+    ResetSample();
+    ResetOrnament();
+    ToneSlideDisable();
+    VibratoDisable();
     CurrentAmplitudeSliding = 0;
     NoiseSlideStore = 0;
     EnvelopeSlideStore = 0;
-    mToneSlideRunner.Disable();
-    CurrentToneSliding = 0;
     TranspositionAccumulator = 0;
-    mVibratoCounter = 0;
   }
 
   void SetSample(const Sample *sample) { mSamplePlayer.Load(sample); }
@@ -278,13 +275,21 @@ struct Channel {
   void EnvelopeEnable() { mEnvelopeEnable = true; }
   void EnvelopeDisable() { mEnvelopeEnable = false; }
 
-  void ToneSlideDisable() { mToneSlideRunner.Disable(); }
-  void ToneSlideEnable(uint8_t delay) { mToneSlideRunner.Enable(delay); }
+  void ToneSlideEnable(uint8_t delay) { mToneSlide.Enable(delay); }
+  void ToneSlideDisable() {
+    mToneSlide.Disable();
+    CurrentToneSliding = 0;
+  }
 
-  void RunVibrato() {
+  void VibratoEnable() {
+    mVibratoCounter = mVibratoDelayOff = PatternCode();
+    mVibratoDelayOn = PatternCode();
+  }
+  void VibratoRun() {
     if (mVibratoCounter && !--mVibratoCounter)
       mVibratoCounter = (mEnable = !mEnable) ? mVibratoDelayOff : mVibratoDelayOn;
   }
+  void VibratoDisable() { mVibratoCounter = 0; }
 
   void RunGlissPortamento();
 
@@ -296,8 +301,6 @@ struct Channel {
   bool SimpleGliss;
   // Amplitude
   int8_t CurrentAmplitudeSliding;
-  // Vibrato
-  uint8_t mVibratoCounter, mVibratoDelayOff, mVibratoDelayOn;
   // Envelope
   int8_t EnvelopeSlideStore;
   // Noise
@@ -309,7 +312,9 @@ struct Channel {
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
   SkipCounter mSkipNotes;
-  DelayRunner mToneSlideRunner;
+  DelayRunner mToneSlide;
+  // Vibrato
+  uint8_t mVibratoCounter, mVibratoDelayOff, mVibratoDelayOn;
 };
 
 class Player {

@@ -287,7 +287,7 @@ void Player::mSetupEnvelope(Channel &channel, uint8_t shape) {
 
 void Player::mSetupGlissEffect(Channel &channel) {
   channel.SimpleGliss = true;
-  channel.mVibratoCounter = 0;
+  channel.VibratoDisable();
   uint8_t delay = channel.PatternCode();
   if ((delay == 0) && (mModule->GetSubVersion() >= 7))
     delay++;
@@ -297,7 +297,7 @@ void Player::mSetupGlissEffect(Channel &channel) {
 
 void Player::mSetupPortamentoEffect(Channel &channel, uint8_t prevNote, int16_t prevSliding) {
   channel.SimpleGliss = false;
-  channel.mVibratoCounter = 0;
+  channel.VibratoDisable();
   channel.ToneSlideEnable(channel.PatternCode());
   channel.SkipPatternCode(2);
   const int16_t step = channel.PatternCodeLE16();
@@ -398,9 +398,7 @@ void Player::mPlayPattern() {
           break;
         case 5:
           // Vibrate Effect
-          channel.mVibratoCounter = channel.mVibratoDelayOff = channel.PatternCode();
-          channel.mVibratoDelayOn = channel.PatternCode();
-          channel.CurrentToneSliding = 0;
+          channel.VibratoEnable();
           channel.ToneSlideDisable();
           break;
         case 8:
@@ -458,16 +456,15 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
 }
 
 void Channel::RunGlissPortamento() {
-  if (!mToneSlideRunner.Run())
+  if (!mToneSlide.Run())
     return;
   CurrentToneSliding += ToneSlideStep;
   if (SimpleGliss)
     return;
   if (((ToneSlideStep < 0) && (CurrentToneSliding <= ToneDelta)) ||
       ((ToneSlideStep >= 0) && (CurrentToneSliding >= ToneDelta))) {
-    mToneSlideRunner.Disable();
+    ToneSlideDisable();
     Note = SlideToNote;
-    CurrentToneSliding = 0;
   }
 }
 
@@ -488,7 +485,7 @@ void Player::mPlaySamples() {
     Channel &channel = mChannels[idx];
 
     if (!channel.IsEnabled()) {
-      channel.RunVibrato();
+      channel.VibratoRun();
       mixer |= 64 | 8;
       continue;
     }
@@ -517,7 +514,7 @@ void Player::mPlaySamples() {
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, tone / 256);
 
     channel.Advance();
-    channel.RunVibrato();
+    channel.VibratoRun();
   }
 
   const uint16_t envelope = mEnvelopeBase + envelopAddition + mCurEnvSlide;
