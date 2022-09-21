@@ -145,7 +145,7 @@ void Player::mUpdateTables() {
     mNoteTable += 96;
 }
 
-inline int16_t Player::mGetNotePeriod(int8_t tone) const {
+inline int16_t Player::GetNotePeriod(int8_t tone) const {
   return pgm_read_word(mNoteTable + ((tone >= 95) ? 95 : ((tone <= 0) ? 0 : tone)));
 }
 
@@ -284,33 +284,33 @@ void Player::mSetupEnvelope(Channel &channel, uint8_t shape) {
   mEnvelopeSlider.Disable();
 }
 
-void Player::mSetupGlissEffect(Channel &channel) {
-  channel.SimpleGliss = true;
-  channel.VibratoDisable();
-  uint8_t delay = channel.PatternCode();
-  if ((delay == 0) && (mModule->GetSubVersion() >= 7))
+void Channel::SetupGlissEffect(const Player *player) {
+  mSimpleGliss = true;
+  mVibratoDisable();
+  uint8_t delay = PatternCode();
+  if ((delay == 0) && (player->GetSubVersion() >= 7))
     delay++;
-  channel.ToneSlideEnable(delay);
-  channel.SetToneSlideStep(channel.PatternCodeLE16());
+  mToneSlide.Enable(delay);
+  mSetToneSlideStep(PatternCodeLE16());
 }
 
-void Player::mSetupPortamentoEffect(Channel &channel, uint8_t prevNote, int16_t prevSliding) {
-  channel.SimpleGliss = false;
-  channel.VibratoDisable();
-  channel.ToneSlideEnable(channel.PatternCode());
-  channel.SkipPatternCode(2);
-  int16_t step = channel.PatternCodeLE16();
+void Channel::SetupPortamentoEffect(const Player *player, uint8_t prevNote, int16_t prevSliding) {
+  mSimpleGliss = false;
+  mVibratoDisable();
+  mToneSlide.Enable(PatternCode());
+  mSkipPatternCode(2);
+  int16_t step = PatternCodeLE16();
   if (step < 0)
     step = -step;
-  channel.SlideToNote = channel.Note;
-  channel.Note = prevNote;
-  channel.ToneDelta = mGetNotePeriod(channel.SlideToNote) - mGetNotePeriod(channel.Note);
+  mSlideToNote = Note;
+  Note = prevNote;
+  mToneDelta = player->GetNotePeriod(mSlideToNote) - player->GetNotePeriod(Note);
   int16_t init = 0;
-  if (mModule->GetSubVersion() >= 6)
+  if (player->GetSubVersion() >= 6)
     init = prevSliding;
-  if (channel.ToneDelta < init)
+  if (mToneDelta < init)
     step = -step;
-  channel.SetToneSlideStep(step, init);
+  mSetToneSlideStep(step, init);
 }
 
 void Player::mPlayPattern() {
@@ -384,11 +384,11 @@ void Player::mPlayPattern() {
       switch (mCmdStack.top()) {
         case 1:
           // Gliss Effect
-          mSetupGlissEffect(channel);
+          channel.SetupGlissEffect(this);
           break;
         case 2:
           // Portamento Effect
-          mSetupPortamentoEffect(channel, prevNote, prevSliding);
+          channel.SetupPortamentoEffect(this, prevNote, prevSliding);
           break;
         case 3:
           // Play Sample From Custom Position
@@ -401,7 +401,6 @@ void Player::mPlayPattern() {
         case 5:
           // Vibrate Effect
           channel.VibratoEnable();
-          channel.ToneSlideDisable();
           break;
         case 8:
           // Slide Envelope Effect
@@ -457,24 +456,24 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
     value = 0;
 }
 
-void Channel::RunGlissPortamento() {
+void Channel::mRunGlissPortamento() {
   mToneSlide.Run();
-  if (SimpleGliss)
+  if (mSimpleGliss)
     return;
-  if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= ToneDelta)) ||
-      ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= ToneDelta))) {
+  if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
+      ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
     ToneSlideDisable();
-    Note = SlideToNote;
+    Note = mSlideToNote;
   }
 }
 
-uint16_t Player::mPlayTone(Channel &channel) {
-  auto &sample = channel.GetSampleData();
-  int16_t tone = sample.Transposition() + channel.TranspositionAccumulator;
+uint16_t Channel::PlayTone(const Player *player) {
+  auto &sample = GetSampleData();
+  int16_t tone = sample.Transposition() + mTranspositionAccumulator;
   if (sample.ToneStore())
-    channel.TranspositionAccumulator = tone;
-  tone += mGetNotePeriod(channel.GetOrnamentNote()) + channel.GetToneSlide();
-  channel.RunGlissPortamento();
+    mTranspositionAccumulator = tone;
+  tone += player->GetNotePeriod(GetOrnamentNote()) + GetToneSlide();
+  mRunGlissPortamento();
   return tone & 0xFFF;
 }
 
@@ -507,7 +506,7 @@ void Player::mPlaySamples() {
 
     mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
 
-    const uint16_t tone = mPlayTone(channel);
+    const uint16_t tone = channel.PlayTone(this);
 
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, amplitude);
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, tone % 256);

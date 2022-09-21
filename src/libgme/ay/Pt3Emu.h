@@ -242,6 +242,8 @@ class SkipCounter {
   uint8_t mDelayCounter, mDelay;
 };
 
+class Player;
+
 // Channel entity
 struct Channel {
   /* only create */
@@ -255,7 +257,7 @@ struct Channel {
   bool IsEnabled() const { return mEnable; }
 
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
-  void SkipPatternCode(size_t n) { mPatternIt += n; }
+  void mSkipPatternCode(size_t n) { mPatternIt += n; }
   uint8_t PatternCode() { return *mPatternIt++; }
   int16_t PatternCodeLE16() {
     const int16_t value = get_le16(mPatternIt);
@@ -275,11 +277,11 @@ struct Channel {
     ResetSample();
     ResetOrnament();
     ToneSlideDisable();
-    VibratoDisable();
+    mVibratoDisable();
     CurrentAmplitudeSliding = 0;
     NoiseSlideStore = 0;
     EnvelopeSlideStore = 0;
-    TranspositionAccumulator = 0;
+    mTranspositionAccumulator = 0;
   }
 
   void SetSample(const Sample *sample) { mSamplePlayer.Load(sample); }
@@ -298,8 +300,7 @@ struct Channel {
   void EnvelopeEnable() { mEnvelopeEnable = true; }
   void EnvelopeDisable() { mEnvelopeEnable = false; }
 
-  void ToneSlideEnable(uint8_t delay) { mToneSlide.Enable(delay); }
-  void SetToneSlideStep(int16_t step, int16_t init = 0) { mToneSlide.SetStep(step, init); }
+  void mSetToneSlideStep(int16_t step, int16_t init = 0) { mToneSlide.SetStep(step, init); }
   void ToneSlideDisable() { mToneSlide.Disable(); }
   int16_t GetToneSlide() const { mToneSlide.GetValue(); }
 
@@ -309,20 +310,20 @@ struct Channel {
   void VibratoEnable() {
     mVibratoCounter = mVibratoOnTime = PatternCode();
     mVibratoOffTime = PatternCode();
+    mToneSlide.Disable();
   }
-  void VibratoDisable() { mVibratoCounter = 0; }
   void VibratoRun() {
     if (mVibratoCounter && !--mVibratoCounter)
       mVibratoCounter = (mEnable = !mEnable) ? mVibratoOnTime : mVibratoOffTime;
   }
 
-  void RunGlissPortamento();
+  void SetupPortamentoEffect(const Player *player, uint8_t prevNote, int16_t prevSliding);
+  void SetupGlissEffect(const Player *player);
+  void mRunGlissPortamento();
+  uint16_t PlayTone(const Player *player);
 
-  // Gliss and Portamento
-  int16_t TranspositionAccumulator, ToneDelta;  //, CurrentToneSliding, ToneSlideStep;
-  uint8_t Note, SlideToNote;
+  uint8_t Note, mSlideToNote;
   bool mEnable, mEnvelopeEnable;
-  bool SimpleGliss;
   // Amplitude
   int8_t CurrentAmplitudeSliding;
   // Envelope
@@ -331,15 +332,20 @@ struct Channel {
   uint8_t NoiseSlideStore;
 
  private:
+  //void mToneSlideEnable(uint8_t delay) { mToneSlide.Enable(delay); }
+  void mVibratoDisable() { mVibratoCounter = 0; }
   // Pattern data iterator.
   const uint8_t *mPatternIt;
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
   SkipCounter mSkipNotes;
   SimpleSlider mToneSlide;
+  // Gliss and Portamento
+  int16_t mTranspositionAccumulator, mToneDelta;
   // Vibrato
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
   uint8_t mVolume;
+  bool mSimpleGliss;
 };
 
 class Player {
@@ -354,18 +360,17 @@ class Player {
     mPlaySamples();
   }
   void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
+  int16_t GetNotePeriod(int8_t tone) const;
+  uint8_t GetSubVersion() const { return mModule->GetSubVersion(); }
+  //const PT3Module &GetModule() const { return *mModule; }
 
  private:
   void mUpdateAmplitude(int8_t &amplitude, uint8_t volume) const;
-  int16_t mGetNotePeriod(int8_t tone) const;
   void mInit();
   void mSetupEnvelope(Channel &chan, uint8_t shape);
-  void mSetupGlissEffect(Channel &chan);
-  void mSetupPortamentoEffect(Channel &chan, uint8_t prevNote, int16_t prevSliding);
   void mUpdateTables();
   void mPlayPattern();
   void mPlaySamples();
-  uint16_t mPlayTone(Channel &channel);
   void mAdvancePosition();
   // AY APU Emulator
   AyApu mApu;
