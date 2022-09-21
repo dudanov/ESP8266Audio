@@ -268,10 +268,10 @@ void Player::mInit() {
   auto pattern = mModule->GetPattern(mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
+    c.SetVolume(15);
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
     c.SetSample(mModule->GetSample(1));
     c.SetOrnament(mModule->GetOrnament(0));
-    c.Volume = 15;
     c.SetSkipLocations(1);
   }
 }
@@ -291,7 +291,7 @@ void Player::mSetupGlissEffect(Channel &channel) {
   if ((delay == 0) && (mModule->GetSubVersion() >= 7))
     delay++;
   channel.ToneSlideEnable(delay);
-  channel.ToneSlideStep = channel.PatternCodeLE16();
+  channel.SetToneSlideStep(channel.PatternCodeLE16());
 }
 
 void Player::mSetupPortamentoEffect(Channel &channel, uint8_t prevNote, int16_t prevSliding) {
@@ -299,15 +299,18 @@ void Player::mSetupPortamentoEffect(Channel &channel, uint8_t prevNote, int16_t 
   channel.VibratoDisable();
   channel.ToneSlideEnable(channel.PatternCode());
   channel.SkipPatternCode(2);
-  const int16_t step = channel.PatternCodeLE16();
-  channel.ToneSlideStep = (step >= 0) ? step : -step;
+  int16_t step = channel.PatternCodeLE16();
+  if (step < 0)
+    step = -step;
   channel.SlideToNote = channel.Note;
   channel.Note = prevNote;
   channel.ToneDelta = mGetNotePeriod(channel.SlideToNote) - mGetNotePeriod(channel.Note);
+  int16_t init = 0;
   if (mModule->GetSubVersion() >= 6)
-    channel.CurrentToneSliding = prevSliding;
-  if (channel.ToneDelta < channel.CurrentToneSliding)
-    channel.ToneSlideStep = -channel.ToneSlideStep;
+    init = prevSliding;
+  if (channel.ToneDelta < init)
+    step = -step;
+  channel.SetToneSlideStep(step, init);
 }
 
 void Player::mPlayPattern() {
@@ -317,7 +320,7 @@ void Player::mPlayPattern() {
     if (channel.IsEmptyLocation())
       continue;
     const uint8_t prevNote = channel.Note;
-    const int16_t prevSliding = channel.CurrentToneSliding;
+    const int16_t prevSliding = channel.GetToneSlide();
     while (true) {
       const uint8_t val = channel.PatternCode();
       if (val >= 0xF0) {
@@ -333,7 +336,7 @@ void Player::mPlayPattern() {
         break;
       } else if (val >= 0xC1) {
         // Set volume.
-        channel.Volume = val - 0xC0;
+        channel.SetVolume(val - 0xC0);
       } else if (val == 0xC0) {
         // Pause. End position.
         channel.Disable();
@@ -455,13 +458,11 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
 }
 
 void Channel::RunGlissPortamento() {
-  if (!mToneSlide.Run())
-    return;
-  CurrentToneSliding += ToneSlideStep;
+  mToneSlide.Run();
   if (SimpleGliss)
     return;
-  if (((ToneSlideStep < 0) && (CurrentToneSliding <= ToneDelta)) ||
-      ((ToneSlideStep >= 0) && (CurrentToneSliding >= ToneDelta))) {
+  if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= ToneDelta)) ||
+      ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= ToneDelta))) {
     ToneSlideDisable();
     Note = SlideToNote;
   }
@@ -472,7 +473,7 @@ uint16_t Player::mPlayTone(Channel &channel) {
   int16_t tone = sample.Transposition() + channel.TranspositionAccumulator;
   if (sample.ToneStore())
     channel.TranspositionAccumulator = tone;
-  tone += mGetNotePeriod(channel.GetOrnamentNote()) + channel.CurrentToneSliding;
+  tone += mGetNotePeriod(channel.GetOrnamentNote()) + channel.GetToneSlide();
   channel.RunGlissPortamento();
   return tone & 0xFFF;
 }
@@ -494,7 +495,7 @@ void Player::mPlaySamples() {
     int8_t amplitude = 0;
 
     sample.VolumeSlide(amplitude, channel.CurrentAmplitudeSliding);
-    mUpdateAmplitude(amplitude, channel.Volume);
+    mUpdateAmplitude(amplitude, channel.GetVolume());
 
     if (channel.IsEnvelopeEnabled() && !sample.EnvelopeMask())
       amplitude |= 16;
@@ -516,11 +517,13 @@ void Player::mPlaySamples() {
     channel.VibratoRun();
   }
 
-  const uint16_t envelope = mEnvelopeBase + envelopAddition + mEnvelopeSlider++;
+  const uint16_t envelope = mEnvelopeBase + envelopAddition + mEnvelopeSlider.GetValue();
   mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
   mApu.Write(mEmuTime, AyApu::AY_ENV_FINE, envelope % 256);
   mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, envelope / 256);
   mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, (mNoiseBase + mAddToNoise) % 32);
+
+  mEnvelopeSlider.Run();
 }
 
 blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {

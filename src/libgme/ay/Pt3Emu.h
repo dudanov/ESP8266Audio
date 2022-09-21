@@ -203,32 +203,25 @@ class DelayRunner {
 
 class SimpleSlider {
  public:
-  void Enable(uint8_t delay, int16_t value = 0) {
-    mDelay.Enable(delay);
-    mAccumulator = value;
+  int16_t GetValue() const { return mValue; }
+  int16_t GetStep() const { return mStep; }
+  void SetStep(int16_t step, int16_t init = 0) {
+    mValue = init;
+    mStep = step;
   }
+  void Enable(uint8_t delay) { mDelay.Enable(delay); }
   void Disable(int16_t value = 0) {
     mDelay.Disable();
-    mAccumulator = value;
+    mValue = value;
   }
-  void SetStep(int16_t value) { mStep = value; }
-  int16_t operator++(int) {
-    const int16_t value = mAccumulator;
-    mRun();
-    return value;
-  }
-  int16_t operator++() {
-    mRun();
-    return mAccumulator;
+  void Run() {
+    if (mDelay.Run())
+      mValue += mStep;
   }
 
  private:
-  void mRun() {
-    if (mDelay.Run())
-      mAccumulator += mStep;
-  }
   DelayRunner mDelay;
-  int16_t mAccumulator, mStep;
+  int16_t mValue, mStep;
 };
 
 class SkipCounter {
@@ -306,27 +299,28 @@ struct Channel {
   void EnvelopeDisable() { mEnvelopeEnable = false; }
 
   void ToneSlideEnable(uint8_t delay) { mToneSlide.Enable(delay); }
-  void ToneSlideDisable() {
-    mToneSlide.Disable();
-    CurrentToneSliding = 0;
-  }
+  void SetToneSlideStep(int16_t step, int16_t init = 0) { mToneSlide.SetStep(step, init); }
+  void ToneSlideDisable() { mToneSlide.Disable(); }
+  int16_t GetToneSlide() const { mToneSlide.GetValue(); }
+
+  uint8_t GetVolume() const { return mVolume; }
+  void SetVolume(uint8_t volume) { mVolume = volume; }
 
   void VibratoEnable() {
     mVibratoCounter = mVibratoOnTime = PatternCode();
     mVibratoOffTime = PatternCode();
   }
+  void VibratoDisable() { mVibratoCounter = 0; }
   void VibratoRun() {
     if (mVibratoCounter && !--mVibratoCounter)
       mVibratoCounter = (mEnable = !mEnable) ? mVibratoOnTime : mVibratoOffTime;
   }
-  void VibratoDisable() { mVibratoCounter = 0; }
 
   void RunGlissPortamento();
 
   // Gliss and Portamento
-  int16_t TranspositionAccumulator, ToneDelta, CurrentToneSliding, ToneSlideStep;
+  int16_t TranspositionAccumulator, ToneDelta;  //, CurrentToneSliding, ToneSlideStep;
   uint8_t Note, SlideToNote;
-  uint8_t Volume;
   bool mEnable, mEnvelopeEnable;
   bool SimpleGliss;
   // Amplitude
@@ -342,9 +336,10 @@ struct Channel {
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
   SkipCounter mSkipNotes;
-  DelayRunner mToneSlide;
+  SimpleSlider mToneSlide;
   // Vibrato
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
+  uint8_t mVolume;
 };
 
 class Player {
