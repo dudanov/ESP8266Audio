@@ -301,8 +301,6 @@ struct Channel {
   void EnvelopeEnable() { mEnvelopeEnable = true; }
   void EnvelopeDisable() { mEnvelopeEnable = false; }
 
-  // void mSetToneSlideStep(int16_t step, int16_t init = 0) { mToneSlide.SetStep(step, init); }
-  // void ToneSlideDisable() { mToneSlide.Disable(); }
   int16_t GetToneSlide() const { return mToneSlide.GetValue(); }
 
   uint8_t GetVolume() const { return mVolume; }

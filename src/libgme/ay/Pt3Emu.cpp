@@ -456,7 +456,7 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
     value = 0;
 }
 
-void Channel::mRunPortamento() {
+inline void Channel::mRunPortamento() {
   if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
       ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
     mToneSlide.Reset();
