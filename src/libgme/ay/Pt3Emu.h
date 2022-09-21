@@ -318,9 +318,9 @@ struct Channel {
       mVibratoCounter = (mEnable = !mEnable) ? mVibratoOnTime : mVibratoOffTime;
   }
 
-  void SetupPortamentoEffect(const Player *player, uint8_t prevNote, int16_t prevSliding);
-  void SetupGlissEffect(const Player *player);
-  void mRunGlissPortamento();
+  void SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding);
+  void SetupGliss(const Player *player);
+  void mRunPortamento();
   uint16_t PlayTone(const Player *player);
 
   uint8_t Note, mSlideToNote;
@@ -346,7 +346,7 @@ struct Channel {
   // Vibrato
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
   uint8_t mVolume;
-  bool mSimpleGliss;
+  bool mPortamento;
 };
 
 class Player {

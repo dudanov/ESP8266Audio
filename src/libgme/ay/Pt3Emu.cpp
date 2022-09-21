@@ -285,8 +285,8 @@ void Player::mSetupEnvelope(Channel &channel, uint8_t shape) {
   mEnvelopeSlider.Reset();
 }
 
-void Channel::SetupGlissEffect(const Player *player) {
-  mSimpleGliss = true;
+void Channel::SetupGliss(const Player *player) {
+  mPortamento = false;
   mVibratoDisable();
   uint8_t delay = PatternCode();
   if ((delay == 0) && (player->GetSubVersion() >= 7))
@@ -295,8 +295,8 @@ void Channel::SetupGlissEffect(const Player *player) {
   mToneSlide.SetStep(PatternCodeLE16());
 }
 
-void Channel::SetupPortamentoEffect(const Player *player, uint8_t prevNote, int16_t prevSliding) {
-  mSimpleGliss = false;
+void Channel::SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding) {
+  mPortamento = true;
   mVibratoDisable();
   mToneSlide.Enable(PatternCode());
   mSkipPatternCode(2);
@@ -384,11 +384,11 @@ void Player::mPlayPattern() {
       switch (mCmdStack.top()) {
         case 1:
           // Gliss Effect
-          channel.SetupGlissEffect(this);
+          channel.SetupGliss(this);
           break;
         case 2:
           // Portamento Effect
-          channel.SetupPortamentoEffect(this, prevNote, prevSliding);
+          channel.SetupPortamento(this, prevNote, prevSliding);
           break;
         case 3:
           // Play Sample From Custom Position
@@ -456,9 +456,7 @@ void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
     value = 0;
 }
 
-void Channel::mRunGlissPortamento() {
-  if (!mToneSlide.Run() || mSimpleGliss)
-    return;
+void Channel::mRunPortamento() {
   if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
       ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
     mToneSlide.Reset();
@@ -472,7 +470,8 @@ uint16_t Channel::PlayTone(const Player *player) {
   if (sample.ToneStore())
     mTranspositionAccumulator = tone;
   tone += player->GetNotePeriod(GetOrnamentNote()) + mToneSlide.GetValue();
-  mRunGlissPortamento();
+  if (mToneSlide.Run() && mPortamento)
+    mRunPortamento();
   return tone & 0xFFF;
 }
 
