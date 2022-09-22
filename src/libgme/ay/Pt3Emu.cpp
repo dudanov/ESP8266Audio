@@ -259,31 +259,16 @@ blargg_err_t Pt3Emu::mStartTrack(int track) {
   return nullptr;
 }
 
-void Player::mInit() {
-  mApu.Reset();
-  mUpdateTables();
-  mPlayDelay.SetDelay(mModule->GetDelay(), 1);
-  mPositionIt = mModule->GetPositionBegin();
-  memset(&mChannels, 0, sizeof(mChannels));
-  auto pattern = mModule->GetPattern(mPositionIt);
-  for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
-    Channel &c = mChannels[idx];
-    c.Reset();
-    c.SetVolume(15);
-    c.SetPatternData(mModule->GetPatternData(pattern, idx));
-    c.SetSample(mModule->GetSample(1));
-    c.SetOrnament(mModule->GetOrnament(0));
-    c.SetSkipLocations(1);
+blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {
+  for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
+    mPlayer.RunUntil(mEmuTime);
   }
+  mEmuTime -= duration;
+  mPlayer.EndFrame(duration);
+  return nullptr;
 }
 
-void Player::mSetupEnvelope(Channel &channel, uint8_t shape) {
-  mApu.Write(mEmuTime, AyApu::AY_ENV_SHAPE, shape);
-  channel.EnvelopeEnable();
-  channel.SetOrnamentPosition(0);
-  mEnvelopeBase = channel.PatternCodeBE16();
-  mEnvelopeSlider.Reset();
-}
+// Channel
 
 void Channel::SetupGliss(const Player *player) {
   mPortamento = false;
@@ -311,6 +296,107 @@ void Channel::SetupPortamento(const Player *player, uint8_t prevNote, int16_t pr
   if (mToneDelta < mToneSlide.GetValue())
     step = -step;
   mToneSlide.SetStep(step);
+}
+
+inline uint8_t Channel::SlideNoise() {
+  auto &sample = GetSampleData();
+  const uint8_t value = sample.Noise() + mNoiseSlideStore;
+  if (sample.NoiseEnvelopeStore())
+    mNoiseSlideStore = value;
+  return value;
+}
+
+inline void Channel::SlideEnvelope(int8_t &value) {
+  auto &sample = GetSampleData();
+  int8_t tmp = sample.EnvelopeSlide();
+  tmp += mEnvelopeSlideStore;
+  value += tmp;
+  if (sample.NoiseEnvelopeStore())
+    mEnvelopeSlideStore = tmp;
+}
+
+inline uint8_t Channel::SlideAmplitude() {
+  auto &sample = GetSampleData();
+  if (sample.VolumeSlide()) {
+    if (sample.VolumeSlideUp()) {
+      if (mAmplitudeSlideStore < 15)
+        mAmplitudeSlideStore++;
+    } else if (mAmplitudeSlideStore > -15) {
+      mAmplitudeSlideStore--;
+    }
+  }
+  const int8_t value = sample.Volume() + mAmplitudeSlideStore;
+  if (value >= 15)
+    return 15;
+  if (value <= 0)
+    return 0;
+  return value;
+}
+
+void Channel::Reset() {
+  SetSamplePosition(0);
+  SetOrnamentPosition(0);
+  mDisableVibrato();
+  mToneSlide.Reset();
+  mAmplitudeSlideStore = 0;
+  mNoiseSlideStore = 0;
+  mEnvelopeSlideStore = 0;
+  mTranspositionAccumulator = 0;
+}
+
+inline void Channel::mRunPortamento() {
+  if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
+      ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
+    mToneSlide.Reset();
+    mNote = mSlideNote;
+  }
+}
+
+uint16_t Channel::PlayTone(const Player *player) {
+  auto &s = GetSampleData();
+  int16_t tone = s.Transposition() + mTranspositionAccumulator;
+  if (s.ToneStore())
+    mTranspositionAccumulator = tone;
+  tone += player->GetNotePeriod(GetOrnamentNote()) + mToneSlide.GetValue();
+  if (mToneSlide.Run() && mPortamento)
+    mRunPortamento();
+  return tone & 0xFFF;
+}
+
+// Player
+
+void Player::mInit() {
+  mApu.Reset();
+  mUpdateTables();
+  mPlayDelay.SetDelay(mModule->GetDelay(), 1);
+  mPositionIt = mModule->GetPositionBegin();
+  memset(&mChannels, 0, sizeof(mChannels));
+  auto pattern = mModule->GetPattern(mPositionIt);
+  for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
+    Channel &c = mChannels[idx];
+    c.Reset();
+    c.SetVolume(15);
+    c.SetPatternData(mModule->GetPatternData(pattern, idx));
+    c.SetSample(mModule->GetSample(1));
+    c.SetOrnament(mModule->GetOrnament(0));
+    c.SetSkipLocations(1);
+  }
+}
+
+void Player::mSetupEnvelope(Channel &channel, uint8_t shape) {
+  mApu.Write(mEmuTime, AyApu::AY_ENV_SHAPE, shape);
+  channel.EnvelopeEnable();
+  channel.SetOrnamentPosition(0);
+  mEnvelopeBase = channel.PatternCodeBE16();
+  mEnvelopeSlider.Reset();
+}
+
+inline void Player::mAdvancePosition() {
+  if (*++mPositionIt == 0xFF)
+    mPositionIt = mModule->GetPositionLoop();
+  auto pattern = mModule->GetPattern(mPositionIt);
+  for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
+    mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
 void Player::mPlayPattern() {
@@ -416,79 +502,6 @@ void Player::mPlayPattern() {
   }
 }
 
-inline void Player::mAdvancePosition() {
-  if (*++mPositionIt == 0xFF)
-    mPositionIt = mModule->GetPositionLoop();
-  auto pattern = mModule->GetPattern(mPositionIt);
-  for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
-    mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
-}
-
-inline uint8_t Channel::SlideNoise() {
-  auto &sample = GetSampleData();
-  const uint8_t value = sample.Noise() + mNoiseSlideStore;
-  if (sample.NoiseEnvelopeStore())
-    mNoiseSlideStore = value;
-  return value;
-}
-
-inline void Channel::SlideEnvelope(int8_t &value) {
-  auto &sample = GetSampleData();
-  int8_t tmp = sample.EnvelopeSlide();
-  tmp += mEnvelopeSlideStore;
-  value += tmp;
-  if (sample.NoiseEnvelopeStore())
-    mEnvelopeSlideStore = tmp;
-}
-
-inline uint8_t Channel::SlideAmplitude() {
-  auto &sample = GetSampleData();
-  if (sample.VolumeSlide()) {
-    if (sample.VolumeSlideUp()) {
-      if (mAmplitudeSlideStore < 15)
-        mAmplitudeSlideStore++;
-    } else if (mAmplitudeSlideStore > -15) {
-      mAmplitudeSlideStore--;
-    }
-  }
-  const int8_t value = sample.Volume() + mAmplitudeSlideStore;
-  if (value >= 15)
-    return 15;
-  if (value <= 0)
-    return 0;
-  return value;
-}
-
-void Channel::Reset() {
-  SetSamplePosition(0);
-  SetOrnamentPosition(0);
-  mDisableVibrato();
-  mToneSlide.Reset();
-  mAmplitudeSlideStore = 0;
-  mNoiseSlideStore = 0;
-  mEnvelopeSlideStore = 0;
-  mTranspositionAccumulator = 0;
-}
-
-inline void Channel::mRunPortamento() {
-  if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
-      ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
-    mToneSlide.Reset();
-    mNote = mSlideNote;
-  }
-}
-
-uint16_t Channel::PlayTone(const Player *player) {
-  auto &s = GetSampleData();
-  int16_t tone = s.Transposition() + mTranspositionAccumulator;
-  if (s.ToneStore())
-    mTranspositionAccumulator = tone;
-  tone += player->GetNotePeriod(GetOrnamentNote()) + mToneSlide.GetValue();
-  if (mToneSlide.Run() && mPortamento)
-    mRunPortamento();
-  return tone & 0xFFF;
-}
-
 void Player::mPlaySamples() {
   int8_t envAdd = 0;
   uint8_t mixer = 0;
@@ -531,15 +544,6 @@ void Player::mPlaySamples() {
   mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, envelope / 256);
 
   mEnvelopeSlider.Run();
-}
-
-blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {
-  for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
-    mPlayer.RunUntil(mEmuTime);
-  }
-  mEmuTime -= duration;
-  mPlayer.EndFrame(duration);
-  return nullptr;
 }
 
 }  // namespace pt3
