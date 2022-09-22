@@ -404,11 +404,11 @@ class Pt3Emu : public ClassicEmu {
   // Player
   Player mPlayer;
   // TurboSound player
-  Player *mTurboSound{nullptr};
+  Player *mTurboSound;
   // Current emulation time
-  blip_clk_time_t mEmuTime{0};
+  blip_clk_time_t mEmuTime;
   // Play period 50Hz
-  blip_clk_time_t mFramePeriod{0};
+  blip_clk_time_t mFramePeriod;
 };
 
 }  // namespace pt3

@@ -193,7 +193,7 @@ unsigned PT3Module::CountSongLengthMs() const { return CountSongLength() * 1000 
 
 /* PT3 EMULATOR */
 
-Pt3Emu::Pt3Emu() {
+Pt3Emu::Pt3Emu() : mTurboSound(nullptr) {
   static const char *const CHANNELS_NAMES[] = {
       "Wave 1", "Wave 2", "Wave 3", "Wave 4", "Wave 5", "Wave 6",
   };
