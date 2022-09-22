@@ -398,6 +398,12 @@ blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
 }  // namespace gme
 
 static const gme_type_t_ gme_stc_type_ = {
-    "ZX Spectrum", 1, 0, &gme::emu::ay::stc::StcEmu::createStcEmu, &gme::emu::ay::stc::StcFile::createStcFile, "STC", 1,
+    "ZX Spectrum (STC)",
+    1,
+    0,
+    &gme::emu::ay::stc::StcEmu::createStcEmu,
+    &gme::emu::ay::stc::StcFile::createStcFile,
+    "STC",
+    1,
 };
 extern gme_type_t const gme_stc_type = &gme_stc_type_;

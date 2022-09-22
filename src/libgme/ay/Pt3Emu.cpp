@@ -590,6 +590,12 @@ void Player::mPlaySamples() {
 }  // namespace gme
 
 static const gme_type_t_ gme_pt3_type_ = {
-    "ZX Spectrum", 1, 0, &gme::emu::ay::pt3::Pt3Emu::createPt3Emu, &gme::emu::ay::pt3::Pt3File::createPt3File, "PT3", 1,
+    "ZX Spectrum (PT3)",
+    1,
+    0,
+    &gme::emu::ay::pt3::Pt3Emu::createPt3Emu,
+    &gme::emu::ay::pt3::Pt3File::createPt3File,
+    "PT3",
+    1,
 };
 extern gme_type_t const gme_pt3_type = &gme_pt3_type_;

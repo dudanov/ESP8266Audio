@@ -185,6 +185,6 @@ blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
 }  // namespace gme
 
 static const gme_type_t_ gme_rsf_type_ = {
-    "ZX Spectrum", 1, 0, &gme::emu::ay::RsfEmu::createRsfEmu, &gme::emu::ay::RsfFile::createRsfFile, "RSF", 1,
+    "ZX Spectrum (RSF)", 1, 0, &gme::emu::ay::RsfEmu::createRsfEmu, &gme::emu::ay::RsfFile::createRsfFile, "RSF", 1,
 };
 extern gme_type_t const gme_rsf_type = &gme_rsf_type_;
