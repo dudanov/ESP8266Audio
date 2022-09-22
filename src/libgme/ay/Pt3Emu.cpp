@@ -212,6 +212,8 @@ Pt3Emu::~Pt3Emu() {
 }
 
 blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, int track) const {
+  GmeFile::copyField(out->song, mPlayer.GetName());
+  GmeFile::copyField(out->author, mPlayer.GetAuthor());
   // out->length = mModule->CountSongLengthMs();
   return nullptr;
 }

@@ -100,6 +100,12 @@ class PT3Module {
   // Get module format subversion.
   uint8_t GetSubVersion() const;
 
+  // Song name.
+  const char *GetName() const { return mName; }
+
+  // Song author.
+  const char *GetAuthor() const { return mAuthor; }
+
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
 
@@ -164,11 +170,11 @@ class PT3Module {
   // " compilation of " or any text of this length.
   uint8_t mUnused0[16];
   // Track name. Unused characters are padded with spaces.
-  uint8_t mName[32];
+  char mName[32];
   // " by " or any text of this length.
   uint8_t mUnused1[4];
   // Author's name. Unused characters are padded with spaces.
-  uint8_t mAuthor[32];
+  char mAuthor[32];
   // One space (any character).
   uint8_t mUnused2;
   // Note frequency table number.
@@ -351,6 +357,8 @@ class Player {
 
   int16_t GetNotePeriod(int8_t tone) const;
   uint8_t GetSubVersion() const { return mModule->GetSubVersion(); }
+  const char *GetName() const { return mModule->GetName(); }
+  const char *GetAuthor() const { return mModule->GetAuthor(); }
 
  private:
   void mInit();
