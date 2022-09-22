@@ -215,7 +215,7 @@ blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, int track) const {
   GmeFile::copyField(out->song, mPlayer.GetName(), 32);
   GmeFile::copyField(out->author, mPlayer.GetAuthor(), 32);
   if (mTurboSound != nullptr)
-    strcpy_P(out->comment, PSTR("6CH TurboSound (TS)"));
+    strcpy_P(out->comment, PSTR("6-ch TurboSound (TS)"));
   return nullptr;
 }
 
