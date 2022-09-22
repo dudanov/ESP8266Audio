@@ -27,7 +27,7 @@ template<typename T> class LoopDataPlayer {
     mEnd = data->end;
     mLoop = data->loop;
   }
-  inline void Reset(uint8_t pos = 0) { mPos = 0; }
+  inline void SetPosition(uint8_t pos) { mPos = pos; }
   inline const T &GetData() const { return mData[mPos]; }
   inline void Advance() {
     if (++mPos >= mEnd)
@@ -206,18 +206,19 @@ class SimpleSlider {
   int16_t GetValue() const { return mValue; }
   int16_t GetStep() const { return mStep; }
   void SetValue(int16_t value) { mValue = value; }
-  void Reset() {
-    SetValue(0);
-    Disable();
-  }
   void SetStep(int16_t step) { mStep = step; }
   void Enable(uint8_t delay) { mDelay.Enable(delay); }
   void Disable() { mDelay.Disable(); }
   bool Run() {
-    const bool run = mDelay.Run();
-    if (run)
+    if (mDelay.Run()) {
       mValue += mStep;
-    return run;
+      return true;
+    }
+    return false;
+  }
+  void Reset() {
+    mDelay.Disable();
+    mValue = 0;
   }
 
  private:
@@ -252,7 +253,9 @@ struct Channel {
   /* not allow make copies */
   Channel(const Channel &) = delete;
 
-  void SetNote(uint8_t note) { Note = note; }
+  void Reset();
+  void SetNote(uint8_t note) { mNote = note; }
+  uint8_t GetNote() const { return mNote; }
   void Enable() { mEnable = true; }
   void Disable() { mEnable = false; }
   bool IsEnabled() const { return mEnable; }
@@ -271,27 +274,16 @@ struct Channel {
     return value;
   }
 
-  void SetSkipLocations(uint8_t skip) { mSkipNotes.SetDelay(skip); }
   bool IsEmptyLocation() { return !mSkipNotes.Run(); }
-
-  void Reset() {
-    ResetSample();
-    ResetOrnament();
-    mVibratoDisable();
-    mToneSlide.Reset();
-    CurrentAmplitudeSliding = 0;
-    NoiseSlideStore = 0;
-    EnvelopeSlideStore = 0;
-    mTranspositionAccumulator = 0;
-  }
+  void SetSkipLocations(uint8_t skip) { mSkipNotes.SetDelay(skip); }
 
   void SetSample(const Sample *sample) { mSamplePlayer.Load(sample); }
+  void SetSamplePosition(uint8_t pos) { mSamplePlayer.SetPosition(pos); }
   void SetOrnament(const Ornament *ornament) { mOrnamentPlayer.Load(ornament); }
-  void ResetSample(uint8_t pos = 0) { mSamplePlayer.Reset(pos); }
-  void ResetOrnament(uint8_t pos = 0) { mOrnamentPlayer.Reset(pos); }
+  void SetOrnamentPosition(uint8_t pos) { mOrnamentPlayer.SetPosition(pos); }
 
   const SampleData &GetSampleData() const { return mSamplePlayer.GetData(); }
-  uint8_t GetOrnamentNote() const { return Note + mOrnamentPlayer.GetData(); }
+  uint8_t GetOrnamentNote() const { return mNote + mOrnamentPlayer.GetData(); }
   void Advance() {
     mSamplePlayer.Advance();
     mOrnamentPlayer.Advance();
@@ -301,27 +293,24 @@ struct Channel {
   void EnvelopeEnable() { mEnvelopeEnable = true; }
   void EnvelopeDisable() { mEnvelopeEnable = false; }
 
-  int16_t GetToneSlide() const { return mToneSlide.GetValue(); }
-
   uint8_t GetVolume() const { return mVolume; }
   void SetVolume(uint8_t volume) { mVolume = volume; }
 
-  void VibratoEnable() {
+  void SetupVibrato() {
     mVibratoCounter = mVibratoOnTime = PatternCode();
     mVibratoOffTime = PatternCode();
     mToneSlide.Disable();
   }
-  void VibratoRun() {
+  void RunVibrato() {
     if (mVibratoCounter && !--mVibratoCounter)
       mVibratoCounter = (mEnable = !mEnable) ? mVibratoOnTime : mVibratoOffTime;
   }
 
   uint16_t PlayTone(const Player *player);
+  int16_t GetToneSlide() const { return mToneSlide.GetValue(); }
   void SetupGliss(const Player *player);
   void SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding);
-  void mRunPortamento();
 
-  uint8_t Note, mSlideToNote;
   // Amplitude
   int8_t CurrentAmplitudeSliding;
   // Envelope
@@ -330,8 +319,8 @@ struct Channel {
   uint8_t NoiseSlideStore;
 
  private:
-  // void mToneSlideEnable(uint8_t delay) { mToneSlide.Enable(delay); }
-  void mVibratoDisable() { mVibratoCounter = 0; }
+  void mRunPortamento();
+  void mDisableVibrato() { mVibratoCounter = 0; }
   // Pattern data iterator.
   const uint8_t *mPatternIt;
   SamplePlayer mSamplePlayer;
@@ -342,6 +331,7 @@ struct Channel {
   int16_t mTranspositionAccumulator, mToneDelta;
   // Vibrato
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
+  uint8_t mNote, mSlideNote;
   uint8_t mVolume;
   bool mEnable, mEnvelopeEnable;
   bool mPortamento;
@@ -386,7 +376,7 @@ class Player {
   const int8_t *mVolumeTable;
   // Current emulation time
   blip_clk_time_t mEmuTime;
-  SkipCounter mSongDelay;
+  SkipCounter mPlayDelay;
   SimpleSlider mEnvelopeSlider;
   uint16_t mEnvelopeBase;
   uint8_t mNoiseBase, mAddToNoise;

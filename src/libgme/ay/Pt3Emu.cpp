@@ -262,7 +262,7 @@ blargg_err_t Pt3Emu::mStartTrack(int track) {
 void Player::mInit() {
   mApu.Reset();
   mUpdateTables();
-  mSongDelay.SetDelay(mModule->GetDelay(), 1);
+  mPlayDelay.SetDelay(mModule->GetDelay(), 1);
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
   auto pattern = mModule->GetPattern(mPositionIt);
@@ -280,14 +280,14 @@ void Player::mInit() {
 void Player::mSetupEnvelope(Channel &channel, uint8_t shape) {
   mApu.Write(mEmuTime, AyApu::AY_ENV_SHAPE, shape);
   channel.EnvelopeEnable();
-  channel.ResetOrnament();
+  channel.SetOrnamentPosition(0);
   mEnvelopeBase = channel.PatternCodeBE16();
   mEnvelopeSlider.Reset();
 }
 
 void Channel::SetupGliss(const Player *player) {
   mPortamento = false;
-  mVibratoDisable();
+  mDisableVibrato();
   uint8_t delay = PatternCode();
   if ((delay == 0) && (player->GetSubVersion() >= 7))
     delay++;
@@ -297,15 +297,15 @@ void Channel::SetupGliss(const Player *player) {
 
 void Channel::SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding) {
   mPortamento = true;
-  mVibratoDisable();
+  mDisableVibrato();
   mToneSlide.Enable(PatternCode());
   mSkipPatternCode(2);
   int16_t step = PatternCodeLE16();
   if (step < 0)
     step = -step;
-  mSlideToNote = Note;
-  Note = prevNote;
-  mToneDelta = player->GetNotePeriod(mSlideToNote) - player->GetNotePeriod(Note);
+  mSlideNote = mNote;
+  mNote = prevNote;
+  mToneDelta = player->GetNotePeriod(mSlideNote) - player->GetNotePeriod(mNote);
   if (player->GetSubVersion() >= 6)
     mToneSlide.SetValue(prevSliding);
   if (mToneDelta < mToneSlide.GetValue())
@@ -314,65 +314,65 @@ void Channel::SetupPortamento(const Player *player, uint8_t prevNote, int16_t pr
 }
 
 void Player::mPlayPattern() {
-  if (!mSongDelay.Run())
+  if (!mPlayDelay.Run())
     return;
-  for (Channel &channel : mChannels) {
-    if (channel.IsEmptyLocation())
+  for (Channel &c : mChannels) {
+    if (c.IsEmptyLocation())
       continue;
-    const uint8_t prevNote = channel.Note;
-    const int16_t prevSliding = channel.GetToneSlide();
+    const uint8_t prevNote = c.GetNote();
+    const int16_t prevSliding = c.GetToneSlide();
     while (true) {
-      const uint8_t val = channel.PatternCode();
+      const uint8_t val = c.PatternCode();
       if (val >= 0xF0) {
         // Set ornament and sample. Envelope disable.
-        channel.SetOrnament(mModule->GetOrnament(val - 0xF0));
-        channel.SetSample(mModule->GetSample(channel.PatternCode() / 2));
-        channel.EnvelopeDisable();
+        c.SetOrnament(mModule->GetOrnament(val - 0xF0));
+        c.SetSample(mModule->GetSample(c.PatternCode() / 2));
+        c.EnvelopeDisable();
       } else if (val >= 0xD1) {
         // Set sample.
-        channel.SetSample(mModule->GetSample(val - 0xD0));
+        c.SetSample(mModule->GetSample(val - 0xD0));
       } else if (val == 0xD0) {
         // Empty location. End position.
         break;
       } else if (val >= 0xC1) {
         // Set volume.
-        channel.SetVolume(val - 0xC0);
+        c.SetVolume(val - 0xC0);
       } else if (val == 0xC0) {
         // Pause. End position.
-        channel.Disable();
-        channel.Reset();
+        c.Disable();
+        c.Reset();
         break;
       } else if (val >= 0xB2) {
         // Set envelope.
-        mSetupEnvelope(channel, val - 0xB1);
+        mSetupEnvelope(c, val - 0xB1);
       } else if (val == 0xB1) {
         // Set number of empty locations after the subsequent code.
-        channel.SetSkipLocations(channel.PatternCode());
+        c.SetSkipLocations(c.PatternCode());
       } else if (val == 0xB0) {
         // Disable envelope.
-        channel.EnvelopeDisable();
-        channel.ResetOrnament();
+        c.EnvelopeDisable();
+        c.SetOrnamentPosition(0);
       } else if (val >= 0x50) {
         // Set note in semitones. End position.
-        channel.SetNote(val - 0x50);
-        channel.Reset();
-        channel.Enable();
+        c.SetNote(val - 0x50);
+        c.Reset();
+        c.Enable();
         break;
       } else if (val >= 0x40) {
         // Set ornament.
-        channel.SetOrnament(mModule->GetOrnament(val - 0x40));
+        c.SetOrnament(mModule->GetOrnament(val - 0x40));
       } else if (val >= 0x20) {
         // Set noise offset (occurs only in channel B).
         mNoiseBase = val - 0x20;
       } else if (val >= 0x11) {
         // Set envelope and sample.
-        mSetupEnvelope(channel, val - 0x10);
-        channel.SetSample(mModule->GetSample(channel.PatternCode() / 2));
+        mSetupEnvelope(c, val - 0x10);
+        c.SetSample(mModule->GetSample(c.PatternCode() / 2));
       } else if (val == 0x10) {
         // Disable envelope, reset ornament and set sample.
-        channel.EnvelopeDisable();
-        channel.ResetOrnament();
-        channel.SetSample(mModule->GetSample(channel.PatternCode() / 2));
+        c.EnvelopeDisable();
+        c.SetOrnamentPosition(0);
+        c.SetSample(mModule->GetSample(c.PatternCode() / 2));
       } else if (val != 0x00) {
         mCmdStack.push(val);
       } else {
@@ -384,32 +384,32 @@ void Player::mPlayPattern() {
       switch (mCmdStack.top()) {
         case 1:
           // Gliss Effect
-          channel.SetupGliss(this);
+          c.SetupGliss(this);
           break;
         case 2:
           // Portamento Effect
-          channel.SetupPortamento(this, prevNote, prevSliding);
+          c.SetupPortamento(this, prevNote, prevSliding);
           break;
         case 3:
           // Play Sample From Custom Position
-          channel.ResetSample(channel.PatternCode());
+          c.SetSamplePosition(c.PatternCode());
           break;
         case 4:
           // Play Ornament From Custom Position
-          channel.ResetOrnament(channel.PatternCode());
+          c.SetOrnamentPosition(c.PatternCode());
           break;
         case 5:
           // Vibrate Effect
-          channel.VibratoEnable();
+          c.SetupVibrato();
           break;
         case 8:
           // Slide Envelope Effect
-          mEnvelopeSlider.Enable(channel.PatternCode());
-          mEnvelopeSlider.SetStep(channel.PatternCodeLE16());
+          mEnvelopeSlider.Enable(c.PatternCode());
+          mEnvelopeSlider.SetStep(c.PatternCodeLE16());
           break;
         case 9:
           // Song Delay
-          mSongDelay.SetDelay(channel.PatternCode());
+          mPlayDelay.SetDelay(c.PatternCode());
           break;
       }
     }
@@ -456,11 +456,22 @@ inline void SampleData::VolumeSlide(int8_t &value, int8_t &store) const {
     value = 0;
 }
 
+void Channel::Reset() {
+  SetSamplePosition(0);
+  SetOrnamentPosition(0);
+  mDisableVibrato();
+  mToneSlide.Reset();
+  CurrentAmplitudeSliding = 0;
+  NoiseSlideStore = 0;
+  EnvelopeSlideStore = 0;
+  mTranspositionAccumulator = 0;
+}
+
 inline void Channel::mRunPortamento() {
   if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
       ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
     mToneSlide.Reset();
-    Note = mSlideToNote;
+    mNote = mSlideNote;
   }
 }
 
@@ -480,39 +491,36 @@ void Player::mPlaySamples() {
   uint8_t mixer = 0;
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx, mixer >>= 1) {
     Channel &channel = mChannels[idx];
-
-    if (!channel.IsEnabled()) {
-      channel.VibratoRun();
-      mixer |= 64 | 8;
-      mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, 0);
-      continue;
-    }
-
-    const SampleData &sample = channel.GetSampleData();
-
     int8_t amplitude = 0;
 
-    sample.VolumeSlide(amplitude, channel.CurrentAmplitudeSliding);
-    mUpdateAmplitude(amplitude, channel.GetVolume());
+    if (channel.IsEnabled()) {
+      const SampleData &sample = channel.GetSampleData();
 
-    if (channel.IsEnvelopeEnabled() && !sample.EnvelopeMask())
-      amplitude |= 16;
+      sample.VolumeSlide(amplitude, channel.CurrentAmplitudeSliding);
+      mUpdateAmplitude(amplitude, channel.GetVolume());
 
-    if (!sample.NoiseMask())
-      sample.NoiseSlide(mAddToNoise, channel.NoiseSlideStore);
-    else
-      sample.EnvelopeSlide(envelopAddition, channel.EnvelopeSlideStore);
+      if (channel.IsEnvelopeEnabled() && !sample.EnvelopeMask())
+        amplitude |= 16;
 
-    mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
+      if (!sample.NoiseMask())
+        sample.NoiseSlide(mAddToNoise, channel.NoiseSlideStore);
+      else
+        sample.EnvelopeSlide(envelopAddition, channel.EnvelopeSlideStore);
 
-    const uint16_t tone = channel.PlayTone(this);
+      mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
 
+      const uint16_t tone = channel.PlayTone(this);
+      mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, tone % 256);
+      mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, tone / 256);
+
+      channel.Advance();
+
+    } else {
+      mixer |= 64 | 8;
+    }
+
+    channel.RunVibrato();
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, amplitude);
-    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, tone % 256);
-    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, tone / 256);
-
-    channel.Advance();
-    channel.VibratoRun();
   }
 
   const uint16_t envelope = mEnvelopeBase + envelopAddition + mEnvelopeSlider.GetValue();
