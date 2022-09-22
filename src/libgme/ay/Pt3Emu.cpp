@@ -254,8 +254,8 @@ blargg_err_t Pt3Emu::mLoad(const uint8_t *data, long size) {
       mTurboSound = new Player;
     if (mTurboSound != nullptr) {
       mTurboSound->Load(module);
-      mPlayer.SetVolume(mGetGain() / 2);
-      mTurboSound->SetVolume(mGetGain() / 2);
+      mPlayer.SetVolume(mGetGain() * 0.7);
+      mTurboSound->SetVolume(mGetGain() * 0.7);
       mSetChannelsNumber(AyApu::OSCS_NUM * 2);
       return mSetupBuffer(CLOCK_RATE);
     }
