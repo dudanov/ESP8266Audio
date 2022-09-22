@@ -514,13 +514,13 @@ void Player::mPlaySamples() {
       mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, tone / 256);
 
       channel.Advance();
-
-    } else {
-      mixer |= 64 | 8;
     }
 
     channel.RunVibrato();
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, amplitude);
+
+    if (amplitude == 0)
+      mixer |= 64 | 8;
   }
 
   const uint16_t envelope = mEnvelopeBase + envelopAddition + mEnvelopeSlider.GetValue();
