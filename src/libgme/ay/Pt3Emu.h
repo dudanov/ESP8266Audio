@@ -46,7 +46,7 @@ struct SampleData {
   bool VolumeSlideUp() const { return mData[0] & 0x40; }
   uint8_t Noise() const { return (mData[0] >> 1) & 0x1F; }
   int8_t EnvelopeSlide() const {
-    int8_t tmp = mData[0] >> 1;
+    const int8_t tmp = mData[0] >> 1;
     return (tmp & 16) ? (tmp | ~15) : (tmp & 15);
   }
   bool EnvelopeMask() const { return mData[0] & 0x01; }
@@ -269,11 +269,13 @@ struct Channel {
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   void mSkipPatternCode(size_t n) { mPatternIt += n; }
   uint8_t PatternCode() { return *mPatternIt++; }
+
   int16_t PatternCodeLE16() {
     const int16_t value = get_le16(mPatternIt);
     mPatternIt += 2;
     return value;
   }
+
   int16_t PatternCodeBE16() {
     const int16_t value = get_be16(mPatternIt);
     mPatternIt += 2;
@@ -290,6 +292,7 @@ struct Channel {
 
   const SampleData &GetSampleData() const { return mSamplePlayer.GetData(); }
   uint8_t GetOrnamentNote() const { return mNote + mOrnamentPlayer.GetData(); }
+
   void Advance() {
     mSamplePlayer.Advance();
     mOrnamentPlayer.Advance();
@@ -307,6 +310,7 @@ struct Channel {
     mVibratoOffTime = PatternCode();
     mToneSlide.Disable();
   }
+
   void RunVibrato() {
     if (mVibratoCounter && !--mVibratoCounter)
       mVibratoCounter = (mEnable = !mEnable) ? mVibratoOnTime : mVibratoOffTime;
@@ -318,8 +322,8 @@ struct Channel {
   void SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding);
 
  private:
-  void mRunPortamento();
   void mDisableVibrato() { mVibratoCounter = 0; }
+  void mRunPortamento();
   const uint8_t *mPatternIt;
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
@@ -327,12 +331,9 @@ struct Channel {
   SimpleSlider mToneSlide;
   int16_t mTranspositionAccumulator, mToneDelta;
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
-  uint8_t mNote, mSlideNote;
-  uint8_t mVolume;
-  uint8_t mNoiseSlideStore;
+  uint8_t mVolume, mNote, mNoteSlide, mNoiseSlideStore;
   int8_t mAmplitudeSlideStore, mEnvelopeSlideStore;
-  bool mEnable, mEnvelopeEnable;
-  bool mPortamento;
+  bool mEnable, mEnvelopeEnable, mPortamento;
 };
 
 class Player {
@@ -341,23 +342,24 @@ class Player {
   void Init() { mInit(); }
   void SetVolume(double volume) { mApu.SetVolume(volume); }
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
+  void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
   void RunUntil(blip_clk_time_t time) {
     mEmuTime = time;
     mPlayPattern();
     mPlaySamples();
   }
-  void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
+
   int16_t GetNotePeriod(int8_t tone) const;
   uint8_t GetSubVersion() const { return mModule->GetSubVersion(); }
 
  private:
-  uint8_t mGetAmplitude(uint8_t volume, uint8_t amplitude) const;
   void mInit();
   void mSetupEnvelope(Channel &chan, uint8_t shape);
   void mUpdateTables();
   void mPlayPattern();
   void mPlaySamples();
   void mAdvancePosition();
+  uint8_t mGetAmplitude(uint8_t volume, uint8_t amplitude) const;
   // AY APU Emulator
   AyApu mApu;
   // Channels
@@ -374,8 +376,8 @@ class Player {
   const uint8_t *mVolumeTable;
   // Current emulation time
   blip_clk_time_t mEmuTime;
-  SkipCounter mPlayDelay;
   SimpleSlider mEnvelopeSlider;
+  SkipCounter mPlayDelay;
   uint16_t mEnvelopeBase;
   uint8_t mNoiseBase;
 };

@@ -288,9 +288,9 @@ void Channel::SetupPortamento(const Player *player, uint8_t prevNote, int16_t pr
   int16_t step = PatternCodeLE16();
   if (step < 0)
     step = -step;
-  mSlideNote = mNote;
+  mNoteSlide = mNote;
   mNote = prevNote;
-  mToneDelta = player->GetNotePeriod(mSlideNote) - player->GetNotePeriod(mNote);
+  mToneDelta = player->GetNotePeriod(mNoteSlide) - player->GetNotePeriod(mNote);
   if (player->GetSubVersion() >= 6)
     mToneSlide.SetValue(prevSliding);
   if (mToneDelta < mToneSlide.GetValue())
@@ -348,7 +348,7 @@ inline void Channel::mRunPortamento() {
   if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
       ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
     mToneSlide.Reset();
-    mNote = mSlideNote;
+    mNote = mNoteSlide;
   }
 }
 
