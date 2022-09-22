@@ -206,7 +206,10 @@ Pt3Emu::Pt3Emu() : mTurboSound(nullptr) {
   mSetSilenceLookahead(1);
 }
 
-Pt3Emu::~Pt3Emu() {}
+Pt3Emu::~Pt3Emu() {
+  if (mTurboSound != nullptr)
+    delete mTurboSound;
+}
 
 blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, int track) const {
   // out->length = mModule->CountSongLengthMs();
