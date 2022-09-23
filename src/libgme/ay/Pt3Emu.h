@@ -350,7 +350,8 @@ class Player {
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
   void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
   void RunUntil(blip_clk_time_t time) {
-    mPlayPattern(time);
+    if (mPlayDelay.Run())
+      mPlayPattern(time);
     mPlaySamples(time);
   }
 

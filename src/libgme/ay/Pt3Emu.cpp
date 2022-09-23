@@ -438,8 +438,6 @@ inline void Player::mAdvancePosition() {
 }
 
 void Player::mPlayPattern(const blip_clk_time_t time) {
-  if (!mPlayDelay.Run())
-    return;
   for (Channel &c : mChannels) {
     if (c.IsEmptyLocation())
       continue;
