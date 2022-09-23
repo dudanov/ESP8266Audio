@@ -145,11 +145,11 @@ void Player::mUpdateTables() {
     mNoteTable += 96;
 }
 
-inline int16_t Player::GetNotePeriod(int8_t tone) const {
+inline int16_t Player::GetNotePeriod(const int8_t tone) const {
   return pgm_read_word(mNoteTable + ((tone >= 95) ? 95 : ((tone <= 0) ? 0 : tone)));
 }
 
-inline uint8_t Player::mGetAmplitude(uint8_t volume, uint8_t amplitude) const {
+inline uint8_t Player::mGetAmplitude(const uint8_t volume, const uint8_t amplitude) const {
   return pgm_read_byte(mVolumeTable + 16 * volume + amplitude);
 }
 
@@ -163,7 +163,7 @@ static const char VT_SIGNATURE[] PROGMEM = {
     'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
 };
 
-const PT3Module *PT3Module::GetModule(const uint8_t *data, size_t size) {
+const PT3Module *PT3Module::GetModule(const uint8_t *data, const size_t size) {
   if (size <= sizeof(PT3Module))
     return nullptr;
   if (!memcmp_P(data, PT_SIGNATURE, sizeof(PT_SIGNATURE)) || !memcmp_P(data, VT_SIGNATURE, sizeof(VT_SIGNATURE)))
@@ -208,7 +208,7 @@ Pt3Emu::Pt3Emu() : mTurboSound(nullptr) {
 
 Pt3Emu::~Pt3Emu() { mDestroyTS(); }
 
-blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, int track) const {
+blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, const int track) const {
   GmeFile::copyField(out->song, mPlayer.GetName(), 32);
   GmeFile::copyField(out->author, mPlayer.GetAuthor(), 32);
   if (mHasTS())
@@ -221,7 +221,7 @@ struct Pt3File : GmeInfo {
   Pt3File() { mSetType(gme_pt3_type); }
   static MusicEmu *createPt3File() { return new Pt3File; }
 
-  blargg_err_t mLoad(const uint8_t *data, long size) override {
+  blargg_err_t mLoad(const uint8_t *data, const long size) override {
     mModule = reinterpret_cast<const PT3Module *>(data);
     // if (!mModule->CheckIntegrity(size))
     // return gme_wrong_file_type;
@@ -229,7 +229,7 @@ struct Pt3File : GmeInfo {
     return nullptr;
   }
 
-  blargg_err_t mGetTrackInfo(track_info_t *out, int track) const override {
+  blargg_err_t mGetTrackInfo(track_info_t *out, const int track) const override {
     // out->length = mModule->CountSongLengthMs();
     return nullptr;
   }
@@ -250,7 +250,7 @@ void Pt3Emu::mDestroyTS() {
   mTurboSound = nullptr;
 }
 
-blargg_err_t Pt3Emu::mLoad(const uint8_t *data, long size) {
+blargg_err_t Pt3Emu::mLoad(const uint8_t *data, const long size) {
   auto module = PT3Module::GetModule(data, size);
   if (module == nullptr)
     return gme_wrong_file_type;
@@ -271,13 +271,13 @@ blargg_err_t Pt3Emu::mLoad(const uint8_t *data, long size) {
   return mSetupBuffer(CLOCK_RATE);
 }
 
-void Pt3Emu::mUpdateEq(BlipEq const &eq) {}  // mApu.SetTrebleEq(eq); }
+void Pt3Emu::mUpdateEq(const BlipEq &eq) {}  // mApu.SetTrebleEq(eq); }
 
-void Pt3Emu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) {
-  if (i < AyApu::OSCS_NUM)
-    mPlayer.SetOscOutput(i, center);
+void Pt3Emu::mSetChannel(const int idx, BlipBuffer *center, BlipBuffer *, BlipBuffer *) {
+  if (idx < AyApu::OSCS_NUM)
+    mPlayer.SetOscOutput(idx, center);
   else if (mHasTS())
-    mTurboSound->SetOscOutput(i - AyApu::OSCS_NUM, center);
+    mTurboSound->SetOscOutput(idx - AyApu::OSCS_NUM, center);
 }
 
 // Emulation
@@ -321,7 +321,7 @@ void Channel::SetupGliss(const Player *player) {
   mToneSlide.SetStep(PatternCodeLE16());
 }
 
-void Channel::SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding) {
+void Channel::SetupPortamento(const Player *player, const uint8_t prevNote, const int16_t prevSliding) {
   mPortamento = true;
   mDisableVibrato();
   mToneSlide.Enable(PatternCode());
@@ -437,7 +437,7 @@ inline void Player::mAdvancePosition() {
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
-void Player::mPlayPattern(blip_clk_time_t time) {
+void Player::mPlayPattern(const blip_clk_time_t time) {
   if (!mPlayDelay.Run())
     return;
   for (Channel &c : mChannels) {
@@ -542,7 +542,7 @@ void Player::mPlayPattern(blip_clk_time_t time) {
   }
 }
 
-void Player::mPlaySamples(blip_clk_time_t time) {
+void Player::mPlaySamples(const blip_clk_time_t time) {
   int8_t envAdd = 0;
   uint8_t mixer = 0;
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx, mixer >>= 1) {
