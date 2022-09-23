@@ -206,15 +206,12 @@ Pt3Emu::Pt3Emu() : mTurboSound(nullptr) {
   mSetSilenceLookahead(1);
 }
 
-Pt3Emu::~Pt3Emu() {
-  if (mTurboSound != nullptr)
-    delete mTurboSound;
-}
+Pt3Emu::~Pt3Emu() { mDestroyTS(); }
 
 blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, int track) const {
   GmeFile::copyField(out->song, mPlayer.GetName(), 32);
   GmeFile::copyField(out->author, mPlayer.GetAuthor(), 32);
-  if (mTurboSound != nullptr)
+  if (mHasTS())
     strcpy_P(out->comment, PSTR("6-ch TurboSound (TS)"));
   return nullptr;
 }
@@ -240,6 +237,19 @@ struct Pt3File : GmeInfo {
 
 // Setup
 
+bool Pt3Emu::mCreateTS() {
+  if (!mHasTS())
+    mTurboSound = new Player;
+  return mHasTS();
+}
+
+void Pt3Emu::mDestroyTS() {
+  if (!mHasTS())
+    return;
+  delete mTurboSound;
+  mTurboSound = nullptr;
+}
+
 blargg_err_t Pt3Emu::mLoad(const uint8_t *data, long size) {
   auto module = PT3Module::GetModule(data, size);
   if (module == nullptr)
@@ -248,20 +258,13 @@ blargg_err_t Pt3Emu::mLoad(const uint8_t *data, long size) {
   mPlayer.Load(module);
   module = PT3Module::FindTSModule(data, size);
   if (module == nullptr) {
-    if (mTurboSound != nullptr) {
-      delete mTurboSound;
-      mTurboSound = nullptr;
-    }
-  } else {
-    if (mTurboSound == nullptr)
-      mTurboSound = new Player;
-    if (mTurboSound != nullptr) {
-      mTurboSound->Load(module);
-      mPlayer.SetVolume(mGetGain() * 0.7);
-      mTurboSound->SetVolume(mGetGain() * 0.7);
-      mSetChannelsNumber(AyApu::OSCS_NUM * 2);
-      return mSetupBuffer(CLOCK_RATE);
-    }
+    mDestroyTS();
+  } else if (mCreateTS()) {
+    mTurboSound->Load(module);
+    mPlayer.SetVolume(mGetGain() * 0.7);
+    mTurboSound->SetVolume(mGetGain() * 0.7);
+    mSetChannelsNumber(AyApu::OSCS_NUM * 2);
+    return mSetupBuffer(CLOCK_RATE);
   }
   mPlayer.SetVolume(mGetGain());
   mSetChannelsNumber(AyApu::OSCS_NUM);
@@ -273,7 +276,7 @@ void Pt3Emu::mUpdateEq(BlipEq const &eq) {}  // mApu.SetTrebleEq(eq); }
 void Pt3Emu::mSetChannel(int i, BlipBuffer *center, BlipBuffer *, BlipBuffer *) {
   if (i < AyApu::OSCS_NUM)
     mPlayer.SetOscOutput(i, center);
-  else if (mTurboSound != nullptr)
+  else if (mHasTS())
     mTurboSound->SetOscOutput(i - AyApu::OSCS_NUM, center);
 }
 
@@ -287,7 +290,7 @@ blargg_err_t Pt3Emu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
   mEmuTime = 0;
   mPlayer.Init();
-  if (mTurboSound != nullptr)
+  if (mHasTS())
     mTurboSound->Init();
   SetTempo(mGetTempo());
   return nullptr;
@@ -296,12 +299,12 @@ blargg_err_t Pt3Emu::mStartTrack(int track) {
 blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
     mPlayer.RunUntil(mEmuTime);
-    if (mTurboSound != nullptr)
+    if (mHasTS())
       mTurboSound->RunUntil(mEmuTime);
   }
   mEmuTime -= duration;
   mPlayer.EndFrame(duration);
-  if (mTurboSound != nullptr)
+  if (mHasTS())
     mTurboSound->EndFrame(duration);
   return nullptr;
 }

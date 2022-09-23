@@ -409,6 +409,9 @@ class Pt3Emu : public ClassicEmu {
   /* PLAYER METHODS AND DATA */
 
  private:
+  bool mCreateTS();
+  void mDestroyTS();
+  bool mHasTS() const { return mTurboSound != nullptr; }
   // Player
   Player mPlayer;
   // TurboSound player
