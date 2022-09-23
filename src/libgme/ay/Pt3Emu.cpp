@@ -171,7 +171,7 @@ const PT3Module *PT3Module::GetModule(const uint8_t *data, const size_t size) {
   return nullptr;
 }
 
-const PT3Module *PT3Module::FindTSModule(const uint8_t *data, size_t size) {
+const PT3Module *PT3Module::FindTSModule(const uint8_t *data, const size_t size) {
   if (size <= sizeof(PT3Module) * 2)
     return nullptr;
   data += sizeof(PT3Module);
@@ -183,10 +183,8 @@ const PT3Module *PT3Module::FindTSModule(const uint8_t *data, size_t size) {
 }
 
 inline uint8_t PT3Module::GetSubVersion() const {
-  // Vortex Tracker?
-  if (mSubVersion == 'r')
-    return 6;
-  return mSubVersion - '0';
+  const uint8_t version = mSubVersion - '0';
+  return (version < 10) ? version : 6;
 }
 
 unsigned PT3Module::CountSongLengthMs() const { return CountSongLength() * 1000 / FRAME_RATE; }
@@ -286,7 +284,7 @@ void Pt3Emu::mSetTempo(double temp) {
   mFramePeriod = static_cast<blip_clk_time_t>(mGetClockRate() / FRAME_RATE / temp);
 }
 
-blargg_err_t Pt3Emu::mStartTrack(int track) {
+blargg_err_t Pt3Emu::mStartTrack(const int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
   mEmuTime = 0;
   mPlayer.Init();
