@@ -344,10 +344,7 @@ struct Channel {
 
 class Player {
  public:
-  void Load(const PT3Module *module) {
-    mModule = module;
-    mUpdateTables();
-  }
+  void Load(const PT3Module *module) { mModule = module; }
   void Init() { mInit(); }
   void SetVolume(double volume) { mApu.SetVolume(volume); }
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
@@ -366,7 +363,6 @@ class Player {
  private:
   void mInit();
   void mSetupEnvelope(Channel &channel);
-  void mUpdateTables();
   void mPlayPattern(blip_clk_time_t time);
   void mPlaySamples(blip_clk_time_t time);
   void mAdvancePosition();
@@ -381,10 +377,6 @@ class Player {
   const PT3Module *mModule;
   // Song position iterators
   const Position *mPositionIt;
-  // Pointer to notes period table
-  const int16_t *mNoteTable;
-  // Pointer to volume period table
-  const uint8_t *mVolumeTable;
   SimpleSlider mEnvelopeSlider;
   SkipCounter mPlayDelay;
   uint16_t mEnvelopeBase;

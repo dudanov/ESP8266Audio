@@ -26,46 +26,17 @@ namespace pt3 {
 static const auto CLOCK_RATE = CLK_SPECTRUM;
 static const auto FRAME_RATE = FRAMERATE_SPECTRUM;
 
+static const char PT_SIGNATURE[] PROGMEM = {
+    'P', 'r', 'o', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', '3', '.',
+};
+
+static const char VT_SIGNATURE[] PROGMEM = {
+    'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
+};
+
 /* PT3 PLAYER */
 
-void Player::mUpdateTables() {
-  static const uint8_t TABLE_VOLUME[][16][16] PROGMEM = {
-      // ProTracker v3.3x-v3.4x
-      {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01},
-       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02},
-       {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03},
-       {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x04, 0x04, 0x04},
-       {0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x03, 0x04, 0x04, 0x04, 0x05, 0x05},
-       {0x00, 0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06},
-       {0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07},
-       {0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07, 0x08},
-       {0x00, 0x00, 0x01, 0x01, 0x02, 0x03, 0x03, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x08, 0x08, 0x09},
-       {0x00, 0x00, 0x01, 0x02, 0x02, 0x03, 0x04, 0x04, 0x05, 0x06, 0x06, 0x07, 0x08, 0x08, 0x09, 0x0A},
-       {0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x04, 0x05, 0x06, 0x06, 0x07, 0x08, 0x09, 0x09, 0x0A, 0x0B},
-       {0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x04, 0x05, 0x06, 0x07, 0x08, 0x08, 0x09, 0x0A, 0x0B, 0x0C},
-       {0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D},
-       {0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E},
-       {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}},
-      // ProTracker v3.5x and above
-      {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01},
-       {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02},
-       {0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03},
-       {0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x04, 0x04},
-       {0x00, 0x00, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x04, 0x04, 0x04, 0x05, 0x05},
-       {0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x02, 0x03, 0x03, 0x04, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06},
-       {0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07},
-       {0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07, 0x08},
-       {0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x07, 0x07, 0x08, 0x08, 0x09},
-       {0x00, 0x01, 0x01, 0x02, 0x03, 0x03, 0x04, 0x05, 0x05, 0x06, 0x07, 0x07, 0x08, 0x09, 0x09, 0x0A},
-       {0x00, 0x01, 0x01, 0x02, 0x03, 0x04, 0x04, 0x05, 0x06, 0x07, 0x07, 0x08, 0x09, 0x0A, 0x0A, 0x0B},
-       {0x00, 0x01, 0x02, 0x02, 0x03, 0x04, 0x05, 0x06, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0A, 0x0B, 0x0C},
-       {0x00, 0x01, 0x02, 0x03, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0A, 0x0B, 0x0C, 0x0D},
-       {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E},
-       {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}},
-  };
-
+int16_t Player::GetNotePeriod(const int8_t tone) const {
   static const int16_t TABLE_PT[][96] PROGMEM = {
       // Table #0 of ProTracker 3.3x - 3.4r
       {0xC21, 0xB73, 0xACE, 0xA33, 0x9A0, 0x916, 0x893, 0x818, 0x7A4, 0x736, 0x6CE, 0x66D, 0x610, 0x5B9, 0x567, 0x519,
@@ -127,281 +98,62 @@ void Player::mUpdateTables() {
        0x020, 0x01F, 0x01D, 0x01B, 0x01A, 0x018, 0x017, 0x016, 0x014, 0x013, 0x012, 0x011, 0x010, 0x00F, 0x00E, 0x00D},
   };
 
-  const uint8_t version = mModule->GetSubVersion();
-  mVolumeTable = TABLE_VOLUME[version >= 5][0];
+  const int16_t *table = TABLE_ST;
 
-  if (mModule->HasNoteTable(0)) {
-    mNoteTable = TABLE_PT[0];
-  } else if (mModule->HasNoteTable(1)) {
-    mNoteTable = TABLE_ST;
-    return;
-  } else if (mModule->HasNoteTable(2)) {
-    mNoteTable = TABLE_ASM[0];
-  } else {
-    mNoteTable = TABLE_REAL[0];
+  if (!mModule->HasNoteTable(1)) {
+    if (mModule->HasNoteTable(2))
+      table = TABLE_ASM[0];
+    else if (mModule->HasNoteTable(3))
+      table = TABLE_REAL[0];
+    else
+      table = TABLE_PT[0];
+    if (mModule->GetSubVersion() >= 4)
+      table += 96;
   }
 
-  if (version >= 4)
-    mNoteTable += 96;
+  return pgm_read_word(table + ((tone >= 95) ? 95 : ((tone <= 0) ? 0 : tone)));
 }
 
-inline int16_t Player::GetNotePeriod(const int8_t tone) const {
-  return pgm_read_word(mNoteTable + ((tone >= 95) ? 95 : ((tone <= 0) ? 0 : tone)));
-}
-
-inline uint8_t Player::mGetAmplitude(const uint8_t volume, const uint8_t amplitude) const {
-  return pgm_read_byte(mVolumeTable + 16 * volume + amplitude);
-}
-
-/* PT3 MODULE */
-
-static const char PT_SIGNATURE[] PROGMEM = {
-    'P', 'r', 'o', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', '3', '.',
-};
-
-static const char VT_SIGNATURE[] PROGMEM = {
-    'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
-};
-
-const PT3Module *PT3Module::GetModule(const uint8_t *data, const size_t size) {
-  if (size <= sizeof(PT3Module))
-    return nullptr;
-  if (!memcmp_P(data, PT_SIGNATURE, sizeof(PT_SIGNATURE)) || !memcmp_P(data, VT_SIGNATURE, sizeof(VT_SIGNATURE)))
-    return reinterpret_cast<const PT3Module *>(data);
-  return nullptr;
-}
-
-const PT3Module *PT3Module::FindTSModule(const uint8_t *data, size_t size) {
-  if (size <= sizeof(PT3Module) * 2)
-    return nullptr;
-  data += sizeof(PT3Module);
-  size -= sizeof(PT3Module);
-  const void *ptr = memmem_P(data, size, PT_SIGNATURE, sizeof(PT_SIGNATURE));
-  if (ptr == nullptr)
-    ptr = memmem_P(data, size, VT_SIGNATURE, sizeof(VT_SIGNATURE));
-  return reinterpret_cast<const PT3Module *>(ptr);
-}
-
-inline uint8_t PT3Module::GetSubVersion() const {
-  const uint8_t version = mSubVersion - '0';
-  return (version < 10) ? version : 6;
-}
-
-unsigned PT3Module::CountSongLengthMs() const { return CountSongLength() * 1000 / FRAME_RATE; }
-
-/* PT3 EMULATOR */
-
-Pt3Emu::Pt3Emu() : mTurboSound(nullptr) {
-  static const char *const CHANNELS_NAMES[] = {
-      "Wave 1", "Wave 2", "Wave 3", "Wave 4", "Wave 5", "Wave 6",
+uint8_t Player::mGetAmplitude(const uint8_t volume, const uint8_t amplitude) const {
+  static const uint8_t TABLE_VOLUME[][16][16] PROGMEM = {
+      // ProTracker v3.3x-v3.4x
+      {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01},
+       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02},
+       {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03},
+       {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x04, 0x04, 0x04},
+       {0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x03, 0x04, 0x04, 0x04, 0x05, 0x05},
+       {0x00, 0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06},
+       {0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07},
+       {0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07, 0x08},
+       {0x00, 0x00, 0x01, 0x01, 0x02, 0x03, 0x03, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x08, 0x08, 0x09},
+       {0x00, 0x00, 0x01, 0x02, 0x02, 0x03, 0x04, 0x04, 0x05, 0x06, 0x06, 0x07, 0x08, 0x08, 0x09, 0x0A},
+       {0x00, 0x00, 0x01, 0x02, 0x03, 0x03, 0x04, 0x05, 0x06, 0x06, 0x07, 0x08, 0x09, 0x09, 0x0A, 0x0B},
+       {0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x04, 0x05, 0x06, 0x07, 0x08, 0x08, 0x09, 0x0A, 0x0B, 0x0C},
+       {0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D},
+       {0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E},
+       {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}},
+      // ProTracker v3.5x and above
+      {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01},
+       {0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02},
+       {0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03},
+       {0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x04, 0x04},
+       {0x00, 0x00, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x04, 0x04, 0x04, 0x05, 0x05},
+       {0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x02, 0x03, 0x03, 0x04, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06},
+       {0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07},
+       {0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07, 0x08},
+       {0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x04, 0x04, 0x05, 0x05, 0x06, 0x07, 0x07, 0x08, 0x08, 0x09},
+       {0x00, 0x01, 0x01, 0x02, 0x03, 0x03, 0x04, 0x05, 0x05, 0x06, 0x07, 0x07, 0x08, 0x09, 0x09, 0x0A},
+       {0x00, 0x01, 0x01, 0x02, 0x03, 0x04, 0x04, 0x05, 0x06, 0x07, 0x07, 0x08, 0x09, 0x0A, 0x0A, 0x0B},
+       {0x00, 0x01, 0x02, 0x02, 0x03, 0x04, 0x05, 0x06, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0A, 0x0B, 0x0C},
+       {0x00, 0x01, 0x02, 0x03, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0A, 0x0B, 0x0C, 0x0D},
+       {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E},
+       {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}},
   };
-  static int const CHANNELS_TYPES[] = {
-      WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2, WAVE_TYPE | 3, WAVE_TYPE | 4, WAVE_TYPE | 5,
-  };
-  mSetType(gme_pt3_type);
-  mSetChannelsNames(CHANNELS_NAMES);
-  mSetChannelsTypes(CHANNELS_TYPES);
-  mSetSilenceLookahead(1);
+
+  return pgm_read_byte(&TABLE_VOLUME[mModule->GetSubVersion() >= 5][volume][amplitude]);
 }
-
-Pt3Emu::~Pt3Emu() { mDestroyTS(); }
-
-blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, const int track) const {
-  GmeFile::copyField(out->song, mPlayer.GetName(), 32);
-  GmeFile::copyField(out->author, mPlayer.GetAuthor(), 32);
-  if (mHasTS())
-    strcpy_P(out->comment, PSTR("6-ch TurboSound (TS)"));
-  return nullptr;
-}
-
-struct Pt3File : GmeInfo {
-  const PT3Module *mModule;
-  Pt3File() { mSetType(gme_pt3_type); }
-  static MusicEmu *createPt3File() { return new Pt3File; }
-
-  blargg_err_t mLoad(const uint8_t *data, const long size) override {
-    mModule = reinterpret_cast<const PT3Module *>(data);
-    // if (!mModule->CheckIntegrity(size))
-    // return gme_wrong_file_type;
-    mSetTrackNum(1);
-    return nullptr;
-  }
-
-  blargg_err_t mGetTrackInfo(track_info_t *out, const int track) const override {
-    // out->length = mModule->CountSongLengthMs();
-    return nullptr;
-  }
-};
-
-// Setup
-
-bool Pt3Emu::mCreateTS() {
-  if (!mHasTS())
-    mTurboSound = new Player;
-  return mHasTS();
-}
-
-void Pt3Emu::mDestroyTS() {
-  if (!mHasTS())
-    return;
-  delete mTurboSound;
-  mTurboSound = nullptr;
-}
-
-blargg_err_t Pt3Emu::mLoad(const uint8_t *data, const long size) {
-  auto module = PT3Module::GetModule(data, size);
-  if (module == nullptr)
-    return gme_wrong_file_type;
-  mSetTrackNum(1);
-  mPlayer.Load(module);
-  module = PT3Module::FindTSModule(data, size);
-  if (module == nullptr) {
-    mDestroyTS();
-  } else if (mCreateTS()) {
-    mTurboSound->Load(module);
-    mPlayer.SetVolume(mGetGain() * 0.7);
-    mTurboSound->SetVolume(mGetGain() * 0.7);
-    mSetChannelsNumber(AyApu::OSCS_NUM * 2);
-    return mSetupBuffer(CLOCK_RATE);
-  }
-  mPlayer.SetVolume(mGetGain());
-  mSetChannelsNumber(AyApu::OSCS_NUM);
-  return mSetupBuffer(CLOCK_RATE);
-}
-
-void Pt3Emu::mUpdateEq(const BlipEq &eq) {}  // mApu.SetTrebleEq(eq); }
-
-void Pt3Emu::mSetChannel(const int idx, BlipBuffer *center, BlipBuffer *, BlipBuffer *) {
-  if (idx < AyApu::OSCS_NUM)
-    mPlayer.SetOscOutput(idx, center);
-  else if (mHasTS())
-    mTurboSound->SetOscOutput(idx - AyApu::OSCS_NUM, center);
-}
-
-// Emulation
-
-void Pt3Emu::mSetTempo(double temp) {
-  mFramePeriod = static_cast<blip_clk_time_t>(mGetClockRate() / FRAME_RATE / temp);
-}
-
-blargg_err_t Pt3Emu::mStartTrack(const int track) {
-  RETURN_ERR(ClassicEmu::mStartTrack(track));
-  mEmuTime = 0;
-  mPlayer.Init();
-  if (mHasTS())
-    mTurboSound->Init();
-  SetTempo(mGetTempo());
-  return nullptr;
-}
-
-blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {
-  for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
-    mPlayer.RunUntil(mEmuTime);
-    if (mHasTS())
-      mTurboSound->RunUntil(mEmuTime);
-  }
-  mEmuTime -= duration;
-  mPlayer.EndFrame(duration);
-  if (mHasTS())
-    mTurboSound->EndFrame(duration);
-  return nullptr;
-}
-
-// Channel
-
-void Channel::SetupGliss(const Player *player) {
-  mPortamento = false;
-  mDisableVibrato();
-  uint8_t delay = PatternCode();
-  if ((delay == 0) && (player->GetSubVersion() >= 7))
-    delay++;
-  mToneSlide.Enable(delay);
-  mToneSlide.SetStep(PatternCodeLE16());
-}
-
-void Channel::SetupPortamento(const Player *player, const uint8_t prevNote, const int16_t prevSliding) {
-  mPortamento = true;
-  mDisableVibrato();
-  mToneSlide.Enable(PatternCode());
-  mSkipPatternCode(2);
-  int16_t step = PatternCodeLE16();
-  if (step < 0)
-    step = -step;
-  mNoteSlide = mNote;
-  mNote = prevNote;
-  mToneDelta = player->GetNotePeriod(mNoteSlide) - player->GetNotePeriod(mNote);
-  if (player->GetSubVersion() >= 6)
-    mToneSlide.SetValue(prevSliding);
-  if (mToneDelta < mToneSlide.GetValue())
-    step = -step;
-  mToneSlide.SetStep(step);
-}
-
-inline uint8_t Channel::SlideNoise() {
-  auto &sample = GetSampleData();
-  const uint8_t value = sample.Noise() + mNoiseSlideStore;
-  if (sample.NoiseEnvelopeStore())
-    mNoiseSlideStore = value;
-  return value;
-}
-
-inline void Channel::SlideEnvelope(int8_t &value) {
-  auto &sample = GetSampleData();
-  const int8_t tmp = sample.EnvelopeSlide() + mEnvelopeSlideStore;
-  value += tmp;
-  if (sample.NoiseEnvelopeStore())
-    mEnvelopeSlideStore = tmp;
-}
-
-inline uint8_t Channel::SlideAmplitude() {
-  auto &sample = GetSampleData();
-  if (sample.VolumeSlide()) {
-    if (sample.VolumeSlideUp()) {
-      if (mAmplitudeSlideStore < 15)
-        mAmplitudeSlideStore++;
-    } else if (mAmplitudeSlideStore > -15) {
-      mAmplitudeSlideStore--;
-    }
-  }
-  const int8_t value = sample.Volume() + mAmplitudeSlideStore;
-  if (value >= 15)
-    return 15;
-  if (value <= 0)
-    return 0;
-  return value;
-}
-
-void Channel::Reset() {
-  SetSamplePosition(0);
-  SetOrnamentPosition(0);
-  mDisableVibrato();
-  mToneSlide.Reset();
-  mAmplitudeSlideStore = 0;
-  mNoiseSlideStore = 0;
-  mEnvelopeSlideStore = 0;
-  mTranspositionAccumulator = 0;
-}
-
-inline void Channel::mRunPortamento() {
-  if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
-      ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
-    mToneSlide.Reset();
-    mNote = mNoteSlide;
-  }
-}
-
-uint16_t Channel::PlayTone(const Player *player) {
-  auto &s = GetSampleData();
-  int16_t tone = s.Transposition() + mTranspositionAccumulator;
-  if (s.ToneStore())
-    mTranspositionAccumulator = tone;
-  tone += player->GetNotePeriod(GetOrnamentNote()) + mToneSlide.GetValue();
-  if (mToneSlide.Run() && mPortamento)
-    mRunPortamento();
-  return tone & 0xFFF;
-}
-
-// Player
 
 void Player::mInit() {
   mApu.Reset();
@@ -579,6 +331,244 @@ void Player::mPlaySamples(const blip_clk_time_t time) {
   mApu.Write(time, AyApu::AY_ENV_COARSE, envelope / 256);
 
   mEnvelopeSlider.Run();
+}
+
+/* PT3 CHANNEL */
+
+void Channel::Reset() {
+  SetSamplePosition(0);
+  SetOrnamentPosition(0);
+  mDisableVibrato();
+  mToneSlide.Reset();
+  mAmplitudeSlideStore = 0;
+  mNoiseSlideStore = 0;
+  mEnvelopeSlideStore = 0;
+  mTranspositionAccumulator = 0;
+}
+
+void Channel::SetupGliss(const Player *player) {
+  mPortamento = false;
+  mDisableVibrato();
+  uint8_t delay = PatternCode();
+  if ((delay == 0) && (player->GetSubVersion() >= 7))
+    delay++;
+  mToneSlide.Enable(delay);
+  mToneSlide.SetStep(PatternCodeLE16());
+}
+
+void Channel::SetupPortamento(const Player *player, const uint8_t prevNote, const int16_t prevSliding) {
+  mPortamento = true;
+  mDisableVibrato();
+  mToneSlide.Enable(PatternCode());
+  mSkipPatternCode(2);
+  int16_t step = PatternCodeLE16();
+  if (step < 0)
+    step = -step;
+  mNoteSlide = mNote;
+  mNote = prevNote;
+  mToneDelta = player->GetNotePeriod(mNoteSlide) - player->GetNotePeriod(mNote);
+  if (player->GetSubVersion() >= 6)
+    mToneSlide.SetValue(prevSliding);
+  if (mToneDelta < mToneSlide.GetValue())
+    step = -step;
+  mToneSlide.SetStep(step);
+}
+
+inline uint8_t Channel::SlideNoise() {
+  auto &sample = GetSampleData();
+  const uint8_t value = sample.Noise() + mNoiseSlideStore;
+  if (sample.NoiseEnvelopeStore())
+    mNoiseSlideStore = value;
+  return value;
+}
+
+inline void Channel::SlideEnvelope(int8_t &value) {
+  auto &sample = GetSampleData();
+  const int8_t tmp = sample.EnvelopeSlide() + mEnvelopeSlideStore;
+  value += tmp;
+  if (sample.NoiseEnvelopeStore())
+    mEnvelopeSlideStore = tmp;
+}
+
+inline uint8_t Channel::SlideAmplitude() {
+  auto &sample = GetSampleData();
+  if (sample.VolumeSlide()) {
+    if (sample.VolumeSlideUp()) {
+      if (mAmplitudeSlideStore < 15)
+        mAmplitudeSlideStore++;
+    } else if (mAmplitudeSlideStore > -15) {
+      mAmplitudeSlideStore--;
+    }
+  }
+  const int8_t value = sample.Volume() + mAmplitudeSlideStore;
+  if (value >= 15)
+    return 15;
+  if (value <= 0)
+    return 0;
+  return value;
+}
+
+inline void Channel::mRunPortamento() {
+  if (((mToneSlide.GetStep() < 0) && (mToneSlide.GetValue() <= mToneDelta)) ||
+      ((mToneSlide.GetStep() >= 0) && (mToneSlide.GetValue() >= mToneDelta))) {
+    mToneSlide.Reset();
+    mNote = mNoteSlide;
+  }
+}
+
+uint16_t Channel::PlayTone(const Player *player) {
+  auto &s = GetSampleData();
+  int16_t tone = s.Transposition() + mTranspositionAccumulator;
+  if (s.ToneStore())
+    mTranspositionAccumulator = tone;
+  tone += player->GetNotePeriod(GetOrnamentNote()) + mToneSlide.GetValue();
+  if (mToneSlide.Run() && mPortamento)
+    mRunPortamento();
+  return tone & 0xFFF;
+}
+
+/* PT3 MODULE */
+
+const PT3Module *PT3Module::GetModule(const uint8_t *data, const size_t size) {
+  if (size <= sizeof(PT3Module))
+    return nullptr;
+  if (!memcmp_P(data, PT_SIGNATURE, sizeof(PT_SIGNATURE)) || !memcmp_P(data, VT_SIGNATURE, sizeof(VT_SIGNATURE)))
+    return reinterpret_cast<const PT3Module *>(data);
+  return nullptr;
+}
+
+const PT3Module *PT3Module::FindTSModule(const uint8_t *data, size_t size) {
+  if (size <= sizeof(PT3Module) * 2)
+    return nullptr;
+  data += sizeof(PT3Module);
+  size -= sizeof(PT3Module);
+  const void *ptr = memmem_P(data, size, PT_SIGNATURE, sizeof(PT_SIGNATURE));
+  if (ptr == nullptr)
+    ptr = memmem_P(data, size, VT_SIGNATURE, sizeof(VT_SIGNATURE));
+  return reinterpret_cast<const PT3Module *>(ptr);
+}
+
+inline uint8_t PT3Module::GetSubVersion() const {
+  const uint8_t version = mSubVersion - '0';
+  return (version < 10) ? version : 6;
+}
+
+unsigned PT3Module::CountSongLengthMs() const { return CountSongLength() * 1000 / FRAME_RATE; }
+
+/* PT3 FILE */
+
+struct Pt3File : GmeInfo {
+  const PT3Module *mModule;
+  Pt3File() { mSetType(gme_pt3_type); }
+  static MusicEmu *createPt3File() { return new Pt3File; }
+
+  blargg_err_t mLoad(const uint8_t *data, const long size) override {
+    mModule = reinterpret_cast<const PT3Module *>(data);
+    // if (!mModule->CheckIntegrity(size))
+    // return gme_wrong_file_type;
+    mSetTrackNum(1);
+    return nullptr;
+  }
+
+  blargg_err_t mGetTrackInfo(track_info_t *out, const int track) const override {
+    // out->length = mModule->CountSongLengthMs();
+    return nullptr;
+  }
+};
+
+/* PT3 EMULATOR */
+
+Pt3Emu::Pt3Emu() : mTurboSound(nullptr) {
+  static const char *const CHANNELS_NAMES[] = {
+      "Wave 1", "Wave 2", "Wave 3", "Wave 4", "Wave 5", "Wave 6",
+  };
+  static int const CHANNELS_TYPES[] = {
+      WAVE_TYPE | 0, WAVE_TYPE | 1, WAVE_TYPE | 2, WAVE_TYPE | 3, WAVE_TYPE | 4, WAVE_TYPE | 5,
+  };
+  mSetType(gme_pt3_type);
+  mSetChannelsNames(CHANNELS_NAMES);
+  mSetChannelsTypes(CHANNELS_TYPES);
+  mSetSilenceLookahead(1);
+}
+
+Pt3Emu::~Pt3Emu() { mDestroyTS(); }
+
+blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, const int track) const {
+  GmeFile::copyField(out->song, mPlayer.GetName(), 32);
+  GmeFile::copyField(out->author, mPlayer.GetAuthor(), 32);
+  if (mHasTS())
+    strcpy_P(out->comment, PSTR("6-ch TurboSound (TS)"));
+  return nullptr;
+}
+
+bool Pt3Emu::mCreateTS() {
+  if (!mHasTS())
+    mTurboSound = new Player;
+  return mHasTS();
+}
+
+void Pt3Emu::mDestroyTS() {
+  if (!mHasTS())
+    return;
+  delete mTurboSound;
+  mTurboSound = nullptr;
+}
+
+blargg_err_t Pt3Emu::mLoad(const uint8_t *data, const long size) {
+  auto module = PT3Module::GetModule(data, size);
+  if (module == nullptr)
+    return gme_wrong_file_type;
+  mSetTrackNum(1);
+  mPlayer.Load(module);
+  module = PT3Module::FindTSModule(data, size);
+  if (module == nullptr) {
+    mDestroyTS();
+  } else if (mCreateTS()) {
+    mTurboSound->Load(module);
+    mPlayer.SetVolume(mGetGain() * 0.7);
+    mTurboSound->SetVolume(mGetGain() * 0.7);
+    mSetChannelsNumber(AyApu::OSCS_NUM * 2);
+    return mSetupBuffer(CLOCK_RATE);
+  }
+  mPlayer.SetVolume(mGetGain());
+  mSetChannelsNumber(AyApu::OSCS_NUM);
+  return mSetupBuffer(CLOCK_RATE);
+}
+
+void Pt3Emu::mUpdateEq(const BlipEq &eq) {}  // mApu.SetTrebleEq(eq); }
+
+void Pt3Emu::mSetChannel(const int idx, BlipBuffer *center, BlipBuffer *, BlipBuffer *) {
+  if (idx < AyApu::OSCS_NUM)
+    mPlayer.SetOscOutput(idx, center);
+  else if (mHasTS())
+    mTurboSound->SetOscOutput(idx - AyApu::OSCS_NUM, center);
+}
+
+void Pt3Emu::mSetTempo(double temp) {
+  mFramePeriod = static_cast<blip_clk_time_t>(mGetClockRate() / FRAME_RATE / temp);
+}
+
+blargg_err_t Pt3Emu::mStartTrack(const int track) {
+  RETURN_ERR(ClassicEmu::mStartTrack(track));
+  mEmuTime = 0;
+  mPlayer.Init();
+  if (mHasTS())
+    mTurboSound->Init();
+  SetTempo(mGetTempo());
+  return nullptr;
+}
+
+blargg_err_t Pt3Emu::mRunClocks(blip_clk_time_t &duration) {
+  for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
+    mPlayer.RunUntil(mEmuTime);
+    if (mHasTS())
+      mTurboSound->RunUntil(mEmuTime);
+  }
+  mEmuTime -= duration;
+  mPlayer.EndFrame(duration);
+  if (mHasTS())
+    mTurboSound->EndFrame(duration);
+  return nullptr;
 }
 
 }  // namespace pt3
