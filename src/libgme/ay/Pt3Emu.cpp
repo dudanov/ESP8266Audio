@@ -171,7 +171,7 @@ const PT3Module *PT3Module::GetModule(const uint8_t *data, const size_t size) {
   return nullptr;
 }
 
-const PT3Module *PT3Module::FindTSModule(const uint8_t *data, const size_t size) {
+const PT3Module *PT3Module::FindTSModule(const uint8_t *data, size_t size) {
   if (size <= sizeof(PT3Module) * 2)
     return nullptr;
   data += sizeof(PT3Module);
@@ -405,7 +405,6 @@ uint16_t Channel::PlayTone(const Player *player) {
 
 void Player::mInit() {
   mApu.Reset();
-  mUpdateTables();
   mPlayDelay.SetDelay(mModule->GetDelay(), 1);
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
