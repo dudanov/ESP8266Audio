@@ -349,8 +349,7 @@ inline uint8_t Channel::SlideNoise() {
 
 inline void Channel::SlideEnvelope(int8_t &value) {
   auto &sample = GetSampleData();
-  int8_t tmp = sample.EnvelopeSlide();
-  tmp += mEnvelopeSlideStore;
+  const int8_t tmp = sample.EnvelopeSlide() + mEnvelopeSlideStore;
   value += tmp;
   if (sample.NoiseEnvelopeStore())
     mEnvelopeSlideStore = tmp;
@@ -415,7 +414,6 @@ void Player::mInit() {
   auto pattern = mModule->GetPattern(mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
-    c.Reset();
     c.SetVolume(15);
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
     c.SetSample(mModule->GetSample(1));
@@ -593,7 +591,7 @@ void Player::mPlaySamples() {
 }  // namespace gme
 
 static const gme_type_t_ gme_pt3_type_ = {
-    "ZX Spectrum (PT3)",
+    "ZX Spectrum (PT 3.x)",
     1,
     0,
     &gme::emu::ay::pt3::Pt3Emu::createPt3Emu,
