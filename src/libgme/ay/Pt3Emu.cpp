@@ -422,8 +422,7 @@ void Player::mInit() {
   }
 }
 
-void Player::mSetupEnvelope(Channel &channel, uint8_t shape) {
-  mApu.Write(mEmuTime, AyApu::AY_ENV_SHAPE, shape);
+void Player::mSetupEnvelope(Channel &channel) {
   channel.EnvelopeEnable();
   channel.SetOrnamentPosition(0);
   mEnvelopeBase = channel.PatternCodeBE16();
@@ -438,7 +437,7 @@ inline void Player::mAdvancePosition() {
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
 
-void Player::mPlayPattern() {
+void Player::mPlayPattern(blip_clk_time_t time) {
   if (!mPlayDelay.Run())
     return;
   for (Channel &c : mChannels) {
@@ -469,7 +468,8 @@ void Player::mPlayPattern() {
         break;
       } else if (val >= 0xB2) {
         // Set envelope.
-        mSetupEnvelope(c, val - 0xB1);
+        mSetupEnvelope(c);
+        mApu.Write(time, AyApu::AY_ENV_SHAPE, val - 0xB1);
       } else if (val == 0xB1) {
         // Set number of empty locations after the subsequent code.
         c.SetSkipLocations(c.PatternCode());
@@ -491,7 +491,8 @@ void Player::mPlayPattern() {
         mNoiseBase = val - 0x20;
       } else if (val >= 0x11) {
         // Set envelope and sample.
-        mSetupEnvelope(c, val - 0x10);
+        mSetupEnvelope(c);
+        mApu.Write(time, AyApu::AY_ENV_SHAPE, val - 0x10);
         c.SetSample(mModule->GetSample(c.PatternCode() / 2));
       } else if (val == 0x10) {
         // Disable envelope, reset ornament and set sample.
@@ -541,7 +542,7 @@ void Player::mPlayPattern() {
   }
 }
 
-void Player::mPlaySamples() {
+void Player::mPlaySamples(blip_clk_time_t time) {
   int8_t envAdd = 0;
   uint8_t mixer = 0;
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx, mixer >>= 1) {
@@ -556,7 +557,7 @@ void Player::mPlaySamples() {
         amplitude |= 16;
 
       if (!s.NoiseMask()) {
-        mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, (mNoiseBase + c.SlideNoise()) % 32);
+        mApu.Write(time, AyApu::AY_NOISE_PERIOD, (mNoiseBase + c.SlideNoise()) % 32);
       } else {
         c.SlideEnvelope(envAdd);
       }
@@ -564,23 +565,23 @@ void Player::mPlaySamples() {
       mixer |= 64 * s.NoiseMask() | 8 * s.ToneMask();
 
       const uint16_t tone = c.PlayTone(this);
-      mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, tone % 256);
-      mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, tone / 256);
+      mApu.Write(time, AyApu::AY_CHNL_A_FINE + idx * 2, tone % 256);
+      mApu.Write(time, AyApu::AY_CHNL_A_COARSE + idx * 2, tone / 256);
 
       c.Advance();
     }
 
     c.RunVibrato();
-    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, amplitude);
+    mApu.Write(time, AyApu::AY_CHNL_A_VOL + idx, amplitude);
 
     if (amplitude == 0)
       mixer |= 64 | 8;
   }
 
   const uint16_t envelope = mEnvelopeBase + mEnvelopeSlider.GetValue() + envAdd;
-  mApu.Write(mEmuTime, AyApu::AY_MIXER, mixer);
-  mApu.Write(mEmuTime, AyApu::AY_ENV_FINE, envelope % 256);
-  mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, envelope / 256);
+  mApu.Write(time, AyApu::AY_MIXER, mixer);
+  mApu.Write(time, AyApu::AY_ENV_FINE, envelope % 256);
+  mApu.Write(time, AyApu::AY_ENV_COARSE, envelope / 256);
 
   mEnvelopeSlider.Run();
 }

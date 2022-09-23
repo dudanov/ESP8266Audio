@@ -350,9 +350,8 @@ class Player {
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
   void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
   void RunUntil(blip_clk_time_t time) {
-    mEmuTime = time;
-    mPlayPattern();
-    mPlaySamples();
+    mPlayPattern(time);
+    mPlaySamples(time);
   }
 
   int16_t GetNotePeriod(int8_t tone) const;
@@ -362,10 +361,10 @@ class Player {
 
  private:
   void mInit();
-  void mSetupEnvelope(Channel &chan, uint8_t shape);
+  void mSetupEnvelope(Channel &channel);
   void mUpdateTables();
-  void mPlayPattern();
-  void mPlaySamples();
+  void mPlayPattern(blip_clk_time_t time);
+  void mPlaySamples(blip_clk_time_t time);
   void mAdvancePosition();
   uint8_t mGetAmplitude(uint8_t volume, uint8_t amplitude) const;
   // AY APU Emulator
@@ -382,8 +381,6 @@ class Player {
   const int16_t *mNoteTable;
   // Pointer to volume period table
   const uint8_t *mVolumeTable;
-  // Current emulation time
-  blip_clk_time_t mEmuTime;
   SimpleSlider mEnvelopeSlider;
   SkipCounter mPlayDelay;
   uint16_t mEnvelopeBase;
