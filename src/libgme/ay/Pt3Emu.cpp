@@ -34,9 +34,17 @@ static const char VT_SIGNATURE[] PROGMEM = {
     'V', 'o', 'r', 't', 'e', 'x', ' ', 'T', 'r', 'a', 'c', 'k', 'e', 'r', ' ', 'I', 'I',
 };
 
+static inline int8_t limit(int8_t value, int8_t min, int8_t max) {
+  if (value >= max)
+    return max;
+  if (value <= min)
+    return min;
+  return value;
+}
+
 /* PT3 PLAYER */
 
-int16_t Player::GetNotePeriod(const int8_t tone) const {
+int16_t Player::GetNotePeriod(const uint8_t tone) const {
   static const int16_t TABLE_PT[][96] PROGMEM = {
       // Table #0 of ProTracker 3.3x - 3.4r
       {0xC21, 0xB73, 0xACE, 0xA33, 0x9A0, 0x916, 0x893, 0x818, 0x7A4, 0x736, 0x6CE, 0x66D, 0x610, 0x5B9, 0x567, 0x519,
@@ -111,7 +119,7 @@ int16_t Player::GetNotePeriod(const int8_t tone) const {
       table += 96;
   }
 
-  return pgm_read_word(table + ((tone >= 95) ? 95 : ((tone <= 0) ? 0 : tone)));
+  return pgm_read_word(table + tone);
 }
 
 uint8_t Player::mGetAmplitude(const uint8_t volume, const uint8_t amplitude) const {
@@ -400,12 +408,7 @@ inline uint8_t Channel::SlideAmplitude() {
       mAmplitudeSlideStore--;
     }
   }
-  const int8_t value = sample.Volume() + mAmplitudeSlideStore;
-  if (value >= 15)
-    return 15;
-  if (value <= 0)
-    return 0;
-  return value;
+  return limit(sample.Volume() + mAmplitudeSlideStore, 0, 15);
 }
 
 inline void Channel::mRunPortamento() {
@@ -421,7 +424,8 @@ uint16_t Channel::PlayTone(const Player *player) {
   int16_t tone = s.Transposition() + mTranspositionAccumulator;
   if (s.ToneStore())
     mTranspositionAccumulator = tone;
-  tone += player->GetNotePeriod(GetOrnamentNote()) + mToneSlide.GetValue();
+  const uint8_t note = limit(mNote + mOrnamentPlayer.GetData(), 0, 95);
+  tone += player->GetNotePeriod(note) + mToneSlide.GetValue();
   if (mToneSlide.Run() && mPortamento)
     mRunPortamento();
   return tone & 0xFFF;

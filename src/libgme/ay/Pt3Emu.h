@@ -295,9 +295,7 @@ struct Channel {
   void SetSamplePosition(uint8_t pos) { mSamplePlayer.SetPosition(pos); }
   void SetOrnament(const Ornament *ornament) { mOrnamentPlayer.Load(ornament); }
   void SetOrnamentPosition(uint8_t pos) { mOrnamentPlayer.SetPosition(pos); }
-
   const SampleData &GetSampleData() const { return mSamplePlayer.GetData(); }
-  uint8_t GetOrnamentNote() const { return mNote + mOrnamentPlayer.GetData(); }
 
   void Advance() {
     mSamplePlayer.Advance();
@@ -355,7 +353,7 @@ class Player {
     mPlaySamples(time);
   }
 
-  int16_t GetNotePeriod(int8_t tone) const;
+  int16_t GetNotePeriod(uint8_t tone) const;
   uint8_t GetSubVersion() const { return mModule->GetSubVersion(); }
   const char *GetName() const { return mModule->GetName(); }
   const char *GetAuthor() const { return mModule->GetAuthor(); }
