@@ -70,6 +70,64 @@ using SamplePlayer = LoopDataPlayer<SampleData>;
 using OrnamentPlayer = LoopDataPlayer<OrnamentData>;
 using Position = uint8_t;
 
+class DelayRunner {
+ public:
+  void Enable(uint8_t delay) { mDelay = mDelayCounter = delay; }
+  void Disable() { mDelayCounter = 0; }
+  bool Run() {
+    if (!mDelayCounter || --mDelayCounter)
+      return false;
+    mDelayCounter = mDelay;
+    return true;
+  }
+
+ private:
+  uint8_t mDelayCounter, mDelay;
+};
+
+class SimpleSlider {
+ public:
+  int16_t GetValue() const { return mValue; }
+  int16_t GetStep() const { return mStep; }
+  void SetValue(int16_t value) { mValue = value; }
+  void SetStep(int16_t step) { mStep = step; }
+  void Enable(uint8_t delay) { mDelay.Enable(delay); }
+  void Disable() { mDelay.Disable(); }
+  bool Run() {
+    if (mDelay.Run()) {
+      mValue += mStep;
+      return true;
+    }
+    return false;
+  }
+  void Reset() {
+    mDelay.Disable();
+    mValue = 0;
+  }
+
+ private:
+  DelayRunner mDelay;
+  int16_t mValue, mStep;
+};
+
+class SkipCounter {
+ public:
+  void SetDelay(uint8_t delay) { mDelay = mDelayCounter = delay; }
+  void SetDelay(uint8_t delay, uint8_t init) {
+    mDelay = delay;
+    mDelayCounter = init;
+  }
+  bool Run() {
+    if (--mDelayCounter)
+      return false;
+    mDelayCounter = mDelay;
+    return true;
+  }
+
+ private:
+  uint8_t mDelayCounter, mDelay;
+};
+
 class PT3Module {
   struct DataOffset {
     DataOffset() = delete;
@@ -194,64 +252,6 @@ class PT3Module {
   DataOffset mOrnaments[16];
   // List of positions. Contains the pattern numbers (0...84) multiplied by 3. The table ends with 0xFF.
   Position mPositions[0];
-};
-
-class DelayRunner {
- public:
-  void Enable(uint8_t delay) { mDelay = mDelayCounter = delay; }
-  void Disable() { mDelayCounter = 0; }
-  bool Run() {
-    if (!mDelayCounter || --mDelayCounter)
-      return false;
-    mDelayCounter = mDelay;
-    return true;
-  }
-
- private:
-  uint8_t mDelayCounter, mDelay;
-};
-
-class SimpleSlider {
- public:
-  int16_t GetValue() const { return mValue; }
-  int16_t GetStep() const { return mStep; }
-  void SetValue(int16_t value) { mValue = value; }
-  void SetStep(int16_t step) { mStep = step; }
-  void Enable(uint8_t delay) { mDelay.Enable(delay); }
-  void Disable() { mDelay.Disable(); }
-  bool Run() {
-    if (mDelay.Run()) {
-      mValue += mStep;
-      return true;
-    }
-    return false;
-  }
-  void Reset() {
-    mDelay.Disable();
-    mValue = 0;
-  }
-
- private:
-  DelayRunner mDelay;
-  int16_t mValue, mStep;
-};
-
-class SkipCounter {
- public:
-  void SetDelay(uint8_t delay) { mDelay = mDelayCounter = delay; }
-  void SetDelay(uint8_t delay, uint8_t init) {
-    mDelay = delay;
-    mDelayCounter = init;
-  }
-  bool Run() {
-    if (--mDelayCounter)
-      return false;
-    mDelayCounter = mDelay;
-    return true;
-  }
-
- private:
-  uint8_t mDelayCounter, mDelay;
 };
 
 class Player;
