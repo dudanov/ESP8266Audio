@@ -158,8 +158,8 @@ class PT3Module {
       SkipCounter delay;
     };
     unsigned mGetPositionLength();
-    std::stack<uint8_t> mStack;
-    std::array<Channel, 3> mChannels;
+    std::stack<PatternData> mStack;
+    std::array<Channel, AyApu::OSCS_NUM> mChannels;
     uint8_t mPlayDelay;
   };
 

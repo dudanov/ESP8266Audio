@@ -465,21 +465,29 @@ unsigned PT3Module::CountSongLengthMs(unsigned &loop) const {
 
 unsigned PT3Module::LengthCounter::GetFrameLength(const PT3Module *module, unsigned &loopFrame) {
   unsigned frame = 0;
+
   auto it = module->GetPositionBegin();
   auto pattern = module->GetPattern(it);
+
   mPlayDelay = module->GetDelay();
+
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     auto &c = mChannels[idx];
+
     c.data = module->GetPatternData(pattern, idx);
     c.delay.SetDelay(1);
   }
+
   for (; it != module->GetPositionEnd(); ++it) {
     if (it == module->GetPositionLoop())
       loopFrame = frame;
+
     for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
       mChannels[idx].data = module->GetPatternData(module->GetPattern(it), idx);
+
     frame += mGetPositionLength();
   }
+
   return frame;
 }
 
@@ -489,7 +497,7 @@ unsigned PT3Module::LengthCounter::mGetPositionLength() {
       if (!c.delay.Run())
         continue;
       while (true) {
-        const uint8_t val = *c.data++;
+        const PatternData val = *c.data++;
         if ((val >= 0x50 && val <= 0xAF) || val == 0xD0 || val == 0xC0) {
           break;
         } else if (val >= 0xF0 || val == 0x10) {
@@ -507,17 +515,17 @@ unsigned PT3Module::LengthCounter::mGetPositionLength() {
         }
       }
       for (; !mStack.empty(); mStack.pop()) {
-        const uint8_t val = mStack.top();
+        const PatternData val = mStack.top();
         if (val == 0x09)
           mPlayDelay = *c.data++;
-        else if ((val == 0x03) || (val == 0x04))
-          c.data += 1;
+        else if (val == 0x02)
+          c.data += 5;
         else if (val == 0x05)
           c.data += 2;
         else if ((val == 0x01) || (val == 0x08))
           c.data += 3;
-        else if (val == 0x02)
-          c.data += 5;
+        else if ((val == 0x03) || (val == 0x04))
+          c.data += 1;
       }
     }
   }
@@ -527,19 +535,27 @@ unsigned PT3Module::LengthCounter::mGetPositionLength() {
 
 struct Pt3File : GmeInfo {
   const PT3Module *mModule;
+  bool mHasTS;
   Pt3File() { mSetType(gme_pt3_type); }
   static MusicEmu *createPt3File() { return new Pt3File; }
 
   blargg_err_t mLoad(const uint8_t *data, const long size) override {
-    mModule = reinterpret_cast<const PT3Module *>(data);
-    // if (!mModule->CheckIntegrity(size))
-    // return gme_wrong_file_type;
+    mModule = PT3Module::GetModule(data, size);
+    if (mModule == nullptr)
+      return gme_wrong_file_type;
+    mHasTS = PT3Module::FindTSModule(data, size) != nullptr;
     mSetTrackNum(1);
     return nullptr;
   }
 
   blargg_err_t mGetTrackInfo(track_info_t *out, const int track) const override {
-    // out->length = mModule->CountSongLengthMs();
+    GmeFile::copyField(out->song, mModule->GetName(), 32);
+    GmeFile::copyField(out->author, mModule->GetAuthor(), 32);
+    unsigned loop;
+    out->length = mModule->CountSongLengthMs(loop);
+    out->loop_length = loop;
+    if (mHasTS)
+      strcpy_P(out->comment, PSTR("6-ch TurboSound (TS)"));
     return nullptr;
   }
 };
