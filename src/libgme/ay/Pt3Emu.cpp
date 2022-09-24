@@ -457,7 +457,70 @@ inline uint8_t PT3Module::GetSubVersion() const {
   return (version < 10) ? version : 6;
 }
 
-unsigned PT3Module::CountSongLengthMs() const { return CountSongLength() * 1000 / FRAME_RATE; }
+unsigned PT3Module::CountSongLengthMs(unsigned &loop) const {
+  const unsigned length = CountSongLength(loop) * 1000 / FRAME_RATE;
+  loop = loop * 1000 / FRAME_RATE;
+}
+
+unsigned PT3Module::LengthCounter::GetFrameLength(const PT3Module *module, unsigned &loopFrame) {
+  unsigned frame = 0;
+  auto it = module->GetPositionBegin();
+  auto pattern = module->GetPattern(it);
+  mPlayDelay = module->GetDelay();
+  for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
+    auto &c = mChannels[idx];
+    c.data = module->GetPatternData(pattern, idx);
+    c.delay.SetDelay(1);
+  }
+  for (; it != module->GetPositionEnd(); ++it) {
+    if (it == module->GetPositionLoop())
+      loopFrame = frame;
+    for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
+      mChannels[idx].data = module->GetPatternData(module->GetPattern(it), idx);
+    frame += mGetPositionLength();
+  }
+  return frame;
+}
+
+unsigned PT3Module::LengthCounter::mGetPositionLength() {
+  for (unsigned frames = 0;; frames += mPlayDelay) {
+    for (auto &c : mChannels) {
+      if (!c.delay.Run())
+        continue;
+      while (true) {
+        const uint8_t val = *c.data++;
+        if ((val >= 0x50 && val <= 0xAF) || val == 0xD0 || val == 0xC0) {
+          break;
+        } else if (val >= 0xF0 || val == 0x10) {
+          c.data += 1;
+        } else if (val >= 0xB2 && val <= 0xBF) {
+          c.data += 2;
+        } else if (val >= 0x11 && val <= 0x1F) {
+          c.data += 3;
+        } else if (val == 0xB1) {
+          c.delay.SetDelay(*c.data++);
+        } else if (val <= 0x09 && val >= 0x01) {
+          mStack.push(val);
+        } else if (val == 0x00) {
+          return frames;
+        }
+      }
+      for (; !mStack.empty(); mStack.pop()) {
+        const uint8_t val = mStack.top();
+        if (val == 0x09)
+          mPlayDelay = *c.data++;
+        else if ((val == 0x03) || (val == 0x04))
+          c.data += 1;
+        else if (val == 0x05)
+          c.data += 2;
+        else if ((val == 0x01) || (val == 0x08))
+          c.data += 3;
+        else if (val == 0x02)
+          c.data += 5;
+      }
+    }
+  }
+}
 
 /* PT3 FILE */
 
@@ -500,6 +563,9 @@ Pt3Emu::~Pt3Emu() { mDestroyTS(); }
 blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, const int track) const {
   GmeFile::copyField(out->song, mPlayer.GetName(), 32);
   GmeFile::copyField(out->author, mPlayer.GetAuthor(), 32);
+  unsigned loop;
+  out->length = mPlayer.CountSongLengthMs(loop);
+  out->loop_length = loop;
   if (mHasTS())
     strcpy_P(out->comment, PSTR("6-ch TurboSound (TS)"));
   return nullptr;

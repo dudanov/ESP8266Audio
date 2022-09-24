@@ -90,6 +90,21 @@ class PT3Module {
     DataOffset mData[3];
   };
 
+  class LengthCounter {
+   public:
+    unsigned GetFrameLength(const PT3Module *module, unsigned &loopFrame);
+
+   private:
+    struct Channel {
+      const PatternData *data;
+      SkipCounter delay;
+    };
+    unsigned mGetPositionLength();
+    std::stack<uint8_t> mStack;
+    std::array<Channel, 3> mChannels;
+    uint8_t mPlayDelay;
+  };
+
  public:
   PT3Module() = delete;
   PT3Module(const PT3Module &) = delete;
@@ -117,6 +132,9 @@ class PT3Module {
   // Loop position iterator.
   const Position *GetPositionLoop() const { return mPositions + mLoop; }
 
+  // End position iterator.
+  const Position *GetPositionEnd() const { return mPositions + mEnd; }
+
   // Get pattern index by specified number.
   const Pattern *GetPattern(const Position *it) const {
     return reinterpret_cast<const Pattern *>(mGetPointer<DataOffset>(mPattern) + *it);
@@ -134,32 +152,15 @@ class PT3Module {
   const Ornament *GetOrnament(uint8_t number) const { return mGetPointer<Ornament>(mOrnaments[number]); }
 
   // Return song length in frames.
-  unsigned CountSongLength() const;
+  unsigned CountSongLength(unsigned &loop) const { return LengthCounter().GetFrameLength(this, loop); }
 
   // Return song length in miliseconds.
-  unsigned CountSongLengthMs() const;
-
-  // Check file integrity.
-  bool CheckIntegrity(size_t size) const;
+  unsigned CountSongLengthMs(unsigned &loop) const;
 
  private:
   template<typename T> const T *mGetPointer(const DataOffset &offset) const {
     return reinterpret_cast<const T *>(mIdentify + offset.GetDataOffset());
   }
-
-  // Count pattern length. Return 0 on error.
-  uint8_t mCountPatternLength(const Pattern *pattern, uint8_t channel = 0) const;
-
-  // Check pattern table data by maximum records.
-  bool mCheckPatternTable() const;
-
-  // Check song data integrity (positions and linked patterns).
-  bool mCheckSongData() const;
-
-  // Find specified pattern by number. Return pointer to pattern on success, else nullptr.
-  const Pattern *mFindPattern(uint8_t pattern) const;
-
-  size_t mGetPositionsCount() const;
 
   /* PT3 MODULE HEADER DATA */
 
@@ -357,6 +358,8 @@ class Player {
   uint8_t GetSubVersion() const { return mModule->GetSubVersion(); }
   const char *GetName() const { return mModule->GetName(); }
   const char *GetAuthor() const { return mModule->GetAuthor(); }
+  unsigned CountSongLength(unsigned &loop) const { return mModule->CountSongLength(loop); }
+  unsigned CountSongLengthMs(unsigned &loop) const { return mModule->CountSongLengthMs(loop); }
 
  private:
   void mInit();
