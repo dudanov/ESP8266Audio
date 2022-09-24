@@ -460,6 +460,7 @@ inline uint8_t PT3Module::GetSubVersion() const {
 unsigned PT3Module::CountSongLengthMs(unsigned &loop) const {
   const unsigned length = CountSongLength(loop) * 1000 / FRAME_RATE;
   loop = loop * 1000 / FRAME_RATE;
+  return length;
 }
 
 unsigned PT3Module::LengthCounter::GetFrameLength(const PT3Module *module, unsigned &loopFrame) {
