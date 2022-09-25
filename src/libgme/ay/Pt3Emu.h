@@ -150,8 +150,8 @@ class PT3Module {
 
   class LengthCounter {
    public:
-    // Count song length in frames.
-    unsigned CountSongLength(const PT3Module *module, unsigned &loopFrame);
+    // Return song length in frames.
+    unsigned CountSongLength(const PT3Module *module, unsigned &loop);
 
    private:
     unsigned mCountPositionLength();

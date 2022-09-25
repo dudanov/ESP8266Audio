@@ -463,7 +463,7 @@ unsigned PT3Module::CountSongLengthMs(unsigned &loop) const {
   return length;
 }
 
-unsigned PT3Module::LengthCounter::CountSongLength(const PT3Module *module, unsigned &loopFrame) {
+unsigned PT3Module::LengthCounter::CountSongLength(const PT3Module *module, unsigned &loop) {
   unsigned frame = 0;
 
   // Init.
@@ -474,7 +474,7 @@ unsigned PT3Module::LengthCounter::CountSongLength(const PT3Module *module, unsi
   for (auto it = module->GetPositionBegin(); it != module->GetPositionEnd(); ++it) {
     // Store loop frame count.
     if (it == module->GetPositionLoop())
-      loopFrame = frame;
+      loop = frame;
 
     // Update pattern data pointers.
     const auto pattern = module->GetPattern(it);
