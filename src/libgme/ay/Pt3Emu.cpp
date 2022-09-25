@@ -466,25 +466,22 @@ unsigned PT3Module::CountSongLengthMs(unsigned &loop) const {
 unsigned PT3Module::LengthCounter::CountSongLength(const PT3Module *module, unsigned &loopFrame) {
   unsigned frame = 0;
 
-  auto it = module->GetPositionBegin();
-  auto pattern = module->GetPattern(it);
-
+  // Init.
   mPlayDelay = module->GetDelay();
-
-  for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
-    auto &c = mChannels[idx];
-
-    c.data = module->GetPatternData(pattern, idx);
+  for (auto &c : mChannels)
     c.delay.SetDelay(1);
-  }
 
-  for (; it != module->GetPositionEnd(); ++it) {
+  for (auto it = module->GetPositionBegin(); it != module->GetPositionEnd(); ++it) {
+    // Store loop frame count.
     if (it == module->GetPositionLoop())
       loopFrame = frame;
 
+    // Update pattern data pointers.
+    const auto pattern = module->GetPattern(it);
     for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
-      mChannels[idx].data = module->GetPatternData(module->GetPattern(it), idx);
+      mChannels[idx].data = module->GetPatternData(pattern, idx);
 
+    // Count current position frames.
     frame += mCountPositionLength();
   }
 
