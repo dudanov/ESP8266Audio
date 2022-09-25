@@ -150,16 +150,17 @@ class PT3Module {
 
   class LengthCounter {
    public:
-    unsigned GetFrameLength(const PT3Module *module, unsigned &loopFrame);
+    // Count song length in frames.
+    unsigned CountSongLength(const PT3Module *module, unsigned &loopFrame);
 
    private:
+    unsigned mCountPositionLength();
     struct Channel {
       const PatternData *data;
       SkipCounter delay;
     };
-    unsigned mGetPositionLength();
-    std::stack<PatternData> mStack;
     std::array<Channel, AyApu::OSCS_NUM> mChannels;
+    std::stack<PatternData> mStack;
     uint8_t mPlayDelay;
   };
 
@@ -210,7 +211,7 @@ class PT3Module {
   const Ornament *GetOrnament(uint8_t number) const { return mGetPointer<Ornament>(mOrnaments[number]); }
 
   // Return song length in frames.
-  unsigned CountSongLength(unsigned &loop) const { return LengthCounter().GetFrameLength(this, loop); }
+  unsigned CountSongLength(unsigned &loop) const { return LengthCounter().CountSongLength(this, loop); }
 
   // Return song length in miliseconds.
   unsigned CountSongLengthMs(unsigned &loop) const;

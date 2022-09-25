@@ -463,7 +463,7 @@ unsigned PT3Module::CountSongLengthMs(unsigned &loop) const {
   return length;
 }
 
-unsigned PT3Module::LengthCounter::GetFrameLength(const PT3Module *module, unsigned &loopFrame) {
+unsigned PT3Module::LengthCounter::CountSongLength(const PT3Module *module, unsigned &loopFrame) {
   unsigned frame = 0;
 
   auto it = module->GetPositionBegin();
@@ -485,19 +485,19 @@ unsigned PT3Module::LengthCounter::GetFrameLength(const PT3Module *module, unsig
     for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
       mChannels[idx].data = module->GetPatternData(module->GetPattern(it), idx);
 
-    frame += mGetPositionLength();
+    frame += mCountPositionLength();
   }
 
   return frame;
 }
 
-unsigned PT3Module::LengthCounter::mGetPositionLength() {
+unsigned PT3Module::LengthCounter::mCountPositionLength() {
   for (unsigned frames = 0;; frames += mPlayDelay) {
     for (auto &c : mChannels) {
       if (!c.delay.Run())
         continue;
       while (true) {
-        const PatternData val = *c.data++;
+        const auto val = *c.data++;
         if ((val >= 0x50 && val <= 0xAF) || val == 0xD0 || val == 0xC0) {
           break;
         } else if (val >= 0xF0 || val == 0x10) {
@@ -515,7 +515,7 @@ unsigned PT3Module::LengthCounter::mGetPositionLength() {
         }
       }
       for (; !mStack.empty(); mStack.pop()) {
-        const PatternData val = mStack.top();
+        const auto val = mStack.top();
         if (val == 0x09)
           mPlayDelay = *c.data++;
         else if (val == 0x02)
