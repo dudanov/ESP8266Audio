@@ -200,7 +200,7 @@ void Player::mPlayPattern(const blip_clk_time_t time) {
       continue;
     const uint8_t prevNote = c.GetNote();
     const int16_t prevSliding = c.GetToneSlide();
-    while (true) {
+    for (;;) {
       const uint8_t val = c.PatternCode();
       if (val >= 0xF0) {
         // Set ornament and sample. Envelope disable.
@@ -262,36 +262,29 @@ void Player::mPlayPattern(const blip_clk_time_t time) {
     }
 
     for (; !mCmdStack.empty(); mCmdStack.pop()) {
-      switch (mCmdStack.top()) {
-        case 1:
-          // Gliss Effect
-          c.SetupGliss(this);
-          break;
-        case 2:
-          // Portamento Effect
-          c.SetupPortamento(this, prevNote, prevSliding);
-          break;
-        case 3:
-          // Play Sample From Custom Position
-          c.SetSamplePosition(c.PatternCode());
-          break;
-        case 4:
-          // Play Ornament From Custom Position
-          c.SetOrnamentPosition(c.PatternCode());
-          break;
-        case 5:
-          // Vibrate Effect
-          c.SetupVibrato();
-          break;
-        case 8:
-          // Slide Envelope Effect
-          mEnvelopeSlider.Enable(c.PatternCode());
-          mEnvelopeSlider.SetStep(c.PatternCodeLE16());
-          break;
-        case 9:
-          // Song Delay
-          mPlayDelay.SetDelay(c.PatternCode());
-          break;
+      const auto val = mCmdStack.top();
+      if (val == 0x01) {
+        // Gliss Effect
+        c.SetupGliss(this);
+      } else if (val == 0x02) {
+        // Portamento Effect
+        c.SetupPortamento(this, prevNote, prevSliding);
+      } else if (val == 0x03) {
+        // Play Sample From Custom Position
+        c.SetSamplePosition(c.PatternCode());
+      } else if (val == 0x04) {
+        // Play Ornament From Custom Position
+        c.SetOrnamentPosition(c.PatternCode());
+      } else if (val == 0x05) {
+        // Vibrate Effect
+        c.SetupVibrato();
+      } else if (val == 0x08) {
+        // Slide Envelope Effect
+        mEnvelopeSlider.Enable(c.PatternCode());
+        mEnvelopeSlider.SetStep(c.PatternCodeLE16());
+      } else if (val == 0x09) {
+        // Song Delay
+        mPlayDelay.SetDelay(c.PatternCode());
       }
     }
   }
@@ -493,23 +486,22 @@ unsigned PT3Module::LengthCounter::mCountPositionLength() {
     for (auto &c : mChannels) {
       if (!c.delay.Run())
         continue;
-      while (true) {
+      for (;;) {
         const auto val = *c.data++;
-        if ((val >= 0x50 && val <= 0xAF) || val == 0xD0 || val == 0xC0) {
+        if ((val >= 0x50 && val <= 0xAF) || val == 0xD0 || val == 0xC0)
           break;
-        } else if (val >= 0xF0 || val == 0x10) {
+        else if (val >= 0xF0 || val == 0x10)
           c.data += 1;
-        } else if (val >= 0xB2 && val <= 0xBF) {
+        else if (val >= 0xB2 && val <= 0xBF)
           c.data += 2;
-        } else if (val >= 0x11 && val <= 0x1F) {
+        else if (val >= 0x11 && val <= 0x1F)
           c.data += 3;
-        } else if (val == 0xB1) {
+        else if (val == 0xB1)
           c.delay.SetDelay(*c.data++);
-        } else if (val <= 0x09 && val >= 0x01) {
+        else if ((val >= 0x01 && val <= 0x05) || val == 0x08 || val == 0x09)
           mStack.push(val);
-        } else if (val == 0x00) {
+        else if (val == 0x00)
           return frames;
-        }
       }
       for (; !mStack.empty(); mStack.pop()) {
         const auto val = mStack.top();
@@ -521,7 +513,7 @@ unsigned PT3Module::LengthCounter::mCountPositionLength() {
           c.data += 2;
         else if ((val == 0x01) || (val == 0x08))
           c.data += 3;
-        else if ((val == 0x03) || (val == 0x04))
+        else
           c.data += 1;
       }
     }
