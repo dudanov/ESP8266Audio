@@ -488,8 +488,12 @@ unsigned PT3Module::LengthCounter::mCountPositionLength() {
         continue;
       for (;;) {
         const auto val = *c.data++;
+        if (val == 0x00)
+          return frames;
         if ((val >= 0x50 && val <= 0xAF) || val == 0xD0 || val == 0xC0)
           break;
+        if ((val >= 0x01 && val <= 0x05) || val == 0x08 || val == 0x09)
+          mStack.push(val);
         else if (val >= 0xF0 || val == 0x10)
           c.data += 1;
         else if (val >= 0xB2 && val <= 0xBF)
@@ -498,10 +502,6 @@ unsigned PT3Module::LengthCounter::mCountPositionLength() {
           c.data += 3;
         else if (val == 0xB1)
           c.delay.SetDelay(*c.data++);
-        else if ((val >= 0x01 && val <= 0x05) || val == 0x08 || val == 0x09)
-          mStack.push(val);
-        else if (val == 0x00)
-          return frames;
       }
       for (; !mStack.empty(); mStack.pop()) {
         const auto val = mStack.top();
