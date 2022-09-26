@@ -487,24 +487,24 @@ unsigned PT3Module::LengthCounter::mCountPositionLength() {
       if (!c.delay.Run())
         continue;
       for (;;) {
-        const auto val = *c.data++;
+        const uint8_t val = *c.data++;
         if (val == 0x00)
           return frames;
         if ((val >= 0x50 && val <= 0xAF) || val == 0xD0 || val == 0xC0)
           break;
-        if ((val >= 0x01 && val <= 0x05) || val == 0x08 || val == 0x09)
-          mStack.push(val);
+        if (val == 0xB1)
+          c.delay.SetDelay(*c.data++);
         else if (val >= 0xF0 || val == 0x10)
           c.data += 1;
         else if (val >= 0xB2 && val <= 0xBF)
           c.data += 2;
         else if (val >= 0x11 && val <= 0x1F)
           c.data += 3;
-        else if (val == 0xB1)
-          c.delay.SetDelay(*c.data++);
+        else if (val <= 0x05 || val == 0x08 || val == 0x09)
+          mStack.push(val);
       }
       for (; !mStack.empty(); mStack.pop()) {
-        const auto val = mStack.top();
+        const uint8_t val = mStack.top();
         if (val == 0x09)
           mPlayDelay = *c.data++;
         else if (val == 0x02)
