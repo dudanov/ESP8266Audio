@@ -601,8 +601,8 @@ blargg_err_t Pt3Emu::mLoad(const uint8_t *data, const long size) {
     mDestroyTS();
   } else if (mCreateTS()) {
     mTurboSound->Load(module);
-    mPlayer.SetVolume(mGetGain() * 0.7);
-    mTurboSound->SetVolume(mGetGain() * 0.7);
+    mPlayer.SetVolume(mGetGain());
+    mTurboSound->SetVolume(mGetGain());
     mSetChannelsNumber(AyApu::OSCS_NUM * 2);
     return mSetupBuffer(CLOCK_RATE);
   }
