@@ -175,10 +175,10 @@ class PT3Module {
   uint8_t GetSubVersion() const;
 
   // Song name.
-  const char *GetName() const { return mName; }
+  void GetName(char *out) const { GmeFile::copyField(out, mName, sizeof(mName)); }
 
   // Song author.
-  const char *GetAuthor() const { return mAuthor; }
+  void GetAuthor(char *out) const { GmeFile::copyField(out, mAuthor, sizeof(mAuthor)); }
 
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
@@ -357,8 +357,8 @@ class Player {
 
   int16_t GetNotePeriod(uint8_t tone) const;
   uint8_t GetSubVersion() const { return mModule->GetSubVersion(); }
-  const char *GetName() const { return mModule->GetName(); }
-  const char *GetAuthor() const { return mModule->GetAuthor(); }
+  void GetName(char *out) const { return mModule->GetName(out); }
+  void GetAuthor(char *out) const { return mModule->GetAuthor(out); }
   unsigned CountSongLength(unsigned &loop) const { return mModule->CountSongLength(loop); }
   unsigned CountSongLengthMs(unsigned &loop) const { return mModule->CountSongLengthMs(loop); }
 

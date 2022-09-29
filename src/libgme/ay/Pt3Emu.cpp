@@ -538,8 +538,8 @@ struct Pt3File : GmeInfo {
   }
 
   blargg_err_t mGetTrackInfo(track_info_t *out, const int track) const override {
-    GmeFile::copyField(out->song, mModule->GetName(), 32);
-    GmeFile::copyField(out->author, mModule->GetAuthor(), 32);
+    mModule->GetName(out->song);
+    mModule->GetAuthor(out->author);
     unsigned loop;
     out->length = mModule->CountSongLengthMs(loop);
     out->loop_length = loop;
@@ -567,8 +567,8 @@ Pt3Emu::Pt3Emu() : mTurboSound(nullptr) {
 Pt3Emu::~Pt3Emu() { mDestroyTS(); }
 
 blargg_err_t Pt3Emu::mGetTrackInfo(track_info_t *out, const int track) const {
-  GmeFile::copyField(out->song, mPlayer.GetName(), 32);
-  GmeFile::copyField(out->author, mPlayer.GetAuthor(), 32);
+  mPlayer.GetName(out->song);
+  mPlayer.GetAuthor(out->author);
   unsigned loop;
   out->length = mPlayer.CountSongLengthMs(loop);
   out->loop_length = loop;
