@@ -1,10 +1,5 @@
 #pragma once
-
-// Sinclair Spectrum PT3 music file emulator
-
-#include "AyApu.h"
-#include "../ClassicEmu.h"
-#include <stack>
+#include <cstdint>
 
 namespace gme {
 namespace emu {
