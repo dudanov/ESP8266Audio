@@ -3,6 +3,7 @@
 // Sinclair Spectrum PT3 music file emulator
 
 #include "AyApu.h"
+#include "common.h"
 #include "../ClassicEmu.h"
 #include <stack>
 
@@ -70,75 +71,7 @@ using SamplePlayer = LoopDataPlayer<SampleData>;
 using OrnamentPlayer = LoopDataPlayer<OrnamentData>;
 using Position = uint8_t;
 
-class DelayRunner {
- public:
-  void Enable(uint8_t delay) { mDelay = mDelayCounter = delay; }
-  void Disable() { mDelayCounter = 0; }
-  bool Run() {
-    if (!mDelayCounter || --mDelayCounter)
-      return false;
-    mDelayCounter = mDelay;
-    return true;
-  }
-
- private:
-  uint8_t mDelayCounter, mDelay;
-};
-
-class SimpleSlider {
- public:
-  int16_t GetValue() const { return mValue; }
-  int16_t GetStep() const { return mStep; }
-  void SetValue(int16_t value) { mValue = value; }
-  void SetStep(int16_t step) { mStep = step; }
-  void Enable(uint8_t delay) { mDelay.Enable(delay); }
-  void Disable() { mDelay.Disable(); }
-  bool Run() {
-    if (mDelay.Run()) {
-      mValue += mStep;
-      return true;
-    }
-    return false;
-  }
-  void Reset() {
-    mDelay.Disable();
-    mValue = 0;
-  }
-
- private:
-  DelayRunner mDelay;
-  int16_t mValue, mStep;
-};
-
-class SkipCounter {
- public:
-  void SetDelay(uint8_t delay) { mDelay = mDelayCounter = delay; }
-  void SetDelay(uint8_t delay, uint8_t init) {
-    mDelay = delay;
-    mDelayCounter = init;
-  }
-  bool Run() {
-    if (--mDelayCounter)
-      return false;
-    mDelayCounter = mDelay;
-    return true;
-  }
-
- private:
-  uint8_t mDelayCounter, mDelay;
-};
-
 class PT3Module {
-  struct DataOffset {
-    DataOffset() = delete;
-    DataOffset(const DataOffset &) = delete;
-    uint16_t GetDataOffset() const { return get_le16(mOffset); }
-    bool IsValid() const { return GetDataOffset() != 0; }
-
-   private:
-    uint8_t mOffset[2];
-  };
-
   struct Pattern {
     Pattern() = delete;
     Pattern(const Pattern &) = delete;
@@ -157,7 +90,7 @@ class PT3Module {
     unsigned mCountPositionLength();
     struct Channel {
       const PatternData *data;
-      SkipCounter delay;
+      DelayRunner delay;
     };
     std::array<Channel, AyApu::OSCS_NUM> mChannels;
     std::stack<PatternData> mStack;
@@ -290,8 +223,8 @@ struct Channel {
     return value;
   }
 
-  bool IsEmptyLocation() { return !mSkipNotes.Run(); }
-  void SetSkipLocations(uint8_t skip) { mSkipNotes.SetDelay(skip); }
+  bool IsEmptyLocation() { return !mSkipNotes.RunSkip(); }
+  void SetSkipLocations(uint8_t skip) { mSkipNotes.Enable(skip); }
 
   void SetSample(const Sample *sample) { mSamplePlayer.Load(sample); }
   void SetSamplePosition(uint8_t pos) { mSamplePlayer.SetPosition(pos); }
@@ -333,7 +266,7 @@ struct Channel {
   const uint8_t *mPatternIt;
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
-  SkipCounter mSkipNotes;
+  DelayRunner mSkipNotes;
   SimpleSlider mToneSlide;
   int16_t mTranspositionAccumulator, mToneDelta;
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
@@ -350,7 +283,7 @@ class Player {
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
   void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
   void RunUntil(blip_clk_time_t time) {
-    if (mPlayDelay.Run())
+    if (mPlayDelay.RunSkip())
       mPlayPattern(time);
     mPlaySamples(time);
   }
@@ -380,7 +313,7 @@ class Player {
   // Song position iterators
   const Position *mPositionIt;
   SimpleSlider mEnvelopeSlider;
-  SkipCounter mPlayDelay;
+  DelayRunner mPlayDelay;
   uint16_t mEnvelopeBase;
   uint8_t mNoiseBase;
 };

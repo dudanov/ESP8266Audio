@@ -196,15 +196,6 @@ inline void Channel::AdvanceSample() {
   }
 }
 
-inline bool Channel::IsEmptyLocation() {
-  if (mSkipCounter > 0) {
-    mSkipCounter--;
-    return true;
-  }
-  mSkipCounter = mSkipCount;
-  return false;
-}
-
 /* SAMPLE DATA */
 
 inline int16_t SampleData::Transposition() const {

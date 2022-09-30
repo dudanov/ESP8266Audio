@@ -141,7 +141,7 @@ void RsfEmu::mSetTempo(double t) {
 
 blargg_err_t RsfEmu::mStartTrack(int track) {
   RETURN_ERR(ClassicEmu::mStartTrack(track));
-  mNextPlay = 0;
+  mEmuTime = 0;
   mIt = mFile.begin;
   mApu.Reset();
   SetTempo(mGetTempo());
@@ -156,26 +156,26 @@ inline blargg_err_t RsfEmu::mWriteRegisters() {
     return gme_wrong_file_type;
   for (unsigned addr = 0; mask != 0; mask >>= 1, addr++) {
     if (mask & 1)
-      mApu.Write(mNextPlay, addr, *++mIt);
+      mApu.Write(mEmuTime, addr, *++mIt);
   }
   return nullptr;
 }
 
 blargg_err_t RsfEmu::mRunClocks(blip_clk_time_t &duration) {
-  while (mNextPlay <= duration) {
+  while (mEmuTime <= duration) {
     if (*mIt != 0xFE) {
       if (*mIt != 0xFF)
         RETURN_ERR(mWriteRegisters());
-      mNextPlay += mPlayPeriod;
+      mEmuTime += mPlayPeriod;
     } else {
-      mNextPlay += *++mIt * mPlayPeriod;
+      mEmuTime += *++mIt * mPlayPeriod;
     }
     if (++mIt >= mFile.end) {
       mSetTrackEnded();
       mIt = mFile.loop;
     }
   }
-  mNextPlay -= duration;
+  mEmuTime -= duration;
   mApu.EndFrame(duration);
   return nullptr;
 }

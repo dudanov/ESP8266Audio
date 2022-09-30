@@ -3,6 +3,7 @@
 // Sinclair Spectrum STC music file emulator
 
 #include "AyApu.h"
+#include "common.h"
 #include "../ClassicEmu.h"
 
 namespace gme {
@@ -179,8 +180,8 @@ struct Channel {
   void EnvelopeEnable() { mEnvelope = true; }
   void EnvelopeDisable() { mEnvelope = false; }
 
-  void SetSkipCount(uint8_t delay) { mSkipCount = mSkipCounter = delay; }
-  bool IsEmptyLocation();
+  void SetSkipCount(uint8_t delay) { mSkipNotes.Enable(delay); }
+  bool IsEmptyLocation() { return !mSkipNotes.RunSkip(); }
 
  private:
   // Pointer to sample.
@@ -189,11 +190,10 @@ struct Channel {
   const uint8_t *mPatternIt;
   // Pointer to ornament data.
   const uint8_t *mOrnament;
+  DelayRunner mSkipNotes;
   uint8_t mNote;
   uint8_t mSamplePosition;
   uint8_t mSampleCounter;
-  uint8_t mSkipCounter;
-  uint8_t mSkipCount;
   bool mEnvelope;
 };
 
