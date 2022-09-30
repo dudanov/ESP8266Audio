@@ -484,7 +484,7 @@ unsigned PT3Module::LengthCounter::CountSongLength(const PT3Module *module, unsi
 unsigned PT3Module::LengthCounter::mCountPositionLength() {
   for (unsigned frames = 0;; frames += mPlayDelay) {
     for (auto &c : mChannels) {
-      if (!c.delay.RunSkip())
+      if (!c.delay.RunPeriod())
         continue;
       for (;;) {
         const uint8_t val = *c.data++;
