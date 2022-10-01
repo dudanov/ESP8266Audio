@@ -9,11 +9,13 @@ class DelayRunner {
  public:
   // Set delay and counter.
   void Set(uint8_t delay) { mDelay = mDelayCounter = delay; }
-  // Set delay and counter init value.
+
+  // Set delay and counter value to 1.
   void Init(uint8_t delay) {
     mDelayCounter = 1;
     mDelay = delay;
   }
+
   // Reset.
   void Disable() { mDelayCounter = 0; }
 
