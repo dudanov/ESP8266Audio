@@ -129,19 +129,19 @@ class PT3Module {
 
   // Get pattern index by specified number.
   const Pattern *GetPattern(const Position *it) const {
-    return reinterpret_cast<const Pattern *>(mGetPointer<DataOffset>(mPattern) + *it);
+    return reinterpret_cast<const Pattern *>(mPattern.GetPointer<DataOffset>(this) + *it);
   }
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-    return mGetPointer<PatternData>(pattern->GetChannelDataOffset(channel));
+    return pattern->GetChannelDataOffset(channel).GetPointer<PatternData>(this);
   }
 
   // Get sample by specified number.
-  const Sample *GetSample(uint8_t number) const { return mGetPointer<Sample>(mSamples[number]); }
+  const Sample *GetSample(uint8_t number) const { return mSamples[number].GetPointer<Sample>(this); }
 
   // Get data of specified ornament number.
-  const Ornament *GetOrnament(uint8_t number) const { return mGetPointer<Ornament>(mOrnaments[number]); }
+  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments[number].GetPointer<Ornament>(this); }
 
   // Return song length in frames.
   unsigned CountSongLength(unsigned &loop) const { return LengthCounter().CountSongLength(this, loop); }
@@ -150,10 +150,6 @@ class PT3Module {
   unsigned CountSongLengthMs(unsigned &loop) const;
 
  private:
-  template<typename T> const T *mGetPointer(const DataOffset &offset) const {
-    return reinterpret_cast<const T *>(mIdentify + offset.GetDataOffset());
-  }
-
   /* PT3 MODULE HEADER DATA */
 
   // Identification: "ProTracker 3.".

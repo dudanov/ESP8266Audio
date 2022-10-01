@@ -71,6 +71,9 @@ struct DataOffset {
   DataOffset(const DataOffset &) = delete;
   uint16_t GetDataOffset() const { return get_le16(mOffset); }
   bool IsValid() const { return GetDataOffset() != 0; }
+  template<typename T> const T *GetPointer(const void *module) const {
+    return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(module) + GetDataOffset());
+  }
 
  private:
   uint8_t mOffset[2];

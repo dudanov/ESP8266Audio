@@ -40,20 +40,22 @@ static uint16_t sGetTonePeriod(uint8_t tone) {
 
 /* STC MODULE */
 
-inline const Position *STCModule::GetPositionBegin() const { return mGetPointer<PositionsTable>(mPositions)->position; }
+inline const Position *STCModule::GetPositionBegin() const {
+  return mPositions.GetPointer<PositionsTable>(this)->position;
+}
 
 inline const Position *STCModule::GetPositionEnd() const {
-  auto p = mGetPointer<PositionsTable>(mPositions);
+  auto p = mPositions.GetPointer<PositionsTable>(this);
   return p->position + p->count + 1;
 }
 
-inline size_t STCModule::mGetPositionsCount() const { return mGetPointer<PositionsTable>(mPositions)->count + 1; }
+inline size_t STCModule::mGetPositionsCount() const { return mPositions.GetPointer<PositionsTable>(this)->count + 1; }
 
 inline const uint8_t *STCModule::GetPatternData(const Pattern *pattern, uint8_t channel) const {
-  return mGetPointer<uint8_t>(pattern->GetDataOffset(channel));
+  return pattern->GetDataOffset(channel).GetPointer<uint8_t>(this);
 }
 
-inline const Pattern *STCModule::mGetPatternBegin() const { return mGetPointer<Pattern>(mPatterns); }
+inline const Pattern *STCModule::mGetPatternBegin() const { return mPatterns.GetPointer<Pattern>(this); }
 
 inline const Pattern *STCModule::GetPattern(uint8_t number) const {
   auto it = mGetPatternBegin();
@@ -63,7 +65,7 @@ inline const Pattern *STCModule::GetPattern(uint8_t number) const {
 }
 
 inline const Ornament *STCModule::GetOrnament(uint8_t number) const {
-  auto it = mGetPointer<Ornament>(mOrnaments);
+  auto it = mOrnaments.GetPointer<Ornament>(this);
   while (!it->HasNumber(number))
     ++it;
   return it;

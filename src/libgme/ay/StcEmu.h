@@ -114,10 +114,6 @@ struct STCModule {
   bool CheckIntegrity(size_t size) const;
 
  private:
-  template<typename T> const T *mGetPointer(const DataOffset &offset) const {
-    return reinterpret_cast<const T *>(&mDelay + offset.GetDataOffset());
-  }
-
   // Count pattern length. Return 0 on error.
   uint8_t mCountPatternLength(const Pattern *pattern, uint8_t channel = 0) const;
 
