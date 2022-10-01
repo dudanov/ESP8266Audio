@@ -462,7 +462,7 @@ unsigned PT3Module::LengthCounter::CountSongLength(const PT3Module *module, unsi
   // Init.
   mPlayDelay = module->GetDelay();
   for (auto &c : mChannels)
-    c.delay.Set(1);
+    c.delay.Init(1);
 
   for (auto it = module->GetPositionBegin(); it != module->GetPositionEnd(); ++it) {
     // Store loop frame count.
