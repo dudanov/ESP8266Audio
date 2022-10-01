@@ -8,9 +8,9 @@ namespace ay {
 class DelayRunner {
  public:
   // Set delay and counter.
-  void Enable(uint8_t delay) { mDelay = mDelayCounter = delay; }
+  void Set(uint8_t delay) { mDelay = mDelayCounter = delay; }
   // Set delay and counter init value.
-  void Enable(uint8_t delay, uint8_t init) {
+  void Set(uint8_t delay, uint8_t init) {
     mDelay = delay;
     mDelayCounter = init;
   }
@@ -18,7 +18,7 @@ class DelayRunner {
   void Disable() { mDelayCounter = 0; }
 
   // Returns TRUE every N-th call. Always FALSE if delay is 0.
-  bool RunPeriod() {
+  bool RunEveryN() {
     if (!mDelayCounter || --mDelayCounter)
       return false;
     mDelayCounter = mDelay;
@@ -26,9 +26,9 @@ class DelayRunner {
   }
 
   // Returns TRUE every N+1 call. Always TRUE if delay is 0.
-  bool RunSkip() {
+  bool RunAfterN() {
     if (mDelayCounter) {
-      mDelayCounter--;
+      --mDelayCounter;
       return false;
     }
     mDelayCounter = mDelay;
@@ -45,10 +45,10 @@ class SimpleSlider {
   int16_t GetStep() const { return mStep; }
   void SetValue(int16_t value) { mValue = value; }
   void SetStep(int16_t step) { mStep = step; }
-  void Enable(uint8_t delay) { mDelay.Enable(delay); }
+  void Enable(uint8_t delay) { mDelay.Set(delay); }
   void Disable() { mDelay.Disable(); }
   bool Run() {
-    if (mDelay.RunPeriod()) {
+    if (mDelay.RunEveryN()) {
       mValue += mStep;
       return true;
     }

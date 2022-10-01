@@ -72,20 +72,16 @@ struct Pattern {
   Pattern(const Pattern &) = delete;
   static const uint8_t MAX_COUNT = 32;
   bool HasNumber(uint8_t number) const { return mNumber == number; }
-  const uint8_t *DataOffset(uint8_t channel) const { return mDataOffset[channel]; }
+  const DataOffset &GetDataOffset(uint8_t channel) const { return mDataOffset[channel]; }
 
  private:
   uint8_t mNumber;
-  uint8_t mDataOffset[3][2];
+  DataOffset mDataOffset[3];
 };
 
 struct STCModule {
   STCModule() = delete;
   STCModule(const STCModule &) = delete;
-  // Shared note period table.
-  static const uint16_t NOTE_TABLE[96];
-
-  static uint16_t GetTonePeriod(uint8_t tone);
 
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
@@ -118,8 +114,8 @@ struct STCModule {
   bool CheckIntegrity(size_t size) const;
 
  private:
-  template<typename T> const T *mGetPointer(const uint8_t *offset) const {
-    return reinterpret_cast<const T *>(&mDelay + get_le16(offset));
+  template<typename T> const T *mGetPointer(const DataOffset &offset) const {
+    return reinterpret_cast<const T *>(&mDelay + offset.GetDataOffset());
   }
 
   // Count pattern length. Return 0 on error.
@@ -142,12 +138,19 @@ struct STCModule {
 
   /* STC MODULE HEADER DATA */
 
+  // Song delay.
   uint8_t mDelay;
-  uint8_t mPositions[2];
-  uint8_t mOrnaments[2];
-  uint8_t mPatterns[2];
+  // Positions table offset.
+  DataOffset mPositions;
+  // Ornaments table offset.
+  DataOffset mOrnaments;
+  // Patterns table offset.
+  DataOffset mPatterns;
+  // Identification string.
   char mName[18];
+  // Module size.
   uint8_t mSize[2];
+  // Samples table.
   Sample mSamples[0];
 };
 
@@ -180,8 +183,8 @@ struct Channel {
   void EnvelopeEnable() { mEnvelope = true; }
   void EnvelopeDisable() { mEnvelope = false; }
 
-  void SetSkipCount(uint8_t delay) { mSkipNotes.Enable(delay); }
-  bool IsEmptyLocation() { return !mSkipNotes.RunSkip(); }
+  void SetSkipCount(uint8_t delay) { mSkipNotes.Set(delay); }
+  bool IsEmptyLocation() { return !mSkipNotes.RunAfterN(); }
 
  private:
   // Pointer to sample.

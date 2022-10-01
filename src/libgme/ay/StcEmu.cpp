@@ -26,20 +26,19 @@ namespace stc {
 static const auto CLOCK_RATE = CLK_SPECTRUM;
 static const auto FRAME_RATE = FRAMERATE_SPECTRUM;
 
-/* STC MODULE */
-
-const uint16_t STCModule::NOTE_TABLE[96] PROGMEM = {
-    0xEF8, 0xE10, 0xD60, 0xC80, 0xBD8, 0xB28, 0xA88, 0x9F0, 0x960, 0x8E0, 0x858, 0x7E0, 0x77C, 0x708, 0x6B0, 0x640,
-    0x5EC, 0x594, 0x544, 0x4F8, 0x4B0, 0x470, 0x42C, 0x3F0, 0x3BE, 0x384, 0x358, 0x320, 0x2F6, 0x2CA, 0x2A2, 0x27C,
-    0x258, 0x238, 0x216, 0x1F8, 0x1DF, 0x1C2, 0x1AC, 0x190, 0x17B, 0x165, 0x151, 0x13E, 0x12C, 0x11C, 0x10B, 0x0FC,
-    0x0EF, 0x0E1, 0x0D6, 0x0C8, 0x0BD, 0x0B2, 0x0A8, 0x09F, 0x096, 0x08E, 0x085, 0x07E, 0x077, 0x070, 0x06B, 0x064,
-    0x05E, 0x059, 0x054, 0x04F, 0x04B, 0x047, 0x042, 0x03F, 0x03B, 0x038, 0x035, 0x032, 0x02F, 0x02C, 0x02A, 0x027,
-    0x025, 0x023, 0x021, 0x01F, 0x01D, 0x01C, 0x01A, 0x019, 0x017, 0x016, 0x015, 0x013, 0x012, 0x011, 0x010, 0x00F,
-};
-
-inline uint16_t STCModule::GetTonePeriod(uint8_t tone) {
+static uint16_t sGetTonePeriod(uint8_t tone) {
+  static const uint16_t NOTE_TABLE[96] PROGMEM = {
+      0xEF8, 0xE10, 0xD60, 0xC80, 0xBD8, 0xB28, 0xA88, 0x9F0, 0x960, 0x8E0, 0x858, 0x7E0, 0x77C, 0x708, 0x6B0, 0x640,
+      0x5EC, 0x594, 0x544, 0x4F8, 0x4B0, 0x470, 0x42C, 0x3F0, 0x3BE, 0x384, 0x358, 0x320, 0x2F6, 0x2CA, 0x2A2, 0x27C,
+      0x258, 0x238, 0x216, 0x1F8, 0x1DF, 0x1C2, 0x1AC, 0x190, 0x17B, 0x165, 0x151, 0x13E, 0x12C, 0x11C, 0x10B, 0x0FC,
+      0x0EF, 0x0E1, 0x0D6, 0x0C8, 0x0BD, 0x0B2, 0x0A8, 0x09F, 0x096, 0x08E, 0x085, 0x07E, 0x077, 0x070, 0x06B, 0x064,
+      0x05E, 0x059, 0x054, 0x04F, 0x04B, 0x047, 0x042, 0x03F, 0x03B, 0x038, 0x035, 0x032, 0x02F, 0x02C, 0x02A, 0x027,
+      0x025, 0x023, 0x021, 0x01F, 0x01D, 0x01C, 0x01A, 0x019, 0x017, 0x016, 0x015, 0x013, 0x012, 0x011, 0x010, 0x00F,
+  };
   return pgm_read_word(NOTE_TABLE + ((tone <= 95) ? tone : 95));
 }
+
+/* STC MODULE */
 
 inline const Position *STCModule::GetPositionBegin() const { return mGetPointer<PositionsTable>(mPositions)->position; }
 
@@ -51,7 +50,7 @@ inline const Position *STCModule::GetPositionEnd() const {
 inline size_t STCModule::mGetPositionsCount() const { return mGetPointer<PositionsTable>(mPositions)->count + 1; }
 
 inline const uint8_t *STCModule::GetPatternData(const Pattern *pattern, uint8_t channel) const {
-  return mGetPointer<uint8_t>(pattern->DataOffset(channel));
+  return mGetPointer<uint8_t>(pattern->GetDataOffset(channel));
 }
 
 inline const Pattern *STCModule::mGetPatternBegin() const { return mGetPointer<Pattern>(mPatterns); }
@@ -142,7 +141,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
 
   // Checking samples section
   constexpr uint16_t SamplesBlockOffset = sizeof(STCModule);
-  const uint16_t PositionsTableOffset = get_le16(mPositions);
+  const uint16_t PositionsTableOffset = mPositions.GetDataOffset();
   if (PositionsTableOffset <= SamplesBlockOffset)
     return false;
   const uint16_t SamplesBlockSize = PositionsTableOffset - SamplesBlockOffset;
@@ -151,7 +150,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
 
   // Checking positions section
   const uint16_t PositionsBlockOffset = PositionsTableOffset + sizeof(PositionsTable);
-  const uint16_t OrnamentsBlockOffset = get_le16(mOrnaments);
+  const uint16_t OrnamentsBlockOffset = mOrnaments.GetDataOffset();
   if (OrnamentsBlockOffset <= PositionsBlockOffset)
     return false;
   const uint16_t PositionsBlockSize = OrnamentsBlockOffset - PositionsBlockOffset;
@@ -161,7 +160,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
     return false;
 
   // Checking ornaments section
-  const uint16_t PatternsBlockOffset = get_le16(mPatterns);
+  const uint16_t PatternsBlockOffset = mPatterns.GetDataOffset();
   if (PatternsBlockOffset <= OrnamentsBlockOffset)
     return false;
   const uint16_t OrnamentsBlockSize = PatternsBlockOffset - OrnamentsBlockOffset;
@@ -359,7 +358,7 @@ void StcEmu::mPlaySamples() {
     mixer |= 64 * sample->NoiseMask() | 8 * sample->ToneMask();
 
     const uint8_t note = channel.GetOrnamentNote() + mPositionTransposition();
-    const uint16_t period = (STCModule::GetTonePeriod(note) + sample->Transposition()) % 4096;
+    const uint16_t period = (sGetTonePeriod(note) + sample->Transposition()) % 4096;
 
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, period % 256);
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, period / 256);
