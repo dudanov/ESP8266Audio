@@ -165,7 +165,7 @@ uint8_t Player::mGetAmplitude(const uint8_t volume, const uint8_t amplitude) con
 
 void Player::mInit() {
   mApu.Reset();
-  mPlayDelay.Set(mModule->GetDelay(), 1);
+  mPlayDelay.Init(mModule->GetDelay());
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
   auto pattern = mModule->GetPattern(mPositionIt);

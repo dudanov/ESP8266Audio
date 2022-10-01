@@ -272,7 +272,7 @@ blargg_err_t StcEmu::mStartTrack(int track) {
 void StcEmu::mInit() {
   mApu.Reset();
   mEmuTime = 0;
-  mDelayCounter = 1;
+  mDelay.Init(mModule->GetDelay());
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
   auto pattern = mModule->GetPattern(mPositionIt->pattern);
@@ -371,10 +371,8 @@ void StcEmu::mPlaySamples() {
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
-    if (--mDelayCounter == 0) {
-      mDelayCounter = mModule->GetDelay();
+    if (mDelay.RunEveryN())
       mPlayPattern();
-    }
     mPlaySamples();
   }
   mEmuTime -= duration;

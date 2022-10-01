@@ -238,7 +238,7 @@ class StcEmu : public ClassicEmu {
   // Play period 50Hz
   blip_clk_time_t mFramePeriod;
   // Global song delay counter
-  uint8_t mDelayCounter;
+  DelayRunner mDelay;
 };
 
 }  // namespace stc
