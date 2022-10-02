@@ -94,7 +94,7 @@ class PT3Module {
     };
     std::array<Channel, AyApu::OSCS_NUM> mChannels;
     std::stack<PatternData> mStack;
-    uint8_t mPlayDelay;
+    uint8_t mDelay;
   };
 
  public:
@@ -219,8 +219,8 @@ struct Channel {
     return value;
   }
 
-  bool IsEmptyLocation() { return !mSkipNotes.RunEveryN(); }
-  void SetSkipLocations(uint8_t skip) { mSkipNotes.Set(skip); }
+  bool IsEmptyLocation() { return !mSkip.Tick(); }
+  void SetSkipLocations(uint8_t skip) { mSkip.Set(skip); }
 
   void SetSample(const Sample *sample) { mSamplePlayer.Load(sample); }
   void SetSamplePosition(uint8_t pos) { mSamplePlayer.SetPosition(pos); }
@@ -262,7 +262,7 @@ struct Channel {
   const uint8_t *mPatternIt;
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
-  DelayRunner mSkipNotes;
+  DelayRunner mSkip;
   SimpleSlider mToneSlide;
   int16_t mTranspositionAccumulator, mToneDelta;
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
@@ -279,7 +279,7 @@ class Player {
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
   void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
   void RunUntil(blip_clk_time_t time) {
-    if (mPlayDelay.RunEveryN())
+    if (mDelay.Tick())
       mPlayPattern(time);
     mPlaySamples(time);
   }
@@ -309,7 +309,7 @@ class Player {
   // Song position iterators
   const Position *mPositionIt;
   SimpleSlider mEnvelopeSlider;
-  DelayRunner mPlayDelay;
+  DelayRunner mDelay;
   uint16_t mEnvelopeBase;
   uint8_t mNoiseBase;
 };

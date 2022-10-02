@@ -325,7 +325,7 @@ void StcEmu::mPlayPattern() {
         mAdvancePosition();
       } else {
         // Number of empty locations after the subsequent code (0-63).
-        channel.SetSkipCount(code - 0xA1);
+        channel.SetSkipCount(code - 0xA0);
       }
     }
   }
@@ -373,7 +373,7 @@ void StcEmu::mPlaySamples() {
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
-    if (mDelay.RunEveryN())
+    if (mDelay.Tick())
       mPlayPattern();
     mPlaySamples();
   }

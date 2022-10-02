@@ -179,8 +179,8 @@ struct Channel {
   void EnvelopeEnable() { mEnvelope = true; }
   void EnvelopeDisable() { mEnvelope = false; }
 
-  void SetSkipCount(uint8_t delay) { mSkipNotes.Set(delay); }
-  bool IsEmptyLocation() { return !mSkipNotes.RunAfterN(); }
+  void SetSkipCount(uint8_t delay) { mSkip.Set(delay); }
+  bool IsEmptyLocation() { return !mSkip.Tick(); }
 
  private:
   // Pointer to sample.
@@ -189,7 +189,7 @@ struct Channel {
   const uint8_t *mPatternIt;
   // Pointer to ornament data.
   const uint8_t *mOrnament;
-  DelayRunner mSkipNotes;
+  DelayRunner mSkip;
   uint8_t mNote;
   uint8_t mSamplePosition;
   uint8_t mSampleCounter;

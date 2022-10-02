@@ -165,7 +165,7 @@ uint8_t Player::mGetAmplitude(const uint8_t volume, const uint8_t amplitude) con
 
 void Player::mInit() {
   mApu.Reset();
-  mPlayDelay.Init(mModule->GetDelay());
+  mDelay.Init(mModule->GetDelay());
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
   auto pattern = mModule->GetPattern(mPositionIt);
@@ -284,7 +284,7 @@ void Player::mPlayPattern(const blip_clk_time_t time) {
         mEnvelopeSlider.SetStep(c.PatternCodeLE16());
       } else if (val == 0x09) {
         // Song Delay
-        mPlayDelay.Set(c.PatternCode());
+        mDelay.Set(c.PatternCode());
       }
     }
   }
@@ -460,7 +460,7 @@ unsigned PT3Module::LengthCounter::CountSongLength(const PT3Module *module, unsi
   unsigned frame = 0;
 
   // Init.
-  mPlayDelay = module->GetDelay();
+  mDelay = module->GetDelay();
   for (auto &c : mChannels)
     c.delay.Init(1);
 
@@ -482,9 +482,9 @@ unsigned PT3Module::LengthCounter::CountSongLength(const PT3Module *module, unsi
 }
 
 unsigned PT3Module::LengthCounter::mCountPositionLength() {
-  for (unsigned frames = 0;; frames += mPlayDelay) {
+  for (unsigned frames = 0;; frames += mDelay) {
     for (auto &c : mChannels) {
-      if (!c.delay.RunEveryN())
+      if (!c.delay.Tick())
         continue;
       for (;;) {
         const uint8_t val = *c.data++;
@@ -506,7 +506,7 @@ unsigned PT3Module::LengthCounter::mCountPositionLength() {
       for (; !mStack.empty(); mStack.pop()) {
         const uint8_t val = mStack.top();
         if (val == 0x09)
-          mPlayDelay = *c.data++;
+          mDelay = *c.data++;
         else if (val == 0x02)
           c.data += 5;
         else if (val == 0x05)

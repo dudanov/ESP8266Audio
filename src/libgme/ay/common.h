@@ -7,38 +7,28 @@ namespace ay {
 
 class DelayRunner {
  public:
-  // Set delay and counter.
-  void Set(uint8_t delay) { mDelay = mDelayCounter = delay; }
-
-  // Set delay and counter value to 1.
+  // Init delay. Tick() method returns TRUE on next call.
   void Init(uint8_t delay) {
-    mDelayCounter = 1;
+    mCounter = 1;
     mDelay = delay;
   }
 
-  // Reset.
-  void Disable() { mDelayCounter = 0; }
+  // Set delay value.
+  void Set(uint8_t delay) { mDelay = mCounter = delay; }
+
+  // Disable. Tick() method always return FALSE.
+  void Disable() { mCounter = 0; }
 
   // Returns TRUE every N-th call. Always FALSE if delay is 0.
-  bool RunEveryN() {
-    if (!mDelayCounter || --mDelayCounter)
+  bool Tick() {
+    if (!mCounter || --mCounter)
       return false;
-    mDelayCounter = mDelay;
-    return true;
-  }
-
-  // Returns TRUE every N+1 call. Always TRUE if delay is 0.
-  bool RunAfterN() {
-    if (mDelayCounter) {
-      --mDelayCounter;
-      return false;
-    }
-    mDelayCounter = mDelay;
+    mCounter = mDelay;
     return true;
   }
 
  private:
-  uint8_t mDelayCounter, mDelay;
+  uint8_t mCounter, mDelay;
 };
 
 class SimpleSlider {
@@ -50,7 +40,7 @@ class SimpleSlider {
   void Enable(uint8_t delay) { mDelay.Set(delay); }
   void Disable() { mDelay.Disable(); }
   bool Run() {
-    if (mDelay.RunEveryN()) {
+    if (mDelay.Tick()) {
       mValue += mStep;
       return true;
     }
