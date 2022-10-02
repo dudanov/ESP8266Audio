@@ -69,6 +69,15 @@ struct DataOffset {
   uint8_t mOffset[2];
 };
 
+struct Pattern {
+  Pattern() = delete;
+  Pattern(const Pattern &) = delete;
+  const DataOffset &GetOffset(uint8_t channel) const { return mData[channel]; }
+
+ private:
+  DataOffset mData[3];
+};
+
 }  // namespace ay
 }  // namespace emu
 }  // namespace gme

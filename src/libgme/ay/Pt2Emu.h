@@ -1,6 +1,6 @@
 #pragma once
 
-// Sinclair Spectrum PT3 music file emulator
+// Sinclair Spectrum PT2 music file emulator
 
 #include "AyApu.h"
 #include "common.h"
@@ -10,13 +10,13 @@
 namespace gme {
 namespace emu {
 namespace ay {
-namespace pt3 {
+namespace pt2 {
 
-/* PT3 MODULE DATA DESCRIPTION */
+/* PT2 MODULE DATA DESCRIPTION */
 
 template<typename T> struct LoopData {
-  uint8_t loop;
   uint8_t end;
+  uint8_t loop;
   T data[0];
 };
 
@@ -43,24 +43,17 @@ template<typename T> class LoopDataPlayer {
 struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
-  bool VolumeSlide() const { return mData[0] & 0x80; }
-  bool VolumeSlideUp() const { return mData[0] & 0x40; }
-  uint8_t Noise() const { return (mData[0] >> 1) & 0x1F; }
-  int8_t EnvelopeSlide() const {
-    const int8_t tmp = mData[0] >> 1;
-    return (tmp & 16) ? (tmp | ~15) : (tmp & 15);
+  bool ToneMask() const { return mData[0] & 2; }
+  bool NoiseMask() const { return mData[0] & 1; }
+  uint8_t Noise() const { return mData[0] / 8; }
+  uint8_t Volume() const { return mData[1] / 16; }
+  int16_t Transposition() const {
+    const int16_t tmp = mData[1] % 16 * 256 + mData[2];
+    return (mData[0] & 4) ? tmp : -tmp;
   }
-  bool EnvelopeMask() const { return mData[0] & 0x01; }
-  bool NoiseMask() const { return mData[1] & 0x80; }
-  bool ToneStore() const { return mData[1] & 0x40; }
-  bool NoiseEnvelopeStore() const { return mData[1] & 0x20; }
-  bool ToneMask() const { return mData[1] & 0x10; }
-  int8_t Volume() const { return mData[1] & 0x0F; }
-  int16_t Transposition() const { return get_le16(mTransposition); }
 
  private:
-  uint8_t mData[2];
-  uint8_t mTransposition[2];
+  uint8_t mData[3];
 };
 
 using PatternData = uint8_t;
@@ -71,11 +64,11 @@ using SamplePlayer = LoopDataPlayer<SampleData>;
 using OrnamentPlayer = LoopDataPlayer<OrnamentData>;
 using Position = uint8_t;
 
-class PT3Module {
+class PT2Module {
   class LengthCounter {
    public:
     // Return song length in frames.
-    unsigned CountSongLength(const PT3Module *module, unsigned &loop);
+    unsigned CountSongLength(const PT2Module *module, unsigned &loop);
 
    private:
     unsigned mCountPositionLength();
@@ -89,25 +82,20 @@ class PT3Module {
   };
 
  public:
-  PT3Module() = delete;
-  PT3Module(const PT3Module &) = delete;
+  PT2Module() = delete;
+  PT2Module(const PT2Module &) = delete;
 
-  static const PT3Module *GetModule(const uint8_t *data, size_t size);
-  static const PT3Module *FindTSModule(const uint8_t *data, size_t size);
+  static const int16_t NOTE_TABLE[96];
+  static int16_t GetNotePeriod(uint8_t tone);
 
-  // Get module format subversion.
-  uint8_t GetSubVersion() const;
+  static const PT2Module *GetModule(const uint8_t *data, size_t size);
+  static const PT2Module *FindTSModule(const uint8_t *data, size_t size);
 
   // Song name.
   void GetName(char *out) const { GmeFile::copyField(out, mName, sizeof(mName)); }
 
-  // Song author.
-  void GetAuthor(char *out) const { GmeFile::copyField(out, mAuthor, sizeof(mAuthor)); }
-
   // Get song global delay.
   uint8_t GetDelay() const { return mDelay; }
-
-  bool HasNoteTable(uint8_t table) const { return mNoteTable == table; }
 
   // Begin position iterator.
   const Position *GetPositionBegin() const { return mPositions; }
@@ -119,9 +107,7 @@ class PT3Module {
   const Position *GetPositionEnd() const { return mPositions + mEnd; }
 
   // Get pattern index by specified number.
-  const Pattern *GetPattern(const Position *it) const {
-    return reinterpret_cast<const Pattern *>(mPattern.GetPointer<DataOffset>(this) + *it);
-  }
+  const Pattern *GetPattern(const Position *it) const { return mPattern.GetPointer<Pattern>(this) + *it; }
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
@@ -141,37 +127,23 @@ class PT3Module {
   unsigned CountSongLengthMs(unsigned &loop) const;
 
  private:
-  /* PT3 MODULE HEADER DATA */
+  /* PT2 MODULE HEADER DATA */
 
-  // Identification: "ProTracker 3.".
-  uint8_t mIdentify[13];
-  // Subversion: "3", "4", "5", "6", etc.
-  uint8_t mSubVersion;
-  // " compilation of " or any text of this length.
-  uint8_t mUnused0[16];
-  // Track name. Unused characters are padded with spaces.
-  char mName[32];
-  // " by " or any text of this length.
-  uint8_t mUnused1[4];
-  // Author's name. Unused characters are padded with spaces.
-  char mAuthor[32];
-  // One space (any character).
-  uint8_t mUnused2;
-  // Note frequency table number.
-  uint8_t mNoteTable;
   // Delay value (tempo).
   uint8_t mDelay;
   // Song end position. Not used in player.
   uint8_t mEnd;
   // Song loop position.
   uint8_t mLoop;
-  // Pattern table offset.
-  DataOffset mPattern;
   // Sample offsets. Starting from sample #0.
   DataOffset mSamples[32];
   // Ornament offsets. Starting from ornament #0.
   DataOffset mOrnaments[16];
-  // List of positions. Contains the pattern numbers (0...84) multiplied by 3. The table ends with 0xFF.
+  // Pattern table offset.
+  DataOffset mPattern;
+  // Track name. Unused characters are padded with spaces.
+  char mName[30];
+  // List of positions. Contains the pattern numbers. The table ends with 0xFF.
   Position mPositions[0];
 };
 
@@ -231,32 +203,19 @@ struct Channel {
   uint8_t GetVolume() const { return mVolume; }
   void SetVolume(uint8_t volume) { mVolume = volume; }
 
-  void SetupVibrato() {
-    mVibratoCounter = mVibratoOnTime = PatternCode();
-    mVibratoOffTime = PatternCode();
-    mToneSlide.Disable();
-  }
-
-  void RunVibrato() {
-    if (mVibratoCounter && !--mVibratoCounter)
-      mVibratoCounter = (mEnable = !mEnable) ? mVibratoOnTime : mVibratoOffTime;
-  }
-
   uint16_t PlayTone(const Player *player);
   int16_t GetToneSlide() const { return mToneSlide.GetValue(); }
   void SetupGliss(const Player *player);
   void SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding);
 
  private:
-  void mDisableVibrato() { mVibratoCounter = 0; }
   void mRunPortamento();
   const uint8_t *mPatternIt;
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
   DelayRunner mSkip;
   SimpleSlider mToneSlide;
-  int16_t mTranspositionAccumulator, mToneDelta;
-  uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
+  int16_t mToneDelta;
   uint8_t mVolume, mNote, mNoteSlide, mNoiseSlideStore;
   int8_t mAmplitudeSlideStore, mEnvelopeSlideStore;
   bool mEnable, mEnvelopeEnable, mPortamento;
@@ -264,7 +223,7 @@ struct Channel {
 
 class Player {
  public:
-  void Load(const PT3Module *module) { mModule = module; }
+  void Load(const PT2Module *module) { mModule = module; }
   void Init() { mInit(); }
   void SetVolume(double volume) { mApu.SetVolume(volume); }
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
@@ -275,16 +234,12 @@ class Player {
     mPlaySamples(time);
   }
 
-  int16_t GetNotePeriod(uint8_t tone) const;
-  uint8_t GetSubVersion() const { return mModule->GetSubVersion(); }
   void GetName(char *out) const { return mModule->GetName(out); }
-  void GetAuthor(char *out) const { return mModule->GetAuthor(out); }
   unsigned CountSongLength(unsigned &loop) const { return mModule->CountSongLength(loop); }
   unsigned CountSongLengthMs(unsigned &loop) const { return mModule->CountSongLengthMs(loop); }
 
  private:
   void mInit();
-  void mSetupEnvelope(Channel &channel);
   void mPlayPattern(blip_clk_time_t time);
   void mPlaySamples(blip_clk_time_t time);
   void mAdvancePosition();
@@ -296,21 +251,20 @@ class Player {
   // Pattern commands stack
   std::stack<uint8_t> mCmdStack;
   // Song file header
-  const PT3Module *mModule;
+  const PT2Module *mModule;
   // Song position iterators
   const Position *mPositionIt;
-  SimpleSlider mEnvelopeSlider;
   DelayRunner mDelay;
   uint16_t mEnvelopeBase;
   uint8_t mNoiseBase;
 };
 
-class Pt3Emu : public ClassicEmu {
+class Pt2Emu : public ClassicEmu {
  public:
-  Pt3Emu();
-  ~Pt3Emu();
-  static MusicEmu *createPt3Emu() { return BLARGG_NEW Pt3Emu; }
-  static gme_type_t static_type() { return gme_pt3_type; }
+  Pt2Emu();
+  ~Pt2Emu();
+  static MusicEmu *createPt2Emu() { return BLARGG_NEW Pt2Emu; }
+  static gme_type_t static_type() { return gme_pt2_type; }
 
  protected:
   blargg_err_t mLoad(const uint8_t *data, long size) override;
@@ -337,7 +291,7 @@ class Pt3Emu : public ClassicEmu {
   blip_clk_time_t mFramePeriod;
 };
 
-}  // namespace pt3
+}  // namespace pt2
 }  // namespace ay
 }  // namespace emu
 }  // namespace gme

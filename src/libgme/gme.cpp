@@ -27,6 +27,7 @@ gme_type_t const *gme_type_list() {
 #else
 #ifdef USE_GME_AY
       gme_ay_type,
+      gme_pt2_type,
       gme_pt3_type,
       gme_rsf_type,
       gme_stc_type,

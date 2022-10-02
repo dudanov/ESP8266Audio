@@ -172,9 +172,9 @@ BLARGG_EXPORT void gme_enable_accuracy(MusicEmu *, int enabled);
 typedef const struct gme_type_t_ *gme_type_t;
 
 /* Emulator type constants for each supported file type */
-extern BLARGG_EXPORT const gme_type_t gme_ay_type, gme_rsf_type, gme_stc_type, gme_pt3_type, gme_gbs_type, gme_gym_type,
-    gme_hes_type, gme_kss_type, gme_nsf_type, gme_nsfe_type, gme_sap_type, gme_spc_type, gme_rsn_type, gme_vgm_type,
-    gme_vgz_type;
+extern BLARGG_EXPORT const gme_type_t gme_ay_type, gme_rsf_type, gme_stc_type, gme_pt2_type, gme_pt3_type, gme_gbs_type,
+    gme_gym_type, gme_hes_type, gme_kss_type, gme_nsf_type, gme_nsfe_type, gme_sap_type, gme_spc_type, gme_rsn_type,
+    gme_vgm_type, gme_vgz_type;
 
 /* Type of this emulator */
 BLARGG_EXPORT gme_type_t gme_type(MusicEmu const *);
