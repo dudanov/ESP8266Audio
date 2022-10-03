@@ -40,60 +40,12 @@ static uint16_t sGetTonePeriod(uint8_t tone) {
 
 /* STC MODULE */
 
-inline const Position *STCModule::GetPositionBegin() const {
-  return mPositions.GetPointer<PositionsTable>(this)->position;
-}
-
 inline const Position *STCModule::GetPositionEnd() const {
-  auto p = mPositions.GetPointer<PositionsTable>(this);
+  auto p = mPositions.GetPointer(this);
   return p->position + p->count + 1;
 }
 
-inline size_t STCModule::mGetPositionsCount() const { return mPositions.GetPointer<PositionsTable>(this)->count + 1; }
-
-inline const uint8_t *STCModule::GetPatternData(const Pattern *pattern, uint8_t channel) const {
-  return pattern->GetDataOffset(channel).GetPointer<uint8_t>(this);
-}
-
-inline const Pattern *STCModule::mGetPatternBegin() const { return mPatterns.GetPointer<Pattern>(this); }
-
-inline const Pattern *STCModule::GetPattern(uint8_t number) const {
-  auto it = mGetPatternBegin();
-  while (!it->HasNumber(number))
-    ++it;
-  return it;
-}
-
-inline const Ornament *STCModule::GetOrnament(uint8_t number) const {
-  auto it = mOrnaments.GetPointer<Ornament>(this);
-  while (!it->HasNumber(number))
-    ++it;
-  return it;
-}
-
-inline const Sample *STCModule::GetSample(uint8_t number) const {
-  auto it = mSamples;
-  while (!it->HasNumber(number))
-    ++it;
-  return it;
-}
-
-bool STCModule::mCheckPatternTable() const {
-  auto it = mGetPatternBegin();
-  for (uint8_t n = 0; n != Pattern::MAX_COUNT; ++n, ++it) {
-    if (it->HasNumber(0xFF))
-      return true;
-  }
-  return false;
-}
-
-const Pattern *STCModule::mFindPattern(uint8_t number) const {
-  for (auto it = mGetPatternBegin(); it != mGetPatternEnd(); ++it) {
-    if (it->HasNumber(number))
-      return it;
-  }
-  return nullptr;
-}
+inline size_t STCModule::mGetPositionsCount() const { return mPositions.GetPointer(this)->count + 1; }
 
 uint8_t STCModule::mCountPatternLength(const Pattern *pattern, uint8_t channel) const {
   unsigned length = 0, skip = 0;
@@ -143,7 +95,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
 
   // Checking samples section
   constexpr uint16_t SamplesBlockOffset = sizeof(STCModule);
-  const uint16_t PositionsTableOffset = mPositions.GetDataOffset();
+  const uint16_t PositionsTableOffset = mPositions.GetValue();
   if (PositionsTableOffset <= SamplesBlockOffset)
     return false;
   const uint16_t SamplesBlockSize = PositionsTableOffset - SamplesBlockOffset;
@@ -152,7 +104,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
 
   // Checking positions section
   const uint16_t PositionsBlockOffset = PositionsTableOffset + sizeof(PositionsTable);
-  const uint16_t OrnamentsBlockOffset = mOrnaments.GetDataOffset();
+  const uint16_t OrnamentsBlockOffset = mOrnaments.GetValue();
   if (OrnamentsBlockOffset <= PositionsBlockOffset)
     return false;
   const uint16_t PositionsBlockSize = OrnamentsBlockOffset - PositionsBlockOffset;
@@ -162,7 +114,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
     return false;
 
   // Checking ornaments section
-  const uint16_t PatternsBlockOffset = mPatterns.GetDataOffset();
+  const uint16_t PatternsBlockOffset = mPatterns.GetValue();
   if (PatternsBlockOffset <= OrnamentsBlockOffset)
     return false;
   const uint16_t OrnamentsBlockSize = PatternsBlockOffset - OrnamentsBlockOffset;

@@ -120,19 +120,19 @@ class PT3Module {
 
   // Get pattern index by specified number.
   const Pattern *GetPattern(const Position *it) const {
-    return reinterpret_cast<const Pattern *>(mPattern.GetPointer<DataOffset>(this) + *it);
+    return reinterpret_cast<const Pattern *>(mPattern.GetPointer(this) + *it);
   }
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-    return pattern->GetOffset(channel).GetPointer<PatternData>(this);
+    return pattern->GetData(this, channel);
   }
 
   // Get sample by specified number.
-  const Sample *GetSample(uint8_t number) const { return mSamples[number].GetPointer<Sample>(this); }
+  const Sample *GetSample(uint8_t number) const { return mSamples[number].GetPointer(this); }
 
   // Get data of specified ornament number.
-  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments[number].GetPointer<Ornament>(this); }
+  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments[number].GetPointer(this); }
 
   // Return song length in frames.
   unsigned CountSongLength(unsigned &loop) const { return LengthCounter().CountSongLength(this, loop); }
@@ -166,11 +166,11 @@ class PT3Module {
   // Song loop position.
   uint8_t mLoop;
   // Pattern table offset.
-  DataOffset mPattern;
+  DataOffset<DataOffset<PatternData>> mPattern;
   // Sample offsets. Starting from sample #0.
-  DataOffset mSamples[32];
+  DataOffset<Sample> mSamples[32];
   // Ornament offsets. Starting from ornament #0.
-  DataOffset mOrnaments[16];
+  DataOffset<Ornament> mOrnaments[16];
   // List of positions. Contains the pattern numbers (0...84) multiplied by 3. The table ends with 0xFF.
   Position mPositions[0];
 };

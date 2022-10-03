@@ -29,14 +29,12 @@ struct SampleData {
 struct Sample {
   Sample() = delete;
   Sample(const Sample &) = delete;
-  bool HasNumber(uint8_t number) const { return mNumber == number; }
   const SampleData *Data(size_t pos) const { return mData + pos; }
   bool IsRepeatable() const { return mRepeatPosition > 0; }
   uint8_t RepeatPosition() const { return mRepeatPosition - 1; }
   uint8_t RepeatLength() const { return mRepeatLength; }
 
  private:
-  uint8_t mNumber;
   SampleData mData[32];
   uint8_t mRepeatPosition;
   uint8_t mRepeatLength;
@@ -45,11 +43,9 @@ struct Sample {
 struct Ornament {
   Ornament() = delete;
   Ornament(const Ornament &) = delete;
-  bool HasNumber(uint8_t number) const { return mNumber == number; }
   const uint8_t *Data() const { return mData; }
 
  private:
-  uint8_t mNumber;
   uint8_t mData[32];
 };
 
@@ -67,18 +63,6 @@ struct PositionsTable {
   Position position[0];
 };
 
-struct Pattern {
-  Pattern() = delete;
-  Pattern(const Pattern &) = delete;
-  static const uint8_t MAX_COUNT = 32;
-  bool HasNumber(uint8_t number) const { return mNumber == number; }
-  const DataOffset &GetDataOffset(uint8_t channel) const { return mDataOffset[channel]; }
-
- private:
-  uint8_t mNumber;
-  DataOffset mDataOffset[3];
-};
-
 struct STCModule {
   STCModule() = delete;
   STCModule(const STCModule &) = delete;
@@ -87,22 +71,24 @@ struct STCModule {
   uint8_t GetDelay() const { return mDelay; }
 
   // Begin position iterator.
-  const Position *GetPositionBegin() const;
+  const Position *GetPositionBegin() const { return mPositions.GetPointer(this)->position; }
 
   // End position iterator.
   const Position *GetPositionEnd() const;
 
   // Get pattern by specified number.
-  const Pattern *GetPattern(uint8_t number) const;
+  const Pattern *GetPattern(uint8_t number) const { return mPatterns.GetPointer(this)->GetObjectByNumber(number); }
 
   // Get data from specified pattern.
-  const uint8_t *GetPatternData(const Pattern *pattern, uint8_t channel) const;
+  const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
+    return pattern->GetData(this, channel);
+  }
 
   // Get sample by specified number.
-  const Sample *GetSample(uint8_t number) const;
+  const Sample *GetSample(uint8_t number) const { return mSamples[0].GetObjectByNumber(number); }
 
   // Get data of specified ornament number.
-  const Ornament *GetOrnament(uint8_t number) const;
+  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments.GetPointer(this)->GetObjectByNumber(number); }
 
   // Return song length in frames.
   unsigned CountSongLength() const;
@@ -118,36 +104,32 @@ struct STCModule {
   uint8_t mCountPatternLength(const Pattern *pattern, uint8_t channel = 0) const;
 
   // Check pattern table data by maximum records.
-  bool mCheckPatternTable() const;
+  bool mCheckPatternTable() const { return mPatterns.GetPointer(this)->FindObjectByNumber<32>(0xFF); }
 
   // Check song data integrity (positions and linked patterns).
   bool mCheckSongData() const;
 
   // Find specified pattern by number. Return pointer to pattern on success, else nullptr.
-  const Pattern *mFindPattern(uint8_t pattern) const;
+  const Pattern *mFindPattern(uint8_t number) const { return mPatterns.GetPointer(this)->FindObjectByNumber(number); }
 
   size_t mGetPositionsCount() const;
-
-  const Pattern *mGetPatternBegin() const;
-
-  const Pattern *mGetPatternEnd() const { return GetPattern(0xFF); }
 
   /* STC MODULE HEADER DATA */
 
   // Song delay.
   uint8_t mDelay;
   // Positions table offset.
-  DataOffset mPositions;
+  DataOffset<PositionsTable> mPositions;
   // Ornaments table offset.
-  DataOffset mOrnaments;
+  DataOffset<Numerable<Ornament>> mOrnaments;
   // Patterns table offset.
-  DataOffset mPatterns;
+  DataOffset<Numerable<Pattern>> mPatterns;
   // Identification string.
   char mName[18];
   // Module size.
   uint8_t mSize[2];
   // Samples table.
-  Sample mSamples[0];
+  Numerable<Sample> mSamples[0];
 };
 
 // Channel entity

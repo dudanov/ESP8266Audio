@@ -107,18 +107,18 @@ class PT2Module {
   const Position *GetPositionEnd() const { return mPositions + mEnd; }
 
   // Get pattern index by specified number.
-  const Pattern *GetPattern(const Position *it) const { return mPattern.GetPointer<Pattern>(this) + *it; }
+  const Pattern *GetPattern(const Position *it) const { return mPattern.GetPointer(this) + *it; }
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-    return pattern->GetOffset(channel).GetPointer<PatternData>(this);
+    return pattern->GetOffset(channel).GetPointer(this);
   }
 
   // Get sample by specified number.
-  const Sample *GetSample(uint8_t number) const { return mSamples[number].GetPointer<Sample>(this); }
+  const Sample *GetSample(uint8_t number) const { return mSamples[number].GetPointer(this); }
 
   // Get data of specified ornament number.
-  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments[number].GetPointer<Ornament>(this); }
+  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments[number].GetPointer(this); }
 
   // Return song length in frames.
   unsigned CountSongLength(unsigned &loop) const { return LengthCounter().CountSongLength(this, loop); }
@@ -136,11 +136,11 @@ class PT2Module {
   // Song loop position.
   uint8_t mLoop;
   // Sample offsets. Starting from sample #0.
-  DataOffset mSamples[32];
+  DataOffset<Sample> mSamples[32];
   // Ornament offsets. Starting from ornament #0.
-  DataOffset mOrnaments[16];
+  DataOffset<Ornament> mOrnaments[16];
   // Pattern table offset.
-  DataOffset mPattern;
+  DataOffset<Pattern> mPattern;
   // Track name. Unused characters are padded with spaces.
   char mName[30];
   // List of positions. Contains the pattern numbers. The table ends with 0xFF.

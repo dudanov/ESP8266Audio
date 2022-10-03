@@ -5,6 +5,8 @@ namespace gme {
 namespace emu {
 namespace ay {
 
+using PatternData = uint8_t;
+
 class DelayRunner {
  public:
   // Init delay. Tick() method returns TRUE on next call.
@@ -56,13 +58,13 @@ class SimpleSlider {
   int16_t mValue, mStep;
 };
 
-struct DataOffset {
+template<typename T> struct DataOffset {
   DataOffset() = delete;
   DataOffset(const DataOffset &) = delete;
-  uint16_t GetDataOffset() const { return get_le16(mOffset); }
-  bool IsValid() const { return GetDataOffset() != 0; }
-  template<typename T> const T *GetPointer(const void *module) const {
-    return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(module) + GetDataOffset());
+  uint16_t GetValue() const { return get_le16(mOffset); }
+  bool IsValid() const { return GetValue() != 0; }
+  const T *GetPointer(const void *start) const {
+    return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(start) + GetValue());
   }
 
  private:
@@ -72,10 +74,39 @@ struct DataOffset {
 struct Pattern {
   Pattern() = delete;
   Pattern(const Pattern &) = delete;
-  const DataOffset &GetOffset(uint8_t channel) const { return mData[channel]; }
+  const DataOffset<PatternData> &GetOffset(uint8_t channel) const { return mData[channel]; }
+  const PatternData *GetData(const void *start, uint8_t channel) const { return mData[channel].GetPointer(start); }
 
  private:
-  DataOffset mData[3];
+  DataOffset<PatternData> mData[3];
+};
+
+template<typename T> class Numerable {
+ public:
+  bool HasNumber(uint8_t number) const { return mNumber == number; }
+  const T *GetObjectByNumber(uint8_t number) const {
+    const Numerable<T> *it = this;
+    while (!it->HasNumber(number))
+      ++it;
+    return &it->mObject;
+  }
+  const T *FindObjectByNumber(uint8_t number) const {
+    for (const Numerable<T> *it = this; !it->HasNumber(0xFF); ++it)
+      if (it->HasNumber(number))
+        return &it->mObject;
+    return nullptr;
+  }
+  template<uint8_t max_count> const T *FindObjectByNumber(uint8_t number) const {
+    const Numerable<T> *it = this;
+    for (uint8_t n = 0; n != max_count; ++n, ++it)
+      if (it->HasNumber(number))
+        return &it->mObject;
+    return nullptr;
+  }
+
+ private:
+  uint8_t mNumber;
+  T mObject;
 };
 
 }  // namespace ay
