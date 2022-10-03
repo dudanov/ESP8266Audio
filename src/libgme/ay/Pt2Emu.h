@@ -111,7 +111,7 @@ class PT2Module {
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-    return pattern->GetOffset(channel).GetPointer(this);
+    return pattern->GetData(this, channel);
   }
 
   // Get sample by specified number.
