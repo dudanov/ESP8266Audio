@@ -37,6 +37,24 @@ class SimpleSlider {
   int16_t GetStep() const { return mStep; }
   void SetValue(int16_t value) { mValue = value; }
   void SetStep(int16_t step) { mStep = step; }
+  bool Run() {
+    if (!mStep)
+      return false;
+    mValue += mStep;
+    return true;
+  }
+  void Reset() { mValue = mStep = 0; }
+
+ private:
+  int16_t mValue, mStep;
+};
+
+class DelayedSlider {
+ public:
+  int16_t GetValue() const { return mValue; }
+  int16_t GetStep() const { return mStep; }
+  void SetValue(int16_t value) { mValue = value; }
+  void SetStep(int16_t step) { mStep = step; }
   void Enable(uint8_t delay) { mDelay.Set(delay); }
   void Disable() { mDelay.Disable(); }
   bool Run() {

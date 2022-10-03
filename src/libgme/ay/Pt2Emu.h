@@ -46,7 +46,7 @@ struct SampleData {
   bool ToneMask() const { return mData[0] & 2; }
   bool NoiseMask() const { return mData[0] & 1; }
   uint8_t Noise() const { return mData[0] / 8; }
-  uint8_t Volume() const { return mData[1] / 16; }
+  uint8_t Amplitude() const { return mData[1] / 16; }
   int16_t Transposition() const {
     const int16_t tmp = mData[1] % 16 * 256 + mData[2];
     return (mData[0] & 4) ? tmp : -tmp;
@@ -163,24 +163,10 @@ struct Channel {
   void Disable() { mEnable = false; }
   bool IsEnabled() const { return mEnable; }
   void SlideEnvelope(int8_t &value);
-  uint8_t SlideNoise();
-  uint8_t SlideAmplitude();
 
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   void mSkipPatternCode(size_t n) { mPatternIt += n; }
   uint8_t PatternCode() { return *mPatternIt++; }
-
-  int16_t PatternCodeLE16() {
-    const int16_t value = get_le16(mPatternIt);
-    mPatternIt += 2;
-    return value;
-  }
-
-  int16_t PatternCodeBE16() {
-    const int16_t value = get_be16(mPatternIt);
-    mPatternIt += 2;
-    return value;
-  }
 
   bool IsEmptyLocation() { return !mSkip.Tick(); }
   void SetSkipLocations(uint8_t skip) { mSkip.Set(skip); }
@@ -203,7 +189,7 @@ struct Channel {
   uint8_t GetVolume() const { return mVolume; }
   void SetVolume(uint8_t volume) { mVolume = volume; }
 
-  uint16_t PlayTone(const Player *player);
+  uint16_t PlayTone();
   int16_t GetToneSlide() const { return mToneSlide.GetValue(); }
   void SetupGliss(const Player *player);
   void SetupPortamento(const Player *player, uint8_t prevNote, int16_t prevSliding);
@@ -216,8 +202,7 @@ struct Channel {
   DelayRunner mSkip;
   SimpleSlider mToneSlide;
   int16_t mToneDelta;
-  uint8_t mVolume, mNote, mNoteSlide, mNoiseSlideStore;
-  int8_t mAmplitudeSlideStore, mEnvelopeSlideStore;
+  uint8_t mVolume, mNote, mNoteSlide;
   bool mEnable, mEnvelopeEnable, mPortamento;
 };
 
