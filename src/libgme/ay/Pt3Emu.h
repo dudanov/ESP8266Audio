@@ -63,7 +63,6 @@ struct SampleData {
   uint8_t mTransposition[2];
 };
 
-using PatternData = uint8_t;
 using OrnamentData = int8_t;
 using Sample = LoopData<SampleData>;
 using Ornament = LoopData<OrnamentData>;
