@@ -20,26 +20,6 @@ template<typename T> struct LoopData {
   T data[0];
 };
 
-template<typename T> class LoopDataPlayer {
- public:
-  inline void Load(const LoopData<T> *data) {
-    mData = data->data;
-    mPos = 0;
-    mEnd = data->end;
-    mLoop = data->loop;
-  }
-  inline void SetPosition(uint8_t pos) { mPos = pos; }
-  inline const T &GetData() const { return mData[mPos]; }
-  inline void Advance() {
-    if (++mPos >= mEnd)
-      mPos = mLoop;
-  }
-
- private:
-  const T *mData;
-  uint8_t mPos, mEnd, mLoop;
-};
-
 struct SampleData {
   SampleData() = delete;
   SampleData(const SampleData &) = delete;
