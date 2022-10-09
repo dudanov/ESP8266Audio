@@ -110,10 +110,10 @@ template<typename T> class NumberedArray {
 template<typename T> struct DataOffset {
   DataOffset() = delete;
   DataOffset(const DataOffset &) = delete;
-  uint16_t GetValue() const { return get_le16(mOffset); }
-  bool IsValid() const { return GetValue() != 0; }
+  uint16_t GetOffset() const { return get_le16(mOffset); }
+  bool IsValid() const { return GetOffset() != 0; }
   const T *GetPointer(const void *start) const {
-    return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(start) + GetValue());
+    return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(start) + GetOffset());
   }
 
  private:

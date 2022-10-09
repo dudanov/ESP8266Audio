@@ -95,7 +95,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
 
   // Checking samples section
   constexpr uint16_t SamplesBlockOffset = sizeof(STCModule);
-  const uint16_t PositionsTableOffset = mPositions.GetValue();
+  const uint16_t PositionsTableOffset = mPositions.GetOffset();
   if (PositionsTableOffset <= SamplesBlockOffset)
     return false;
   const uint16_t SamplesBlockSize = PositionsTableOffset - SamplesBlockOffset;
@@ -104,7 +104,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
 
   // Checking positions section
   const uint16_t PositionsBlockOffset = PositionsTableOffset + sizeof(PositionsTable);
-  const uint16_t OrnamentsBlockOffset = mOrnaments.GetValue();
+  const uint16_t OrnamentsBlockOffset = mOrnaments.GetOffset();
   if (OrnamentsBlockOffset <= PositionsBlockOffset)
     return false;
   const uint16_t PositionsBlockSize = OrnamentsBlockOffset - PositionsBlockOffset;
@@ -114,7 +114,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
     return false;
 
   // Checking ornaments section
-  const uint16_t PatternsBlockOffset = mPatterns.GetValue();
+  const uint16_t PatternsBlockOffset = mPatterns.GetOffset();
   if (PatternsBlockOffset <= OrnamentsBlockOffset)
     return false;
   const uint16_t OrnamentsBlockSize = PatternsBlockOffset - OrnamentsBlockOffset;
