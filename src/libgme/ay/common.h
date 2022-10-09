@@ -80,29 +80,30 @@ template<typename T> class NumberedList {
   NumberedList() = delete;
   NumberedList(const NumberedList<T> &) = delete;
 
-  const T *GetItem(uint8_t number) const {
-    auto it = this;
+  const T *GetItem(const uint8_t number) const {
+    const NumberedList<T> *it = this;
     while (it->mNumber != number)
       ++it;
     return &it->mItem;
   }
 
-  const T *FindItem(uint8_t number) const {
-    for (auto it = this; it->mNumber != 0xFF; ++it)
+  const T *FindItem(const uint8_t number) const {
+    for (const NumberedList<T> *it = this; !sIsEnd(it); ++it)
       if (it->mNumber == number)
         return &it->mItem;
     return nullptr;
   }
 
-  template<uint8_t max_count> const T *FindItem(uint8_t number) const {
-    auto it = this;
+  bool IsValid(const uint8_t max_count) const {
+    const NumberedList<T> *it = this;
     for (uint8_t n = 0; n != max_count; ++n, ++it)
-      if (it->mNumber == number)
-        return &it->mItem;
-    return nullptr;
+      if (sIsEnd(it))
+        return true;
+    return false;
   }
 
  private:
+  static bool sIsEnd(const NumberedList<T> *it) { return it->mNumber == 0xFF; }
   uint8_t mNumber;
   T mItem;
 };

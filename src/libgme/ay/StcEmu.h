@@ -104,7 +104,7 @@ struct STCModule {
   uint8_t mCountPatternLength(const Pattern *pattern, uint8_t channel = 0) const;
 
   // Check pattern table data by maximum records.
-  bool mCheckPatternTable() const { return mPatterns.GetPointer(this)->FindItem<32>(0xFF) != nullptr; }
+  bool mCheckPatternTable() const { return mPatterns.GetPointer(this)->IsValid(32); }
 
   // Check song data integrity (positions and linked patterns).
   bool mCheckSongData() const;
