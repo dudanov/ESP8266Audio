@@ -75,36 +75,36 @@ class DelayedSlider {
 };
 
 // An object that has a number.
-template<typename T> class Numberable {
+template<typename T> class NumberedArray {
  public:
-  Numberable() = delete;
-  Numberable(const Numberable<T> &) = delete;
+  NumberedArray() = delete;
+  NumberedArray(const NumberedArray<T> &) = delete;
 
-  const T *GetObject(uint8_t number) const {
+  const T *GetItem(uint8_t number) const {
     auto it = this;
     while (it->mNumber != number)
       ++it;
-    return &it->mObject;
+    return &it->mItem;
   }
 
-  const T *FindObject(uint8_t number) const {
+  const T *FindItem(uint8_t number) const {
     for (auto it = this; it->mNumber != 0xFF; ++it)
       if (it->mNumber == number)
-        return &it->mObject;
+        return &it->mItem;
     return nullptr;
   }
 
-  template<uint8_t max_count> const T *FindObject(uint8_t number) const {
+  template<uint8_t max_count> const T *FindItem(uint8_t number) const {
     auto it = this;
     for (uint8_t n = 0; n != max_count; ++n, ++it)
       if (it->mNumber == number)
-        return &it->mObject;
+        return &it->mItem;
     return nullptr;
   }
 
  private:
   uint8_t mNumber;
-  T mObject;
+  T mItem;
 };
 
 template<typename T> struct DataOffset {

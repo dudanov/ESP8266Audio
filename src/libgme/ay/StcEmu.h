@@ -77,7 +77,7 @@ struct STCModule {
   const Position *GetPositionEnd() const;
 
   // Get pattern by specified number.
-  const Pattern *GetPattern(uint8_t number) const { return mPatterns.GetPointer(this)->GetObject(number); }
+  const Pattern *GetPattern(uint8_t number) const { return mPatterns.GetPointer(this)->GetItem(number); }
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
@@ -85,10 +85,10 @@ struct STCModule {
   }
 
   // Get sample by specified number.
-  const Sample *GetSample(uint8_t number) const { return mSamples[0].GetObject(number); }
+  const Sample *GetSample(uint8_t number) const { return mSamples.GetItem(number); }
 
   // Get data of specified ornament number.
-  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments.GetPointer(this)->GetObject(number); }
+  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments.GetPointer(this)->GetItem(number); }
 
   // Return song length in frames.
   unsigned CountSongLength() const;
@@ -104,13 +104,13 @@ struct STCModule {
   uint8_t mCountPatternLength(const Pattern *pattern, uint8_t channel = 0) const;
 
   // Check pattern table data by maximum records.
-  bool mCheckPatternTable() const { return mPatterns.GetPointer(this)->FindObject<32>(0xFF); }
+  bool mCheckPatternTable() const { return mPatterns.GetPointer(this)->FindItem<32>(0xFF) != nullptr; }
 
   // Check song data integrity (positions and linked patterns).
   bool mCheckSongData() const;
 
   // Find specified pattern by number. Return pointer to pattern on success, else nullptr.
-  const Pattern *mFindPattern(uint8_t number) const { return mPatterns.GetPointer(this)->FindObject(number); }
+  const Pattern *mFindPattern(uint8_t number) const { return mPatterns.GetPointer(this)->FindItem(number); }
 
   size_t mGetPositionsCount() const;
 
@@ -121,15 +121,15 @@ struct STCModule {
   // Positions table offset.
   DataOffset<PositionsTable> mPositions;
   // Ornaments table offset.
-  DataOffset<Numberable<Ornament>> mOrnaments;
+  DataOffset<NumberedArray<Ornament>> mOrnaments;
   // Patterns table offset.
-  DataOffset<Numberable<Pattern>> mPatterns;
+  DataOffset<NumberedArray<Pattern>> mPatterns;
   // Identification string.
   char mName[18];
   // Module size.
   uint8_t mSize[2];
   // Samples table.
-  Numberable<Sample> mSamples[0];
+  NumberedArray<Sample> mSamples;
 };
 
 // Channel entity
