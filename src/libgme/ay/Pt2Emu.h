@@ -15,9 +15,10 @@ namespace pt2 {
 /* PT2 MODULE DATA DESCRIPTION */
 
 template<typename T> struct LoopData {
+  typedef T data_type;
   uint8_t end;
   uint8_t loop;
-  T data[0];
+  data_type data[0];
 };
 
 struct SampleData {
@@ -40,8 +41,8 @@ using PatternData = uint8_t;
 using OrnamentData = int8_t;
 using Sample = LoopData<SampleData>;
 using Ornament = LoopData<OrnamentData>;
-using SamplePlayer = LoopDataPlayer<SampleData>;
-using OrnamentPlayer = LoopDataPlayer<OrnamentData>;
+using SamplePlayer = LoopDataPlayer<Sample>;
+using OrnamentPlayer = LoopDataPlayer<Ornament>;
 using Position = uint8_t;
 
 class PT2Module {
