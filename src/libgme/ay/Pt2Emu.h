@@ -180,7 +180,7 @@ struct Channel {
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
   DelayRunner mSkip;
-  SimpleSlider mToneSlide;
+  SimpleSlider<int16_t> mToneSlide;
   int16_t mToneDelta;
   uint8_t mVolume, mNote, mNoteSlide;
   bool mEnable, mEnvelopeEnable, mPortamento;

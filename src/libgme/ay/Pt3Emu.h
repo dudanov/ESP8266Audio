@@ -234,7 +234,7 @@ struct Channel {
   SamplePlayer mSamplePlayer;
   OrnamentPlayer mOrnamentPlayer;
   DelayRunner mSkip;
-  DelayedSlider mToneSlide;
+  DelayedSlider<int16_t> mToneSlide;
   int16_t mTranspositionAccumulator, mToneDelta;
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
   uint8_t mVolume, mNote, mNoteSlide, mNoiseSlideStore;
@@ -279,7 +279,7 @@ class Player {
   const PT3Module *mModule;
   // Song position iterators
   const Position *mPositionIt;
-  DelayedSlider mEnvelopeSlider;
+  DelayedSlider<int16_t> mEnvelopeSlider;
   DelayRunner mDelay;
   uint16_t mEnvelopeBase;
   uint8_t mNoiseBase;

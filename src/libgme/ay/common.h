@@ -31,47 +31,42 @@ class DelayRunner {
   uint8_t mCounter, mDelay;
 };
 
-class SimpleSlider {
+template<typename T> class SliderBase {
  public:
-  int16_t GetValue() const { return mValue; }
-  int16_t GetStep() const { return mStep; }
-  void SetValue(int16_t value) { mValue = value; }
-  void SetStep(int16_t step) { mStep = step; }
-  bool Run() {
+  void SetValue(const T &value) { mValue = value; }
+  void SetStep(const T &step) { mStep = step; }
+  const T &GetValue() const { return mValue; }
+  const T &GetStep() const { return mStep; }
+
+ protected:
+  bool mRun() {
     if (!mStep)
       return false;
     mValue += mStep;
     return true;
   }
-  void Reset() { mValue = mStep = 0; }
-
- private:
-  int16_t mValue, mStep;
+  void mReset() { mValue = mStep = 0; }
+  T mValue, mStep;
 };
 
-class DelayedSlider {
+template<typename T> class SimpleSlider : public SliderBase<T> {
  public:
-  int16_t GetValue() const { return mValue; }
-  int16_t GetStep() const { return mStep; }
-  void SetValue(int16_t value) { mValue = value; }
-  void SetStep(int16_t step) { mStep = step; }
+  bool Run() { return mRun(); }
+  void Reset() { mReset(); }
+};
+
+template<typename T> class DelayedSlider : public SliderBase<T> {
+ public:
   void Enable(uint8_t delay) { mDelay.Set(delay); }
   void Disable() { mDelay.Disable(); }
-  bool Run() {
-    if (mDelay.Tick()) {
-      mValue += mStep;
-      return true;
-    }
-    return false;
-  }
+  bool Run() { return mDelay.Tick() && mRun(); }
   void Reset() {
     mDelay.Disable();
-    mValue = 0;
+    mReset();
   }
 
  private:
   DelayRunner mDelay;
-  int16_t mValue, mStep;
 };
 
 // An object that has a number.
