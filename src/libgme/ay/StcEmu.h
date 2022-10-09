@@ -77,7 +77,9 @@ struct STCModule {
   const Position *GetPositionEnd() const;
 
   // Get pattern by specified number.
-  const Pattern *GetPattern(uint8_t number) const { return mPatterns.GetPointer(this)->GetItem(number); }
+  const Pattern *GetPattern(const Position *position) const {
+    return mPatterns.GetPointer(this)->GetItem(position->pattern);
+  }
 
   // Get data from specified pattern.
   const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {

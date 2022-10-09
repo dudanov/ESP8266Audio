@@ -133,7 +133,7 @@ bool STCModule::CheckIntegrity(size_t size) const {
 
 unsigned STCModule::CountSongLength() const {
   // all patterns has same length
-  return mCountPatternLength(GetPattern(GetPositionBegin()->pattern)) * mGetPositionsCount() * mDelay;
+  return mCountPatternLength(GetPattern(GetPositionBegin())) * mGetPositionsCount() * mDelay;
 }
 
 unsigned STCModule::CountSongLengthMs() const { return CountSongLength() * 1000 / FRAME_RATE; }
@@ -229,7 +229,7 @@ void StcEmu::mInit() {
   mDelay.Init(mModule->GetDelay());
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
-  auto pattern = mModule->GetPattern(mPositionIt->pattern);
+  auto pattern = mModule->GetPattern(mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
@@ -288,7 +288,7 @@ inline void StcEmu::mAdvancePosition() {
     mPositionIt = mModule->GetPositionBegin();
     mSetTrackEnded();
   }
-  auto pattern = mModule->GetPattern(mPositionIt->pattern);
+  auto pattern = mModule->GetPattern(mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
