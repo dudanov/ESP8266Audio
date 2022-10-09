@@ -88,7 +88,7 @@ template<typename T> class NumberedList {
   }
 
   const T *FindItem(const uint8_t number) const {
-    for (const NumberedList<T> *it = this; !sIsEnd(it); ++it)
+    for (const NumberedList<T> *it = this; !it->mIsEnd(); ++it)
       if (it->mNumber == number)
         return &it->mItem;
     return nullptr;
@@ -97,13 +97,13 @@ template<typename T> class NumberedList {
   bool IsValid(const uint8_t max_count) const {
     const NumberedList<T> *it = this;
     for (uint8_t n = 0; n != max_count; ++n, ++it)
-      if (sIsEnd(it))
+      if (it->mIsEnd())
         return true;
     return false;
   }
 
  private:
-  static bool sIsEnd(const NumberedList<T> *it) { return it->mNumber == 0xFF; }
+  bool mIsEnd() const { return mNumber == 0xFF; }
   uint8_t mNumber;
   T mItem;
 };
