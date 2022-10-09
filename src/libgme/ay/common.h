@@ -79,23 +79,25 @@ template<typename T> class Numberable {
  public:
   Numberable() = delete;
   Numberable(const Numberable<T> &) = delete;
-  bool HasNumber(uint8_t number) const { return mNumber == number; }
+
   const T *GetObjectByNumber(uint8_t number) const {
-    const Numberable<T> *it = this;
-    while (!it->HasNumber(number))
+    auto it = this;
+    while (it->mNumber != number)
       ++it;
     return &it->mObject;
   }
+
   const T *FindObjectByNumber(uint8_t number) const {
-    for (const Numberable<T> *it = this; !it->HasNumber(0xFF); ++it)
-      if (it->HasNumber(number))
+    for (auto it = this; it->mNumber != 0xFF; ++it)
+      if (it->mNumber == number)
         return &it->mObject;
     return nullptr;
   }
+
   template<uint8_t max_count> const T *FindObjectByNumber(uint8_t number) const {
-    const Numberable<T> *it = this;
+    auto it = this;
     for (uint8_t n = 0; n != max_count; ++n, ++it)
-      if (it->HasNumber(number))
+      if (it->mNumber == number)
         return &it->mObject;
     return nullptr;
   }
