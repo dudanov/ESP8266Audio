@@ -261,7 +261,7 @@ unsigned PT2Module::LengthCounter::CountSongLength(const PT2Module *module, unsi
       loop = frame;
 
     // Update pattern data pointers.
-    const auto pattern = module->GetPattern(it);
+    auto pattern = module->GetPattern(it);
     for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
       mChannels[idx].data = module->GetPatternData(pattern, idx);
 
