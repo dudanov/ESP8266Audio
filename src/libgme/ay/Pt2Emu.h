@@ -58,7 +58,6 @@ class PT2Module {
       DelayRunner delay;
     };
     std::array<Channel, AyApu::OSCS_NUM> mChannels;
-    std::stack<PatternData> mStack;
     uint8_t mDelay;
   };
 
