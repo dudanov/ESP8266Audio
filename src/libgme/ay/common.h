@@ -75,10 +75,10 @@ class DelayedSlider {
 };
 
 // An object that has a number.
-template<typename T> class NumberedArray {
+template<typename T> class NumberedList {
  public:
-  NumberedArray() = delete;
-  NumberedArray(const NumberedArray<T> &) = delete;
+  NumberedList() = delete;
+  NumberedList(const NumberedList<T> &) = delete;
 
   const T *GetItem(uint8_t number) const {
     auto it = this;

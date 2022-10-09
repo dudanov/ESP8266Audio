@@ -121,15 +121,15 @@ struct STCModule {
   // Positions table offset.
   DataOffset<PositionsTable> mPositions;
   // Ornaments table offset.
-  DataOffset<NumberedArray<Ornament>> mOrnaments;
+  DataOffset<NumberedList<Ornament>> mOrnaments;
   // Patterns table offset.
-  DataOffset<NumberedArray<Pattern>> mPatterns;
+  DataOffset<NumberedList<Pattern>> mPatterns;
   // Identification string.
   char mName[18];
   // Module size.
   uint8_t mSize[2];
   // Samples table.
-  NumberedArray<Sample> mSamples;
+  NumberedList<Sample> mSamples;
 };
 
 // Channel entity
