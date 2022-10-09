@@ -80,21 +80,21 @@ template<typename T> class Numberable {
   Numberable() = delete;
   Numberable(const Numberable<T> &) = delete;
 
-  const T *GetObjectByNumber(uint8_t number) const {
+  const T *GetObject(uint8_t number) const {
     auto it = this;
     while (it->mNumber != number)
       ++it;
     return &it->mObject;
   }
 
-  const T *FindObjectByNumber(uint8_t number) const {
+  const T *FindObject(uint8_t number) const {
     for (auto it = this; it->mNumber != 0xFF; ++it)
       if (it->mNumber == number)
         return &it->mObject;
     return nullptr;
   }
 
-  template<uint8_t max_count> const T *FindObjectByNumber(uint8_t number) const {
+  template<uint8_t max_count> const T *FindObject(uint8_t number) const {
     auto it = this;
     for (uint8_t n = 0; n != max_count; ++n, ++it)
       if (it->mNumber == number)
