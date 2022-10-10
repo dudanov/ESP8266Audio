@@ -33,7 +33,7 @@ class DelayRunner {
 };
 
 template<typename T> class SliderBase {
-  static_assert(std::is_integral<T>::value, "T must be an integer type.");
+  static_assert(std::is_signed<T>::value, "T must be an signed integer type.");
 
  public:
   void SetValue(const T &value) { mValue = value; }
