@@ -118,23 +118,21 @@ template<typename T> struct DataOffset {
 
 template<typename T> class LoopDataPlayer {
  public:
-  typedef typename T::data_type data_type;
-  void Load(const T *data) {
-    mData = data->data;
-    mPos = 0;
-    mEnd = data->end;
-    mLoop = data->loop;
-  }
+  typedef typename T::loop_data_t loop_data_t;
+  const loop_data_t &GetData() const { return mData->data[mPos]; }
   void SetPosition(uint8_t pos) { mPos = pos; }
-  const data_type &GetData() const { return mData[mPos]; }
+  void Load(const T *data) {
+    mData = data;
+    mPos = 0;
+  }
   void Advance() {
-    if (++mPos >= mEnd)
-      mPos = mLoop;
+    if (++mPos >= mData->end)
+      mPos = mData->loop;
   }
 
  private:
-  const data_type *mData;
-  uint8_t mPos, mEnd, mLoop;
+  const T *mData;
+  uint8_t mPos;
 };
 
 using PatternData = uint8_t;

@@ -15,7 +15,7 @@ namespace pt3 {
 /* PT3 MODULE DATA DESCRIPTION */
 
 template<typename T> struct LoopData {
-  typedef T data_type;
+  typedef T loop_data_t;
   uint8_t loop;
   uint8_t end;
   T data[0];
@@ -47,8 +47,6 @@ struct SampleData {
 using OrnamentData = int8_t;
 using Sample = LoopData<SampleData>;
 using Ornament = LoopData<OrnamentData>;
-using SamplePlayer = LoopDataPlayer<Sample>;
-using OrnamentPlayer = LoopDataPlayer<Ornament>;
 using Position = uint8_t;
 
 class PT3Module {
@@ -231,10 +229,10 @@ struct Channel {
   void mDisableVibrato() { mVibratoCounter = 0; }
   void mRunPortamento();
   const uint8_t *mPatternIt;
-  SamplePlayer mSamplePlayer;
-  OrnamentPlayer mOrnamentPlayer;
-  DelayRunner mSkip;
+  LoopDataPlayer<Sample> mSamplePlayer;
+  LoopDataPlayer<Ornament> mOrnamentPlayer;
   DelayedSlider<int16_t> mToneSlide;
+  DelayRunner mSkip;
   int16_t mTranspositionAccumulator, mToneDelta;
   uint8_t mVibratoCounter, mVibratoOnTime, mVibratoOffTime;
   uint8_t mVolume, mNote, mNoteSlide, mNoiseSlideStore;
