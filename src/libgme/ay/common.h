@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <type_traits>
 
 namespace gme {
 namespace emu {
@@ -32,6 +33,8 @@ class DelayRunner {
 };
 
 template<typename T> class SliderBase {
+  static_assert(std::is_integral<T>::value, "T must be an integer type.");
+
  public:
   void SetValue(const T &value) { mValue = value; }
   void SetStep(const T &step) { mStep = step; }
