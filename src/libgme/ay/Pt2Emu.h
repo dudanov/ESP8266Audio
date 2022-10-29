@@ -85,18 +85,18 @@ class PT2Module {
   const Position *GetPositionEnd() const { return mPositions + mEnd; }
 
   // Get pattern index by specified number.
-  const Pattern *GetPattern(const Position *it) const { return mPattern.GetPointer(this) + *it; }
+  const Pattern &GetPattern(const Position &position) const { return mPattern.GetPointer(this)[position]; }
 
   // Get data from specified pattern.
-  const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-    return pattern->GetData(this, channel);
+  const PatternData *GetPatternData(const Pattern &pattern, uint8_t channel) const {
+    return pattern.GetData(this, channel);
   }
 
   // Get sample by specified number.
-  const Sample *GetSample(uint8_t number) const { return mSamples[number].GetPointer(this); }
+  const Sample &GetSample(uint8_t number) const { return mSamples[number].GetReference(this); }
 
   // Get data of specified ornament number.
-  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments[number].GetPointer(this); }
+  const Ornament &GetOrnament(uint8_t number) const { return mOrnaments[number].GetReference(this); }
 
   // Return song length in frames.
   unsigned CountSongLength(unsigned &loop) const { return LengthCounter().CountSongLength(this, loop); }
@@ -149,9 +149,9 @@ struct Channel {
   bool IsEmptyLocation() { return !mSkip.Tick(); }
   void SetSkipLocations(uint8_t skip) { mSkip.Set(skip); }
 
-  void SetSample(const Sample *sample) { mSamplePlayer.Load(sample); }
+  void SetSample(const Sample &sample) { mSamplePlayer.Load(&sample); }
   void SetSamplePosition(uint8_t pos) { mSamplePlayer.SetPosition(pos); }
-  void SetOrnament(const Ornament *ornament) { mOrnamentPlayer.Load(ornament); }
+  void SetOrnament(const Ornament &ornament) { mOrnamentPlayer.Load(&ornament); }
   void SetOrnamentPosition(uint8_t pos) { mOrnamentPlayer.SetPosition(pos); }
   const SampleData &GetSampleData() const { return mSamplePlayer.GetData(); }
 

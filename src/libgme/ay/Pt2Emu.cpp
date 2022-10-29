@@ -50,7 +50,7 @@ void Player::mInit() {
   mDelay.Init(mModule->GetDelay());
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
-  auto pattern = mModule->GetPattern(mPositionIt);
+  auto &pattern = mModule->GetPattern(*mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
     c.SetVolume(15);
@@ -64,7 +64,7 @@ void Player::mInit() {
 inline void Player::mAdvancePosition() {
   if (*++mPositionIt == 0xFF)
     mPositionIt = mModule->GetPositionLoop();
-  auto pattern = mModule->GetPattern(mPositionIt);
+  auto &pattern = mModule->GetPattern(*mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }
@@ -261,7 +261,7 @@ unsigned PT2Module::LengthCounter::CountSongLength(const PT2Module *module, unsi
       loop = frame;
 
     // Update pattern data pointers.
-    auto pattern = module->GetPattern(it);
+    auto &pattern = module->GetPattern(*it);
     for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
       mChannels[idx].data = module->GetPatternData(pattern, idx);
 

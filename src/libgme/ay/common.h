@@ -109,8 +109,9 @@ template<typename T> class NumberedList {
 template<typename T> struct DataOffset {
   DataOffset() = delete;
   DataOffset(const DataOffset &) = delete;
-  uint16_t GetOffset() const { return get_le16(mOffset); }
   bool IsValid() const { return GetOffset() != 0; }
+  uint16_t GetOffset() const { return get_le16(mOffset); }
+  const T &GetReference(const void *start) const { return *GetPointer(start); }
   const T *GetPointer(const void *start) const {
     return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(start) + GetOffset());
   }

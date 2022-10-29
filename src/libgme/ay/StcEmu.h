@@ -71,14 +71,14 @@ struct STCModule {
   uint8_t GetDelay() const { return mDelay; }
 
   // Begin position iterator.
-  const Position *GetPositionBegin() const { return mPositions.GetPointer(this)->position; }
+  const Position *GetPositionBegin() const { return mPositions.GetReference(this).position; }
 
   // End position iterator.
   const Position *GetPositionEnd() const;
 
   // Get pattern by specified number.
-  const Pattern &GetPattern(const Position *position) const {
-    return mPatterns.GetPointer(this)->GetItem(position->pattern);
+  const Pattern &GetPattern(const Position &position) const {
+    return mPatterns.GetReference(this).GetItem(position.pattern);
   }
 
   // Get data from specified pattern.
@@ -90,7 +90,7 @@ struct STCModule {
   const Sample &GetSample(uint8_t number) const { return mSamples.GetItem(number); }
 
   // Get data of specified ornament number.
-  const Ornament &GetOrnament(uint8_t number) const { return mOrnaments.GetPointer(this)->GetItem(number); }
+  const Ornament &GetOrnament(uint8_t number) const { return mOrnaments.GetReference(this).GetItem(number); }
 
   // Return song length in frames.
   unsigned CountSongLength() const;
@@ -106,13 +106,13 @@ struct STCModule {
   uint8_t mCountPatternLength(const Pattern &pattern, uint8_t channel = 0) const;
 
   // Check pattern table data by maximum records.
-  bool mCheckPatternTable() const { return mPatterns.GetPointer(this)->IsValid(32); }
+  bool mCheckPatternTable() const { return mPatterns.GetReference(this).IsValid(32); }
 
   // Check song data integrity (positions and linked patterns).
   bool mCheckSongData() const;
 
   // Find specified pattern by number. Return pointer to pattern on success, else nullptr.
-  const Pattern *mFindPattern(uint8_t number) const { return mPatterns.GetPointer(this)->FindItem(number); }
+  const Pattern *mFindPattern(uint8_t number) const { return mPatterns.GetReference(this).FindItem(number); }
 
   size_t mGetPositionsCount() const;
 
