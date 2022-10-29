@@ -78,11 +78,11 @@ template<typename T> class NumberedList {
   NumberedList() = delete;
   NumberedList(const NumberedList<T> &) = delete;
 
-  const T *GetItem(const uint8_t number) const {
+  const T &GetItem(const uint8_t number) const {
     const NumberedList<T> *it = this;
     while (it->mNumber != number)
       ++it;
-    return &it->mItem;
+    return it->mItem;
   }
 
   const T *FindItem(const uint8_t number) const {

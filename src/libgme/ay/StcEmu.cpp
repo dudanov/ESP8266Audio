@@ -47,7 +47,7 @@ inline const Position *STCModule::GetPositionEnd() const {
 
 inline size_t STCModule::mGetPositionsCount() const { return mPositions.GetPointer(this)->count + 1; }
 
-uint8_t STCModule::mCountPatternLength(const Pattern *pattern, uint8_t channel) const {
+uint8_t STCModule::mCountPatternLength(const Pattern &pattern, uint8_t channel) const {
   unsigned length = 0, skip = 0;
   for (auto it = GetPatternData(pattern, channel); *it != 0xFF; ++it) {
     const uint8_t data = *it;
@@ -74,7 +74,7 @@ bool STCModule::mCheckSongData() const {
     if (pattern == nullptr)
       return false;
     for (uint8_t channel = 0; channel != AyApu::OSCS_NUM; ++channel) {
-      const uint8_t length = mCountPatternLength(pattern, channel);
+      const uint8_t length = mCountPatternLength(*pattern, channel);
       if (length == 0)
         return false;
       if (PatternLength != 0) {
@@ -229,7 +229,7 @@ void StcEmu::mInit() {
   mDelay.Init(mModule->GetDelay());
   mPositionIt = mModule->GetPositionBegin();
   memset(&mChannels, 0, sizeof(mChannels));
-  auto pattern = mModule->GetPattern(mPositionIt);
+  auto &pattern = mModule->GetPattern(mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
@@ -288,7 +288,7 @@ inline void StcEmu::mAdvancePosition() {
     mPositionIt = mModule->GetPositionBegin();
     mSetTrackEnded();
   }
-  auto pattern = mModule->GetPattern(mPositionIt);
+  auto &pattern = mModule->GetPattern(mPositionIt);
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx)
     mChannels[idx].SetPatternData(mModule->GetPatternData(pattern, idx));
 }

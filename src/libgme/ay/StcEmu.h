@@ -77,20 +77,20 @@ struct STCModule {
   const Position *GetPositionEnd() const;
 
   // Get pattern by specified number.
-  const Pattern *GetPattern(const Position *position) const {
+  const Pattern &GetPattern(const Position *position) const {
     return mPatterns.GetPointer(this)->GetItem(position->pattern);
   }
 
   // Get data from specified pattern.
-  const PatternData *GetPatternData(const Pattern *pattern, uint8_t channel) const {
-    return pattern->GetData(this, channel);
+  const PatternData *GetPatternData(const Pattern &pattern, uint8_t channel) const {
+    return pattern.GetData(this, channel);
   }
 
   // Get sample by specified number.
-  const Sample *GetSample(uint8_t number) const { return mSamples.GetItem(number); }
+  const Sample &GetSample(uint8_t number) const { return mSamples.GetItem(number); }
 
   // Get data of specified ornament number.
-  const Ornament *GetOrnament(uint8_t number) const { return mOrnaments.GetPointer(this)->GetItem(number); }
+  const Ornament &GetOrnament(uint8_t number) const { return mOrnaments.GetPointer(this)->GetItem(number); }
 
   // Return song length in frames.
   unsigned CountSongLength() const;
@@ -103,7 +103,7 @@ struct STCModule {
 
  private:
   // Count pattern length. Return 0 on error.
-  uint8_t mCountPatternLength(const Pattern *pattern, uint8_t channel = 0) const;
+  uint8_t mCountPatternLength(const Pattern &pattern, uint8_t channel = 0) const;
 
   // Check pattern table data by maximum records.
   bool mCheckPatternTable() const { return mPatterns.GetPointer(this)->IsValid(32); }
@@ -152,8 +152,8 @@ struct Channel {
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   uint8_t PatternCode() { return *mPatternIt++; }
 
-  void SetSample(const STCModule *stc, uint8_t number) { mSample = stc->GetSample(number); }
-  void SetOrnament(const STCModule *stc, uint8_t number) { mOrnament = stc->GetOrnament(number)->Data(); }
+  void SetSample(const STCModule *stc, uint8_t number) { mSample = &stc->GetSample(number); }
+  void SetOrnament(const STCModule *stc, uint8_t number) { mOrnament = stc->GetOrnament(number).Data(); }
   void AdvanceSample();
 
   const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
@@ -170,9 +170,9 @@ struct Channel {
   // Pointer to sample.
   const Sample *mSample;
   // Pattern data iterator.
-  const uint8_t *mPatternIt;
+  const PatternData *mPatternIt;
   // Pointer to ornament data.
-  const uint8_t *mOrnament;
+  const PatternData *mOrnament;
   DelayRunner mSkip;
   uint8_t mNote;
   uint8_t mSamplePosition;
