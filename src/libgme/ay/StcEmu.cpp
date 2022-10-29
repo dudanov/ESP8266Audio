@@ -149,13 +149,6 @@ inline void Channel::AdvanceSample() {
   }
 }
 
-/* SAMPLE DATA */
-
-inline int16_t SampleData::Transposition() const {
-  int16_t result = mData[0] / 16 * 256 + mData[2];
-  return (mData[1] & 32) ? result : -result;
-}
-
 /* STC EMULATOR */
 
 StcEmu::StcEmu() {

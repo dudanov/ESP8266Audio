@@ -20,7 +20,10 @@ struct SampleData {
   uint8_t Noise() const { return mData[1] % 32; }
   bool ToneMask() const { return mData[1] & 64; }
   bool NoiseMask() const { return mData[1] & 128; }
-  int16_t Transposition() const;
+  int16_t Transposition() const {
+    const int16_t result = mData[0] / 16 * 256 + mData[2];
+    return (mData[1] & 32) ? result : -result;
+  }
 
  private:
   uint8_t mData[3];
