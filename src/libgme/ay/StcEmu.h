@@ -152,8 +152,8 @@ struct Channel {
   void SetPatternData(const uint8_t *data) { mPatternIt = data; }
   uint8_t PatternCode() { return *mPatternIt++; }
 
-  void SetSample(const STCModule *stc, uint8_t number) { mSample = &stc->GetSample(number); }
-  void SetOrnament(const STCModule *stc, uint8_t number) { mOrnament = stc->GetOrnament(number).Data(); }
+  void SetSample(const Sample &sample) { mSample = &sample; }
+  void SetOrnament(const Ornament &ornament) { mOrnament = ornament.Data(); }
   void AdvanceSample();
 
   const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
@@ -167,11 +167,8 @@ struct Channel {
   bool IsEmptyLocation() { return !mSkip.Tick(); }
 
  private:
-  // Pointer to sample.
-  const Sample *mSample;
-  // Pattern data iterator.
   const PatternData *mPatternIt;
-  // Pointer to ornament data.
+  const Sample *mSample;
   const PatternData *mOrnament;
   DelayRunner mSkip;
   uint8_t mNote;

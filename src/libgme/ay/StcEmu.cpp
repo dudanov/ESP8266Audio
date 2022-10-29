@@ -233,7 +233,7 @@ void StcEmu::mInit() {
   for (uint8_t idx = 0; idx != mChannels.size(); ++idx) {
     Channel &c = mChannels[idx];
     c.SetPatternData(mModule->GetPatternData(pattern, idx));
-    c.SetOrnament(mModule, 0);
+    c.SetOrnament(mModule->GetOrnament(0));
   }
 }
 
@@ -249,11 +249,11 @@ void StcEmu::mPlayPattern() {
         break;
       } else if (code <= 0x6F) {
         // Select sample (0-15).
-        channel.SetSample(mModule, code % 16);
+        channel.SetSample(mModule->GetSample(code % 16));
       } else if (code <= 0x7F) {
         // Select ornament (0-15).
         channel.EnvelopeDisable();
-        channel.SetOrnament(mModule, code % 16);
+        channel.SetOrnament(mModule->GetOrnament(code % 16));
       } else if (code == 0x80) {
         // Rest (shuts channel). End position.
         channel.Disable();
@@ -264,11 +264,11 @@ void StcEmu::mPlayPattern() {
       } else if (code == 0x82) {
         // Select ornament 0.
         channel.EnvelopeDisable();
-        channel.SetOrnament(mModule, 0);
+        channel.SetOrnament(mModule->GetOrnament(0));
       } else if (code <= 0x8E) {
         // Select envelope effect (3-14).
         channel.EnvelopeEnable();
-        channel.SetOrnament(mModule, 0);
+        channel.SetOrnament(mModule->GetOrnament(0));
         mApu.Write(mEmuTime, AyApu::AY_ENV_FINE, channel.PatternCode());
         mApu.Write(mEmuTime, AyApu::AY_ENV_COARSE, 0);
         mApu.Write(mEmuTime, AyApu::AY_ENV_SHAPE, code % 16);
