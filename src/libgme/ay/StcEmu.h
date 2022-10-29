@@ -29,7 +29,7 @@ struct SampleData {
 struct Sample {
   Sample() = delete;
   Sample(const Sample &) = delete;
-  const SampleData *Data(size_t pos) const { return mData + pos; }
+  const SampleData &Data(uint8_t pos) const { return mData[pos]; }
   bool IsRepeatable() const { return mRepeatPosition > 0; }
   uint8_t RepeatPosition() const { return mRepeatPosition - 1; }
   uint8_t RepeatLength() const { return mRepeatLength; }
@@ -43,7 +43,7 @@ struct Sample {
 struct Ornament {
   Ornament() = delete;
   Ornament(const Ornament &) = delete;
-  const uint8_t *Data() const { return mData; }
+  const uint8_t &Data(uint8_t pos) const { return mData[pos]; }
 
  private:
   uint8_t mData[32];
@@ -153,11 +153,11 @@ struct Channel {
   uint8_t PatternCode() { return *mPatternIt++; }
 
   void SetSample(const Sample &sample) { mSample = &sample; }
-  void SetOrnament(const Ornament &ornament) { mOrnament = ornament.Data(); }
+  void SetOrnament(const Ornament &ornament) { mOrnament = &ornament; }
   void AdvanceSample();
 
-  const SampleData *GetSampleData() const { return mSample->Data(mSamplePosition); }
-  uint8_t GetOrnamentNote() const { return mNote + mOrnament[mSamplePosition]; }
+  const SampleData &GetSampleData() const { return mSample->Data(mSamplePosition); }
+  uint8_t GetOrnamentNote() const { return mNote + mOrnament->Data(mSamplePosition); }
 
   bool IsEnvelopeEnabled() const { return mEnvelope; }
   void EnvelopeEnable() { mEnvelope = true; }
@@ -169,7 +169,7 @@ struct Channel {
  private:
   const PatternData *mPatternIt;
   const Sample *mSample;
-  const PatternData *mOrnament;
+  const Ornament *mOrnament;
   DelayRunner mSkip;
   uint8_t mNote;
   uint8_t mSamplePosition;

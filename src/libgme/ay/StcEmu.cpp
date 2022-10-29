@@ -304,19 +304,19 @@ void StcEmu::mPlaySamples() {
       continue;
     }
 
-    auto sample = channel.GetSampleData();
+    auto &sample = channel.GetSampleData();
 
-    if (!sample->NoiseMask())
-      mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, sample->Noise());
+    if (!sample.NoiseMask())
+      mApu.Write(mEmuTime, AyApu::AY_NOISE_PERIOD, sample.Noise());
 
-    mixer |= 64 * sample->NoiseMask() | 8 * sample->ToneMask();
+    mixer |= 64 * sample.NoiseMask() | 8 * sample.ToneMask();
 
     const uint8_t note = channel.GetOrnamentNote() + mPositionTransposition();
-    const uint16_t period = (sGetTonePeriod(note) + sample->Transposition()) % 4096;
+    const uint16_t period = (sGetTonePeriod(note) + sample.Transposition()) % 4096;
 
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_FINE + idx * 2, period % 256);
     mApu.Write(mEmuTime, AyApu::AY_CHNL_A_COARSE + idx * 2, period / 256);
-    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, sample->Volume() + 16 * channel.IsEnvelopeEnabled());
+    mApu.Write(mEmuTime, AyApu::AY_CHNL_A_VOL + idx, sample.Volume() + 16 * channel.IsEnvelopeEnabled());
 
     channel.AdvanceSample();
   }
