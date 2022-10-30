@@ -6,16 +6,20 @@ namespace gme {
 namespace emu {
 namespace ay {
 
-/* MODULES DATA TYPES */
+/* INTERNAL MODULES DATA TYPES */
 
 using PatternData = uint8_t;
 
+// The 16-bit offset of the object data from the module's start address.
 template<typename T> struct DataOffset {
   DataOffset() = delete;
   DataOffset(const DataOffset &) = delete;
   bool IsValid() const { return GetOffset() != 0; }
+  // Raw offset value.
   uint16_t GetOffset() const { return get_le16(mOffset); }
+  // Reference to data object.
   const T &GetReference(const void *start) const { return *GetPointer(start); }
+  // Pointer to data object.
   const T *GetPointer(const void *start) const {
     return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(start) + GetOffset());
   }
@@ -24,6 +28,7 @@ template<typename T> struct DataOffset {
   uint8_t mOffset[2];
 };
 
+// Pattern table. Contains pattern data offsets for 3 channels.
 struct Pattern {
   Pattern() = delete;
   Pattern(const Pattern &) = delete;
