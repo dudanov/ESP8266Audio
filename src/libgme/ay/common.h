@@ -6,6 +6,68 @@ namespace gme {
 namespace emu {
 namespace ay {
 
+/* MODULES DATA TYPES */
+
+using PatternData = uint8_t;
+
+template<typename T> struct DataOffset {
+  DataOffset() = delete;
+  DataOffset(const DataOffset &) = delete;
+  bool IsValid() const { return GetOffset() != 0; }
+  uint16_t GetOffset() const { return get_le16(mOffset); }
+  const T &GetReference(const void *start) const { return *GetPointer(start); }
+  const T *GetPointer(const void *start) const {
+    return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(start) + GetOffset());
+  }
+
+ private:
+  uint8_t mOffset[2];
+};
+
+struct Pattern {
+  Pattern() = delete;
+  Pattern(const Pattern &) = delete;
+  const PatternData *GetData(const void *start, uint8_t channel) const { return mData[channel].GetPointer(start); }
+
+ private:
+  DataOffset<PatternData> mData[3];
+};
+
+template<typename T> class NumberedList {
+ public:
+  NumberedList() = delete;
+  NumberedList(const NumberedList<T> &) = delete;
+
+  const T &GetItem(const uint8_t number) const {
+    const NumberedList<T> *it = this;
+    while (it->mNumber != number)
+      ++it;
+    return it->mItem;
+  }
+
+  const T *FindItem(const uint8_t number) const {
+    for (const NumberedList<T> *it = this; !it->mIsEnd(); ++it)
+      if (it->mNumber == number)
+        return &it->mItem;
+    return nullptr;
+  }
+
+  bool IsValid(const uint8_t max_count) const {
+    const NumberedList<T> *it = this;
+    for (uint8_t n = 0; n != max_count; ++n, ++it)
+      if (it->mIsEnd())
+        return true;
+    return false;
+  }
+
+ private:
+  bool mIsEnd() const { return mNumber == 0xFF; }
+  uint8_t mNumber;
+  T mItem;
+};
+
+/* PLAYERS HELPER CLASSES */
+
 class DelayRunner {
  public:
   // Init delay. Run() method returns TRUE on next call.
@@ -72,54 +134,6 @@ template<typename T> class DelayedSlider : public SliderBase<T> {
   DelayRunner mDelay;
 };
 
-// An object that has a number.
-template<typename T> class NumberedList {
- public:
-  NumberedList() = delete;
-  NumberedList(const NumberedList<T> &) = delete;
-
-  const T &GetItem(const uint8_t number) const {
-    const NumberedList<T> *it = this;
-    while (it->mNumber != number)
-      ++it;
-    return it->mItem;
-  }
-
-  const T *FindItem(const uint8_t number) const {
-    for (const NumberedList<T> *it = this; !it->mIsEnd(); ++it)
-      if (it->mNumber == number)
-        return &it->mItem;
-    return nullptr;
-  }
-
-  bool IsValid(const uint8_t max_count) const {
-    const NumberedList<T> *it = this;
-    for (uint8_t n = 0; n != max_count; ++n, ++it)
-      if (it->mIsEnd())
-        return true;
-    return false;
-  }
-
- private:
-  bool mIsEnd() const { return mNumber == 0xFF; }
-  uint8_t mNumber;
-  T mItem;
-};
-
-template<typename T> struct DataOffset {
-  DataOffset() = delete;
-  DataOffset(const DataOffset &) = delete;
-  bool IsValid() const { return GetOffset() != 0; }
-  uint16_t GetOffset() const { return get_le16(mOffset); }
-  const T &GetReference(const void *start) const { return *GetPointer(start); }
-  const T *GetPointer(const void *start) const {
-    return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(start) + GetOffset());
-  }
-
- private:
-  uint8_t mOffset[2];
-};
-
 template<typename T> class LoopDataPlayer {
  public:
   typedef typename T::loop_data_t loop_data_t;
@@ -137,17 +151,6 @@ template<typename T> class LoopDataPlayer {
  private:
   const T *mData;
   uint8_t mPos;
-};
-
-using PatternData = uint8_t;
-
-struct Pattern {
-  Pattern() = delete;
-  Pattern(const Pattern &) = delete;
-  const PatternData *GetData(const void *start, uint8_t channel) const { return mData[channel].GetPointer(start); }
-
- private:
-  DataOffset<PatternData> mData[3];
 };
 
 }  // namespace ay
