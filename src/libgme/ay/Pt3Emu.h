@@ -47,6 +47,8 @@ struct SampleData {
 using OrnamentData = int8_t;
 using Sample = LoopData<SampleData>;
 using Ornament = LoopData<OrnamentData>;
+using SamplePlayer = LoopDataPlayer<Sample>;
+using OrnamentPlayer = LoopDataPlayer<Ornament>;
 using Position = uint8_t;
 
 class PT3Module {
@@ -229,8 +231,8 @@ struct Channel {
   void mDisableVibrato() { mVibratoCounter = 0; }
   void mRunPortamento();
   const PatternData *mPatternIt;
-  LoopDataPlayer<Sample> mSamplePlayer;
-  LoopDataPlayer<Ornament> mOrnamentPlayer;
+  SamplePlayer mSamplePlayer;
+  OrnamentPlayer mOrnamentPlayer;
   DelayedSlider<int16_t> mToneSlide;
   DelayRunner mSkip;
   int16_t mTranspositionAccumulator, mToneDelta;
@@ -272,7 +274,7 @@ class Player {
   // Channels
   std::array<Channel, AyApu::OSCS_NUM> mChannels;
   // Pattern commands stack
-  std::stack<uint8_t> mCmdStack;
+  std::stack<PatternData> mCmdStack;
   // Song file header
   const PT3Module *mModule;
   // Song position iterators

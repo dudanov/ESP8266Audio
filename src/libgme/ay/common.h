@@ -22,7 +22,7 @@ class DelayRunner {
 
   // Returns TRUE every N-th call. Always FALSE if delay is 0.
   bool Tick() {
-    if (!mCounter || --mCounter)
+    if ((mCounter == 0) || (--mCounter != 0))
       return false;
     mCounter = mDelay;
     return true;
@@ -43,7 +43,7 @@ template<typename T> class SliderBase {
 
  protected:
   bool mRun() {
-    if (!mStep)
+    if (mStep == 0)
       return false;
     mValue += mStep;
     return true;
