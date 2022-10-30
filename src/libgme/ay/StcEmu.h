@@ -167,7 +167,7 @@ struct Channel {
   void EnvelopeDisable() { mEnvelope = false; }
 
   void SetSkipCount(uint8_t delay) { mSkip.Enable(delay); }
-  bool IsEmptyLocation() { return !mSkip.Tick(); }
+  bool IsEmptyLocation() { return !mSkip.Run(); }
 
  private:
   const PatternData *mPatternIt;

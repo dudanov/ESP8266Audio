@@ -8,7 +8,7 @@ namespace ay {
 
 class DelayRunner {
  public:
-  // Init delay. Tick() method returns TRUE on next call.
+  // Init delay. Run() method returns TRUE on next call.
   void Init(uint8_t delay) {
     mCounter = 1;
     mDelay = delay;
@@ -17,11 +17,11 @@ class DelayRunner {
   // Set delay value.
   void Enable(uint8_t delay) { mDelay = mCounter = delay; }
 
-  // Disable. Tick() method always return FALSE.
+  // Disable. Run() method always return FALSE.
   void Disable() { mCounter = 0; }
 
   // Returns TRUE every N-th call. Always FALSE if delay is 0.
-  bool Tick() {
+  bool Run() {
     if ((mCounter == 0) || (--mCounter != 0))
       return false;
     mCounter = mDelay;
@@ -62,7 +62,7 @@ template<typename T> class DelayedSlider : public SliderBase<T> {
  public:
   void Enable(uint8_t delay) { mDelay.Enable(delay); }
   void Disable() { mDelay.Disable(); }
-  bool Run() { return mDelay.Tick() && mRun(); }
+  bool Run() { return mDelay.Run() && mRun(); }
   void Reset() {
     mDelay.Disable();
     mReset();

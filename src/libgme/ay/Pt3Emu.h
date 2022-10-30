@@ -190,7 +190,7 @@ struct Channel {
     return value;
   }
 
-  bool IsEmptyLocation() { return !mSkip.Tick(); }
+  bool IsEmptyLocation() { return !mSkip.Run(); }
   void SetSkipLocations(uint8_t skip) { mSkip.Enable(skip); }
 
   void SetSample(const Sample &sample) { mSamplePlayer.Load(&sample); }
@@ -250,7 +250,7 @@ class Player {
   void SetOscOutput(int idx, BlipBuffer *out) { mApu.SetOscOutput(idx, out); }
   void EndFrame(blip_clk_time_t time) { mApu.EndFrame(time); }
   void RunUntil(blip_clk_time_t time) {
-    if (mDelay.Tick())
+    if (mDelay.Run())
       mPlayPattern(time);
     mPlaySamples(time);
   }

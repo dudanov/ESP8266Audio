@@ -318,7 +318,7 @@ void StcEmu::mPlaySamples() {
 
 blargg_err_t StcEmu::mRunClocks(blip_clk_time_t &duration) {
   for (; mEmuTime <= duration; mEmuTime += mFramePeriod) {
-    if (mDelay.Tick())
+    if (mDelay.Run())
       mPlayPattern();
     mPlaySamples();
   }
