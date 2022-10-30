@@ -275,7 +275,7 @@ void Player::mPlayPattern(const blip_clk_time_t time) {
         mEnvelopeSlider.SetStep(c.PatternCodeLE16());
       } else if (val == 0x09) {
         // Song Delay
-        mDelay.Set(c.PatternCode());
+        mDelay.Enable(c.PatternCode());
       }
     }
   }
@@ -484,7 +484,7 @@ unsigned PT3Module::LengthCounter::mCountPositionLength() {
         if ((val >= 0x50 && val <= 0xAF) || val == 0xD0 || val == 0xC0)
           break;
         if (val == 0xB1)
-          c.delay.Set(*c.data++);
+          c.delay.Enable(*c.data++);
         else if (val >= 0xF0 || val == 0x10)
           c.data += 1;
         else if (val >= 0xB2 && val <= 0xBF)

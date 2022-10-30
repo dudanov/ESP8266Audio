@@ -191,7 +191,7 @@ struct Channel {
   }
 
   bool IsEmptyLocation() { return !mSkip.Tick(); }
-  void SetSkipLocations(uint8_t skip) { mSkip.Set(skip); }
+  void SetSkipLocations(uint8_t skip) { mSkip.Enable(skip); }
 
   void SetSample(const Sample &sample) { mSamplePlayer.Load(&sample); }
   void SetSamplePosition(uint8_t pos) { mSamplePlayer.SetPosition(pos); }

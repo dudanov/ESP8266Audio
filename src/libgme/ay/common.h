@@ -15,7 +15,7 @@ class DelayRunner {
   }
 
   // Set delay value.
-  void Set(uint8_t delay) { mDelay = mCounter = delay; }
+  void Enable(uint8_t delay) { mDelay = mCounter = delay; }
 
   // Disable. Tick() method always return FALSE.
   void Disable() { mCounter = 0; }
@@ -60,7 +60,7 @@ template<typename T> class SimpleSlider : public SliderBase<T> {
 
 template<typename T> class DelayedSlider : public SliderBase<T> {
  public:
-  void Enable(uint8_t delay) { mDelay.Set(delay); }
+  void Enable(uint8_t delay) { mDelay.Enable(delay); }
   void Disable() { mDelay.Disable(); }
   bool Run() { return mDelay.Tick() && mRun(); }
   void Reset() {

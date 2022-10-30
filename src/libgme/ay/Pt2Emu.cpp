@@ -114,7 +114,7 @@ void Player::mPlayPattern(const blip_clk_time_t time) {
         c.SetVolume(val - 0x10);
       } else if (val == 0x0F) {
         // Song Delay
-        mDelay.Set(c.PatternCode());
+        mDelay.Enable(c.PatternCode());
       } else if (val == 0x0E) {
         // Gliss Effect
         c.SetupGliss(this);
@@ -288,7 +288,7 @@ unsigned PT2Module::LengthCounter::mCountPositionLength() {
         else if (val == 0x0D)
           c.data += 3;
         else if (val >= 0x20 && val <= 0x5f)
-          c.delay.Set(val - 0x1F);
+          c.delay.Enable(val - 0x1F);
         else if (val >= 0x71 && val <= 0x7e)
           c.data += 2;
         else if (val <= 0x0B || val == 0x0E)
