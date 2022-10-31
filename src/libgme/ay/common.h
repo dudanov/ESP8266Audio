@@ -21,7 +21,7 @@ template<typename T> struct DataOffset {
   const T &GetReference(const void *start) const { return *GetPointer(start); }
   // Pointer to data object.
   const T *GetPointer(const void *start) const {
-    return reinterpret_cast<const T *>(reinterpret_cast<const uint8_t *>(start) + GetOffset());
+    return reinterpret_cast<const T *>(static_cast<const uint8_t *>(start) + GetOffset());
   }
 
  private:
